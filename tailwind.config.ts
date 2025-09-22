@@ -47,13 +47,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        medical: {
-          blue: "hsl(var(--medical-blue))",
-          "blue-dark": "hsl(var(--medical-blue-dark))",
-          green: "hsl(var(--medical-green))",
-          "green-light": "hsl(var(--medical-green-light))",
-          navy: "hsl(var(--medical-navy))",
-          light: "hsl(var(--medical-light))",
+        lung: {
+          blue: "hsl(var(--lung-blue))",
+          "blue-dark": "hsl(var(--lung-blue-dark))",
+          green: "hsl(var(--lung-green))",
+          "green-light": "hsl(var(--lung-green-light))",
+          purple: "hsl(var(--lung-purple))",
+          "purple-dark": "hsl(var(--lung-purple-dark))",
+          "light-blue": "hsl(var(--lung-light-blue))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -67,8 +68,11 @@ export default {
         },
       },
       backgroundImage: {
-        'medical-gradient': 'var(--medical-gradient)',
         'hero-gradient': 'var(--hero-gradient)',
+      },
+      fontFamily: {
+        'livvic': ['Livvic', 'sans-serif'],
+        'lexend': ['Lexend Deca', 'sans-serif'],
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
