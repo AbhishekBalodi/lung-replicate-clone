@@ -47,10 +47,10 @@ const Header = () => {
             <a href="/doctors/naveen-kumar" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Doctors
             </a>
-            <a href="#services" className="text-foreground hover:text-lung-blue transition-colors font-medium">
+            <a href="/services" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Services
             </a>
-            <a href="#contact" className="text-foreground hover:text-lung-blue transition-colors font-medium">
+            <a href="/contact" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Contact
             </a>
           </div>
