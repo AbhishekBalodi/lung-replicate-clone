@@ -1,136 +1,122 @@
-import { Facebook, Twitter, Instagram, Youtube, MapPin, Phone, Mail } from "lucide-react";
-import lungIcon from "@/assets/lung-icon.png";
+import { Facebook, Twitter, Instagram, MapPin, Phone, Mail } from "lucide-react";
 
 const Footer = () => {
-  const quickLinks = [
-    "About Us",
-    "Our Services", 
-    "Our Doctors",
-    "Appointments",
-    "Patient Portal",
-    "Insurance"
-  ];
-
-  const services = [
-    "Emergency Care",
-    "Pulmonology",
-    "Chest Medicine", 
-    "Sleep Studies",
-    "Lung Function Tests",
-    "Bronchoscopy"
-  ];
-
   return (
-    <footer className="bg-foreground text-white">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <img src={lungIcon} alt="Save Lung Center" className="h-10 w-10" />
-              <div>
-                <h3 className="text-xl font-bold">SAVE LUNG CENTER</h3>
-                <p className="text-sm opacity-80">Your Family Pulmonologist</p>
-              </div>
+    <footer className="bg-slate-800 text-white">
+      {/* Main Footer Content */}
+      <div className="py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Savelungcenter */}
+            <div>
+              <h3 className="text-xl font-bold mb-6 font-lexend">Savelungcenter</h3>
+              <p className="text-gray-300 leading-relaxed font-livvic">
+                From wellness tips to expert advice, we're here to support your journey to a 
+                healthier you. Our team of dedicated healthcare providers has years of experience.
+              </p>
             </div>
-            <p className="text-sm opacity-90 leading-relaxed">
-              Providing exceptional lung care services with compassion, expertise, and 
-              state-of-the-art medical technology for comprehensive respiratory health.
-            </p>
-            <div className="flex gap-4">
-              <div className="p-2 bg-white/10 rounded-full hover:bg-lung-green transition-colors cursor-pointer">
-                <Facebook className="h-4 w-4" />
-              </div>
-              <div className="p-2 bg-white/10 rounded-full hover:bg-lung-green transition-colors cursor-pointer">
-                <Twitter className="h-4 w-4" />
-              </div>
-              <div className="p-2 bg-white/10 rounded-full hover:bg-lung-green transition-colors cursor-pointer">
-                <Instagram className="h-4 w-4" />
-              </div>
-              <div className="p-2 bg-white/10 rounded-full hover:bg-lung-green transition-colors cursor-pointer">
-                <Youtube className="h-4 w-4" />
-              </div>
+
+            {/* Useful Links */}
+            <div>
+              <h4 className="text-lg font-semibold mb-6 font-lexend">Useful Links</h4>
+              <ul className="space-y-3">
+                <li><a href="/doctors/naveen-kumar" className="text-gray-300 hover:text-white transition-colors font-livvic">Doctors</a></li>
+                <li><a href="#contact" className="text-gray-300 hover:text-white transition-colors font-livvic">Contact Us</a></li>
+                <li><a href="#services" className="text-gray-300 hover:text-white transition-colors font-livvic">Services</a></li>
+              </ul>
             </div>
-          </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-            <ul className="space-y-2">
-              {quickLinks.map((link) => (
-                <li key={link}>
-                  <a href="#" className="text-sm opacity-90 hover:opacity-100 hover:text-lung-green transition-colors">
-                    {link}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Explore Pages */}
+            <div>
+              <h4 className="text-lg font-semibold mb-6 font-lexend">Explore Pages</h4>
+              <ul className="space-y-3">
+                <li><a href="/" className="text-gray-300 hover:text-white transition-colors font-livvic">Home</a></li>
+                <li><a href="#appointment" className="text-gray-300 hover:text-white transition-colors font-livvic">Book Appointment</a></li>
+              </ul>
+            </div>
 
-          {/* Services */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Our Services</h4>
-            <ul className="space-y-2">
-              {services.map((service) => (
-                <li key={service}>
-                  <a href="#" className="text-sm opacity-90 hover:opacity-100 hover:text-lung-green transition-colors">
-                    {service}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Contact Info</h4>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <MapPin className="h-4 w-4 mt-1 text-lung-green flex-shrink-0" />
-                <div className="text-sm opacity-90">
-                  <p>Savelung Center, B-42 Rajan Babu Road</p>
-                  <p>Adarsh Nagar, Delhi-110033</p>
+            {/* Opening Hour */}
+            <div>
+              <h4 className="text-lg font-semibold mb-6 font-lexend">Opening Hour</h4>
+              <div className="space-y-2 text-gray-300 font-livvic">
+                <div className="flex justify-between">
+                  <span>Mon - Tues</span>
+                  <span>09:00AM - 7:00PM</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Wed - Thu</span>
+                  <span>09:00AM - 7:00PM</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Fri - Sat</span>
+                  <span>09:00AM - 7:00PM</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sunday</span>
+                  <span className="text-red-400">Closed</span>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <Phone className="h-4 w-4 text-lung-green flex-shrink-0" />
-                <div className="text-sm opacity-90">
-                  <p>+91 858-680-5004</p>
-                  <p className="text-xs">Emergency: +91 858-680-5004</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <Mail className="h-4 w-4 text-lung-green flex-shrink-0" />
-                <div className="text-sm opacity-90">
-                  <p>info@savelungcenter.com</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-3 bg-white/5 rounded-lg">
-              <p className="text-sm font-semibold text-lung-green">Working Hours</p>
-              <p className="text-xs opacity-90">Mon-Sat: 9:00 AM - 07:00 PM</p>
-              <p className="text-xs opacity-90">Sunday: Closed</p>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="border-t border-white/20 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
-          <p className="text-sm opacity-80">
-            © 2024 Save Lung Center. All rights reserved.
+      {/* Contact Cards Section */}
+      <div className="py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Medical Address */}
+            <div className="bg-lung-blue p-6 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <MapPin className="h-6 w-6 text-white" />
+                <h5 className="font-semibold text-white font-lexend">MEDICAL ADDRESS</h5>
+              </div>
+              <p className="text-white/90 font-livvic">
+                B-42 Rajan Babu Road, Adarsh Nagar, Delhi-110033
+              </p>
+            </div>
+
+            {/* Email Address */}
+            <div className="bg-lung-blue p-6 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <Mail className="h-6 w-6 text-white" />
+                <h5 className="font-semibold text-white font-lexend">EMAIL ADDRESS</h5>
+              </div>
+              <p className="text-white/90 font-livvic">
+                Savelungcenter@gmail.com
+              </p>
+            </div>
+
+            {/* Emergency Call */}
+            <div className="bg-lung-blue p-6 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <Phone className="h-6 w-6 text-white" />
+                <h5 className="font-semibold text-white font-lexend">EMERGENCY CALL</h5>
+              </div>
+              <p className="text-white/90 font-livvic">
+                +91 858-680-5004
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Footer */}
+      <div className="border-t border-gray-700 py-6 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+          <p className="text-gray-400 text-sm font-livvic">
+            Copyright © 2023-25 All Rights Reserved | Code Get Solution
           </p>
-          <div className="flex gap-6 mt-4 md:mt-0">
-            <a href="#" className="text-sm opacity-80 hover:opacity-100 transition-opacity">
-              Privacy Policy
-            </a>
-            <a href="#" className="text-sm opacity-80 hover:opacity-100 transition-opacity">
-              Terms of Service
-            </a>
-            <a href="#" className="text-sm opacity-80 hover:opacity-100 transition-opacity">
-              HIPAA Notice
-            </a>
+          <div className="flex gap-4 mt-4 md:mt-0">
+            <div className="w-10 h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">
+              <Facebook className="h-5 w-5 text-white" />
+            </div>
+            <div className="w-10 h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">
+              <Instagram className="h-5 w-5 text-white" />
+            </div>
+            <div className="w-10 h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">
+              <Twitter className="h-5 w-5 text-white" />
+            </div>
           </div>
         </div>
       </div>
