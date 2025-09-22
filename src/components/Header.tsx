@@ -1,10 +1,25 @@
 import { Button } from "@/components/ui/button";
-import { Phone, MapPin, Clock, Facebook, Twitter, Instagram } from "lucide-react";
+import { Phone, MapPin, Clock, Facebook, Twitter, Instagram, User } from "lucide-react";
 import lungIcon from "@/assets/lung-icon.png";
+import SignUpModal from "@/components/SignUpModal";
+import { useState } from "react";
 
 const Header = () => {
+  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+
   return (
-    <header className="w-full">
+    <>
+      <SignUpModal 
+        isOpen={isSignUpOpen} 
+        onClose={() => setIsSignUpOpen(false)}
+        onSwitchToLogin={() => {
+          setIsSignUpOpen(false);
+          setIsLoginOpen(true);
+        }}
+      />
+      
+      <header className="w-full">
       {/* Top Info Bar */}
       <div className="bg-lung-blue text-white py-3 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm">
@@ -60,16 +75,24 @@ const Header = () => {
               <Phone className="h-4 w-4" />
               <span>+91 858-680-5004</span>
             </div>
-            <Button className="bg-lung-green hover:bg-lung-green-light text-white">
-              Appointment →
-            </Button>
-            <Button variant="outline" className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white">
-              👤 Login →
+            <a href="/book-appointment">
+              <Button className="bg-lung-green hover:bg-lung-green-light text-white">
+                Appointment →
+              </Button>
+            </a>
+            <Button 
+              variant="outline" 
+              className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"
+              onClick={() => setIsSignUpOpen(true)}
+            >
+              <User className="h-4 w-4 mr-2" />
+              Login →
             </Button>
           </div>
         </div>
       </nav>
-    </header>
+      </header>
+    </>
   );
 };
 

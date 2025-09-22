@@ -69,12 +69,26 @@ const AppointmentBooking = () => {
     <section className="py-16 px-4 bg-medical-light/30">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-foreground mb-4">
+          <h2 className="text-4xl font-bold text-foreground mb-4 font-lexend">
             Book an Appointment & You're Done!
           </h2>
-          <p className="text-lg text-muted-foreground">
-            Looking for the best medical treatments without a long waiting time?
+          <p className="text-lg text-muted-foreground font-livvic">
+            Looking for the best & quick pulmonary treatments without a long waiting time?
           </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="text-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/book-appointment">
+              <Button className="bg-lung-green hover:bg-lung-green-light text-white px-8 py-3">
+                Book Now →
+              </Button>
+            </a>
+            <Button variant="outline" className="border-lung-blue text-lung-blue hover:bg-lung-blue hover:text-white px-8 py-3">
+              Learn More
+            </Button>
+          </div>
         </div>
 
         {/* Steps Navigation */}

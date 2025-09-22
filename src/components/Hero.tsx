@@ -19,12 +19,14 @@ const Hero = () => {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4">
-            <Button 
-              size="lg" 
-              className="bg-lung-green hover:bg-lung-green-light text-white font-semibold px-8 py-6 text-lg"
-            >
-              Make Appointment
-            </Button>
+            <a href="/book-appointment">
+              <Button 
+                size="lg" 
+                className="bg-lung-green hover:bg-lung-green-light text-white font-semibold px-8 py-6 text-lg"
+              >
+                Make Appointment
+              </Button>
+            </a>
             <Button 
               variant="outline" 
               size="lg"
