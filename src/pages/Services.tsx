@@ -84,8 +84,8 @@ const Services = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      
-      {/* Hero Section */}
+      <div className="pt-32">
+        {/* Hero Section */}
       <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-16 px-4">
         <div className="max-w-7xl mx-auto text-center text-white">
           {/* Breadcrumb */}
@@ -131,6 +131,7 @@ const Services = () => {
       </section>
 
       <Footer />
+      </div>
     </div>
   );
 };

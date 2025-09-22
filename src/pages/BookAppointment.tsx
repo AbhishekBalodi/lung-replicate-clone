@@ -339,8 +339,8 @@ const BookAppointment = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      
-      {/* Hero Section */}
+      <div className="pt-32">
+        {/* Hero Section */}
       <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-16 px-4">
         <div className="max-w-4xl mx-auto text-center text-white">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 font-lexend">Book an Appointment & You're Done!</h1>
@@ -423,6 +423,7 @@ const BookAppointment = () => {
       </section>
 
       <Footer />
+      </div>
     </div>
   );
 };

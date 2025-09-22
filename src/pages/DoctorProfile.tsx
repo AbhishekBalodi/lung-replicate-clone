@@ -18,8 +18,8 @@ const DoctorProfile = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      
-      {/* Doctor Hero Section */}
+      <div className="pt-32">
+        {/* Doctor Hero Section */}
       <section className="bg-gradient-to-r from-lung-blue to-lung-blue/80 py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-8">
@@ -416,6 +416,7 @@ const DoctorProfile = () => {
       </section>
 
       <Footer />
+      </div>
     </div>
   );
 };

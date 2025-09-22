@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Phone, MapPin, Clock, Facebook, Twitter, Instagram, User } from "lucide-react";
 import lungIcon from "@/assets/lung-icon.png";
 import SignUpModal from "@/components/SignUpModal";
+import LoginModal from "@/components/LoginModal";
 import { useState } from "react";
 
 const Header = () => {
@@ -19,7 +20,16 @@ const Header = () => {
         }}
       />
       
-      <header className="w-full">
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        onSwitchToSignUp={() => {
+          setIsLoginOpen(false);
+          setIsSignUpOpen(true);
+        }}
+      />
+      
+      <header className="w-full fixed top-0 left-0 z-50 bg-white shadow-md">
       {/* Top Info Bar */}
       <div className="bg-lung-blue text-white py-3 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-sm">
@@ -83,7 +93,7 @@ const Header = () => {
             <Button 
               variant="outline" 
               className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"
-              onClick={() => setIsSignUpOpen(true)}
+              onClick={() => setIsLoginOpen(true)}
             >
               <User className="h-4 w-4 mr-2" />
               Login →
