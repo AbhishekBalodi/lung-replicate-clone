@@ -54,9 +54,9 @@ const Contact = () => {
               </div>
               <h3 className="text-2xl font-bold text-foreground mb-4 font-lexend">Visit Us</h3>
               <p className="text-muted-foreground font-livvic leading-relaxed">
-                Dr. Naveen Ailawadi Chest Clinic,<br />
-                Shop no. 1, B-42 Rajan Babu Road,<br />
-                Adarsh Nagar, New Delhi, 110033
+                Dr. John Smith Medical Clinic,<br />
+                123 Main Street, Suite 1,<br />
+                Medical District, New York, 10001
               </p>
             </Card>
 
@@ -67,7 +67,7 @@ const Contact = () => {
               </div>
               <h3 className="text-2xl font-bold text-foreground mb-4 font-lexend">Email Us</h3>
               <p className="text-muted-foreground font-livvic">
-                savelungcenter@gmail.com
+                info@healthcareplus.com
               </p>
             </Card>
 
@@ -78,7 +78,7 @@ const Contact = () => {
               </div>
               <h3 className="text-2xl font-bold text-foreground mb-4 font-lexend">Call Us</h3>
               <p className="text-muted-foreground font-livvic">
-                +91 858 680 5004
+                +1 555 123 4567
               </p>
             </Card>
           </div>
@@ -101,15 +101,15 @@ const Contact = () => {
               </div>
               
               {/* Map Info Card */}
-              <Card className="absolute top-4 left-4 p-4 bg-white shadow-strong max-w-xs">
-                <h4 className="font-bold text-foreground mb-1 font-lexend">Dr Naveen Ailawadi</h4>
+                <Card className="absolute top-4 left-4 p-4 bg-white shadow-strong max-w-xs">
+                <h4 className="font-bold text-foreground mb-1 font-lexend">Dr John Smith Medical</h4>
                 <p className="text-sm text-muted-foreground mb-2 font-livvic">
-                  gate no 1, metro station, B, 42, Rajan Babu Rd, near Adarsh nagar, Adarsh Nagar, Delhi, 110033
+                  123 Main Street, Suite 1, Medical District, New York, 10001
                 </p>
                 <div className="flex items-center gap-1 mb-2">
                   <span className="text-yellow-500">★★★★★</span>
                   <span className="text-sm text-muted-foreground">4.9</span>
-                  <span className="text-sm text-lung-blue">1,524 reviews</span>
+                  <span className="text-sm text-lung-blue">2,150 reviews</span>
                 </div>
                 <Button variant="link" className="text-lung-blue p-0 h-auto text-sm font-livvic">
                   View larger map
@@ -119,7 +119,7 @@ const Contact = () => {
 
             {/* Contact Form */}
             <div className="bg-slate-800 rounded-lg p-8 text-white">
-              <h3 className="text-2xl font-bold mb-4 font-lexend">Let's talk...</h3>
+              <h3 className="text-2xl font-bold mb-4 font-lexend">Contact Us</h3>
               <p className="text-gray-300 mb-8 font-livvic">
                 We'd love to hear from you. Send us a message and we'll respond as soon as possible.
               </p>
@@ -187,9 +187,9 @@ const Contact = () => {
       {/* Need Immediate Assistance */}
       <section className="py-16 px-4 bg-muted/30">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-6 font-lexend">Need Immediate Assistance?</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-6 font-lexend">Need Medical Assistance?</h2>
           <p className="text-muted-foreground mb-8 text-lg font-livvic">
-            For urgent matters or immediate support, don't hesitate to reach out to us directly. Our 
+            For urgent matters or immediate medical support, don't hesitate to reach out to us directly. Our 
             team is available to help you with any questions or concerns.
           </p>
           <Button className="bg-lung-green hover:bg-lung-green-light text-white px-8 py-3">

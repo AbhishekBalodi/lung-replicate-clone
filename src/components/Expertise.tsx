@@ -7,23 +7,23 @@ const Expertise = () => {
   const expertiseAreas = [
     {
       icon: Wind,
-      title: "Interventional Pulmonology",
-      description: "Minimally invasive lung procedures."
+      title: "General Medicine",
+      description: "Comprehensive primary healthcare services."
     },
     {
       icon: Bed,
-      title: "Respiratory Critical Care",
-      description: "Advanced care for lung emergencies."
+      title: "Emergency Care",
+      description: "24/7 urgent medical care services."
     },
     {
       icon: Home,
-      title: "Treating Specific Lung Conditions",
-      description: "Focused care for lung diseases."
+      title: "Preventive Medicine",
+      description: "Health screenings and prevention programs."
     },
     {
       icon: CircleSlash,
-      title: "Pulmonary Rehabilitation & Smoking Cessation",
-      description: "Rehab programs and quit smoking."
+      title: "Chronic Disease Management",
+      description: "Long-term care for chronic conditions."
     }
   ];
 
@@ -34,7 +34,7 @@ const Expertise = () => {
           <div>
             <div className="mb-8">
               <p className="text-lung-blue text-lg font-medium mb-2">Speciality</p>
-              <h2 className="text-4xl font-bold text-foreground mb-6">Our Expertise</h2>
+              <h2 className="text-4xl font-bold text-foreground mb-6">Our Medical Expertise</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -70,7 +70,7 @@ const Expertise = () => {
                 <Phone className="h-4 w-4 mr-2" />
                 Emergency Call
                 <br />
-                <span className="text-xs">+91 8586805004</span>
+                <span className="text-xs">+1 555-123-4567</span>
               </Button>
             </div>
           </div>

@@ -7,19 +7,19 @@ const Qualifications = () => {
   const qualifications = [
     {
       degree: "MBBS",
-      institution: "S.N. Medical College, Agra",
-      years: "2002-2007",
+      institution: "National Medical College",
+      years: "2006-2011",
       icon: GraduationCap
     },
     {
-      degree: "MD (Pulmonary Medicine)",
-      institution: "Government Medical College, Amritsar",
-      years: "2010-2013",
+      degree: "MD (Internal Medicine)",
+      institution: "State Medical University",
+      years: "2014-2017",
       icon: GraduationCap
     },
     {
-      degree: "Visiting Merit Ceng Fellow",
-      institution: "University of Pennsylvania, Philadelphia, USA",
+      degree: "Visiting Fellow",
+      institution: "Harvard Medical School, Boston, USA",
       years: "",
       icon: Award
     }
@@ -27,16 +27,16 @@ const Qualifications = () => {
 
   const awards = [
     "Certificate: Awarded during MBBS studies",
-    "Best Poster Presentation: Received during post-graduation",
-    "First Division: Achieved MD (Pulmonary Medicine) degree",
-    "School Topper: Acknowledged throughout school period"
+    "Best Research Presentation: Received during post-graduation",
+    "First Division: Achieved MD (Internal Medicine) degree",
+    "Academic Excellence: Acknowledged throughout medical school"
   ];
 
   const memberships = [
-    "National College of Chest Physicians (NCCP)",
-    "Indian Chest Society (ICS)",
-    "European Respiratory Society (ERS)",
-    "Chest Council of India (CCI)"
+    "American Medical Association (AMA)",
+    "American College of Physicians (ACP)",
+    "International Medical Society (IMS)",
+    "National Board of Medical Examiners (NBME)"
   ];
 
   return (

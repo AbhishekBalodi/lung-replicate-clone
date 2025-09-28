@@ -36,7 +36,7 @@ const WhyChooseUs = () => {
 
           <div>
             <h2 className="text-4xl font-bold text-foreground mb-6">
-              Why We're the Best Choice for Patient Treatment?
+              Why We're the Best Choice for Healthcare?
             </h2>
             
             <p className="text-muted-foreground mb-8 text-lg">
@@ -62,7 +62,7 @@ const WhyChooseUs = () => {
               </Button>
               
               <div className="text-lung-blue">
-                <p className="font-medium">Need for online solution?</p>
+                <p className="font-medium">Need an online consultation?</p>
                 <Button variant="link" className="text-lung-blue p-0 h-auto font-normal underline">
                   Click Here →
                 </Button>

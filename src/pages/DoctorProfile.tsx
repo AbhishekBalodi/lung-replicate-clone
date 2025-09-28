@@ -9,10 +9,10 @@ const DoctorProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
 
   const stats = [
-    { label: "Patients Treated", value: "25,000+", icon: Users, color: "text-lung-blue" },
-    { label: "Years Experience", value: "17+", icon: Calendar, color: "text-lung-green" },
+    { label: "Patients Treated", value: "15,000+", icon: Users, color: "text-lung-blue" },
+    { label: "Years Experience", value: "15+", icon: Calendar, color: "text-lung-green" },
     { label: "Patient Rating", value: "4.9/5", icon: Star, color: "text-yellow-500" },
-    { label: "Success Rate", value: "98%", icon: CheckCircle, color: "text-lung-green" }
+    { label: "Success Rate", value: "96%", icon: CheckCircle, color: "text-lung-green" }
   ];
 
   return (
@@ -33,30 +33,30 @@ const DoctorProfile = () => {
               </div>
               <div className="absolute -bottom-2 -right-2 flex gap-2">
                 <span className="bg-lung-green text-white px-3 py-1 rounded-full text-sm font-medium">
-                  Pulmonologist
+                  General Medicine
                 </span>
                 <span className="bg-lung-blue-dark text-white px-3 py-1 rounded-full text-sm font-medium">
-                  Respiratory Medicine
+                  Family Care
                 </span>
               </div>
             </div>
             
             <div className="flex-1 text-center lg:text-left">
               <h1 className="text-4xl font-bold text-white mb-4 font-lexend">
-                Dr. Naveen Kumar Ailawadi
+                Dr. John Smith
               </h1>
               <p className="text-white/90 text-lg mb-6 font-livvic">
-                Director & Unit Head - Respiratory Medicine, Allergy & Sleep Disorder Centre
+                Director & Unit Head - Internal Medicine, Family Care & Wellness Center
               </p>
               
               <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 text-white/80">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  <span>17+ Years Experience</span>
+                  <span>15+ Years Experience</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Award className="h-5 w-5" />
-                  <span>Max Healthcare</span>
+                  <span>MedHealth Hospital</span>
                 </div>
               </div>
               
@@ -120,12 +120,12 @@ const DoctorProfile = () => {
                       <h2 className="text-2xl font-bold text-foreground font-lexend">Professional Summary</h2>
                     </div>
                     <p className="text-muted-foreground leading-relaxed font-livvic">
-                      Dr. Naveen Kumar Ailawadi is an expert pulmonologist with over 17 years of experience in 
-                      pulmonary medicine, critical care, allergies, and sleep disorders. He is committed to 
-                      delivering the highest standard of care to his patients. Dr. Ailawadi routinely manages 
-                      complex and critically ill cases, including pneumonia, asthma, TB, ILD, and COPD. His 
+                      Dr. John Smith is an expert physician with over 15 years of experience in 
+                      internal medicine, family care, and preventive health. He is committed to 
+                      delivering the highest standard of care to his patients. Dr. Smith routinely manages 
+                      complex cases, including diabetes, hypertension, heart disease, and preventive care. His 
                       extensive clinical expertise ensures accurate diagnosis and effective treatment. He is 
-                      known for his patient-centric approach and dedication to respiratory health.
+                      known for his patient-centric approach and dedication to comprehensive health care.
                     </p>
                   </div>
 
@@ -137,24 +137,24 @@ const DoctorProfile = () => {
                     </div>
                     <div className="space-y-6">
                       <div className="border-l-4 border-lung-blue pl-6">
-                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Director & Unit Head, BLK Max Hospital</h3>
-                        <p className="text-lung-blue font-medium mb-2">Max Healthcare</p>
+                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Director & Unit Head, MedHealth Hospital</h3>
+                        <p className="text-lung-blue font-medium mb-2">MedHealth Systems</p>
                         <p className="text-muted-foreground font-livvic">
-                          Leading respiratory medicine, TB, asthma, ILD, COPD, and other various lung diseases
+                          Leading internal medicine, family care, diabetes management, and preventive health services
                         </p>
                       </div>
                       <div className="border-l-4 border-lung-blue pl-6">
                         <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Senior Consultant</h3>
-                        <p className="text-lung-blue font-medium mb-2">Max Super Speciality Hospital, Patparganj</p>
+                        <p className="text-lung-blue font-medium mb-2">General Medical Center</p>
                         <p className="text-muted-foreground font-livvic">
-                          Department of Pulmonology & Sleep Medicine at Max Super Speciality Hospital, Shalimar Bagh, New Delhi
+                          Department of Internal Medicine & Family Health at General Medical Center
                         </p>
                       </div>
                       <div className="border-l-4 border-lung-blue pl-6">
                         <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Senior Resident</h3>
-                        <p className="text-lung-blue font-medium mb-2">Rajan Babu Institute of Pulmonary Medicine & TB</p>
+                        <p className="text-lung-blue font-medium mb-2">University Medical Center</p>
                         <p className="text-muted-foreground font-livvic">
-                          Department of Pulmonary Medicine
+                          Department of Internal Medicine
                         </p>
                       </div>
                       <Button variant="link" className="text-lung-blue font-livvic">Read More</Button>
@@ -169,13 +169,13 @@ const DoctorProfile = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <Card className="p-6 bg-lung-green/5 border-lung-green/20">
-                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MD (Pulmonology Medicine)</h3>
-                        <p className="text-lung-green font-medium mb-2">Government Medical College, Amritsar</p>
+                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MD (Internal Medicine)</h3>
+                        <p className="text-lung-green font-medium mb-2">State Medical University</p>
                         <p className="text-sm text-muted-foreground font-livvic">First Division</p>
                       </Card>
                       <Card className="p-6 bg-lung-green/5 border-lung-green/20">
                         <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MBBS</h3>
-                        <p className="text-lung-green font-medium mb-2">SN Medical College Agra</p>
+                        <p className="text-lung-green font-medium mb-2">National Medical College</p>
                         <p className="text-sm text-muted-foreground font-livvic">Merit Certificate</p>
                       </Card>
                     </div>
@@ -189,9 +189,9 @@ const DoctorProfile = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[
-                        "Tuberculosis (TB)", "Asthma", "Bronchial Asthma",
-                        "Bronchitis", "Bronchiectasis", "Chronic Obstructive Pulmonary Disease",
-                        "Chronic Bronchitis", "Emphysema", "Occupational Lung Disease"
+                        "Diabetes Management", "Hypertension", "Heart Disease",
+                        "Preventive Care", "Family Medicine", "Chronic Disease Management",
+                        "Health Screenings", "Wellness Programs", "Adult Medicine"
                       ].map((specialty, index) => (
                         <Card key={index} className="p-4 bg-lung-purple/5 border-lung-purple/20 text-center">
                           <p className="text-lung-purple font-medium font-livvic">{specialty}</p>
@@ -209,10 +209,10 @@ const DoctorProfile = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        "National College of Chest Physician (NCCP)",
-                        "Indian Chest Society (ICS)",
-                        "European Chest Society (ERS)",
-                        "Chest Council of India (CCI)"
+                        "American Medical Association (AMA)",
+                        "American College of Physicians (ACP)",
+                        "International Medical Society (IMS)",
+                        "National Board of Medical Examiners (NBME)"
                       ].map((membership, index) => (
                         <Card key={index} className="p-4 bg-lung-blue/10 border-lung-blue/20">
                           <div className="flex items-center gap-3">
@@ -246,7 +246,7 @@ const DoctorProfile = () => {
                               <span className="text-sm text-muted-foreground">Patient #{review}</span>
                             </div>
                             <p className="text-muted-foreground font-livvic">
-                              Excellent care and treatment. Dr. Ailawadi is very knowledgeable and takes time to explain everything clearly.
+                              Excellent care and treatment. Dr. Smith is very knowledgeable and takes time to explain everything clearly.
                             </p>
                           </div>
                         </div>
@@ -299,28 +299,28 @@ const DoctorProfile = () => {
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-lung-blue mt-1" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">Save Lung Center Clinic</p>
-                      <p className="text-sm text-muted-foreground font-livvic">Adarsh Nagar, New Delhi - 110033</p>
+                      <p className="font-medium text-foreground font-livvic">HealthCare Plus Clinic</p>
+                      <p className="text-sm text-muted-foreground font-livvic">Medical District, NY - 10001</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-lung-blue mt-1" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">BLK-Max Super Speciality Hospital</p>
-                      <p className="text-sm text-muted-foreground font-livvic">Pusa Road, New Delhi - 110005</p>
+                      <p className="font-medium text-foreground font-livvic">MedHealth Super Speciality Hospital</p>
+                      <p className="text-sm text-muted-foreground font-livvic">Health Avenue, NY - 10002</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-lung-green/5 rounded-lg">
                     <Phone className="h-5 w-5 text-lung-green" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">91 8586805004</p>
+                      <p className="font-medium text-foreground font-livvic">1 555 123 4567</p>
                       <p className="text-sm text-muted-foreground font-livvic">24/7 Helpline</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-lung-blue" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">savelungcenter@gmail.com</p>
+                      <p className="font-medium text-foreground font-livvic">info@healthcareplus.com</p>
                       <p className="text-sm text-muted-foreground font-livvic">For appointments</p>
                     </div>
                   </div>

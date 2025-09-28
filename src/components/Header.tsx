@@ -36,7 +36,7 @@ const Header = () => {
           <div className="flex items-center gap-6 mb-2 md:mb-0">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
-              <span>Savelung Center, B-42 Rajan Babu Road, Adarsh Nagar, Delhi-110033</span>
+              <span>Medical Health Center, 123 Main Street, Medical District, NY-10001</span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -60,8 +60,8 @@ const Header = () => {
           <div className="flex items-center gap-3">
             <img src={lungIcon} alt="Save Lung Center" className="h-12 w-12" />
             <div>
-              <h1 className="text-2xl font-bold text-foreground">SAVE LUNG CENTER</h1>
-              <p className="text-sm text-muted-foreground">Your Family Pulmonologist</p>
+              <h1 className="text-2xl font-bold text-foreground">HEALTHCARE PLUS</h1>
+              <p className="text-sm text-muted-foreground">Your Family Medical Center</p>
             </div>
           </div>
           
@@ -69,7 +69,7 @@ const Header = () => {
             <a href="/" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Home
             </a>
-            <a href="/doctors/naveen-kumar" className="text-foreground hover:text-lung-blue transition-colors font-medium">
+            <a href="/doctors/john-smith" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Doctors
             </a>
             <a href="/services" className="text-foreground hover:text-lung-blue transition-colors font-medium">
@@ -83,7 +83,7 @@ const Header = () => {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 text-lung-blue font-semibold">
               <Phone className="h-4 w-4" />
-              <span>+91 858-680-5004</span>
+              <span>+1 555-123-4567</span>
             </div>
             <a href="/book-appointment">
               <Button className="bg-lung-green hover:bg-lung-green-light text-white">

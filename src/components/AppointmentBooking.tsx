@@ -28,10 +28,10 @@ const AppointmentBooking = () => {
   ];
 
   const doctors = [
-    "Dr. Sarah Johnson - Cardiology",
-    "Dr. Michael Chen - Pulmonology", 
-    "Dr. Emily Davis - Orthopedics",
-    "Dr. James Wilson - General Medicine"
+    "Dr. John Smith - Internal Medicine",
+    "Dr. Sarah Johnson - Cardiology", 
+    "Dr. Michael Chen - Neurology",
+    "Dr. Emily Davis - Orthopedics"
   ];
 
   const handleNext = () => {
@@ -73,7 +73,7 @@ const AppointmentBooking = () => {
             Book an Appointment & You're Done!
           </h2>
           <p className="text-lg text-muted-foreground font-livvic">
-            Looking for the best & quick pulmonary treatments without a long waiting time?
+            Looking for the best & quick medical treatments without a long waiting time?
           </p>
         </div>
 

@@ -9,7 +9,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Savelungcenter */}
             <div>
-              <h3 className="text-xl font-bold mb-6 font-lexend">Savelungcenter</h3>
+              <h3 className="text-xl font-bold mb-6 font-lexend">HealthCare Plus</h3>
               <p className="text-gray-300 leading-relaxed font-livvic">
                 From wellness tips to expert advice, we're here to support your journey to a 
                 healthier you. Our team of dedicated healthcare providers has years of experience.
@@ -20,7 +20,7 @@ const Footer = () => {
             <div>
               <h4 className="text-lg font-semibold mb-6 font-lexend">Useful Links</h4>
               <ul className="space-y-3">
-                <li><a href="/doctors/naveen-kumar" className="text-gray-300 hover:text-white transition-colors font-livvic">Doctors</a></li>
+                <li><a href="/doctors/john-smith" className="text-gray-300 hover:text-white transition-colors font-livvic">Doctors</a></li>
                 <li><a href="#contact" className="text-gray-300 hover:text-white transition-colors font-livvic">Contact Us</a></li>
                 <li><a href="#services" className="text-gray-300 hover:text-white transition-colors font-livvic">Services</a></li>
               </ul>
@@ -72,7 +72,7 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-lexend">MEDICAL ADDRESS</h5>
               </div>
               <p className="text-white/90 font-livvic">
-                B-42 Rajan Babu Road, Adarsh Nagar, Delhi-110033
+                123 Main Street, Medical District, NY-10001
               </p>
             </div>
 
@@ -83,7 +83,7 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-lexend">EMAIL ADDRESS</h5>
               </div>
               <p className="text-white/90 font-livvic">
-                Savelungcenter@gmail.com
+                info@healthcareplus.com
               </p>
             </div>
 
@@ -94,7 +94,7 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-lexend">EMERGENCY CALL</h5>
               </div>
               <p className="text-white/90 font-livvic">
-                +91 858-680-5004
+                +1 555-123-4567
               </p>
             </div>
           </div>
@@ -105,7 +105,7 @@ const Footer = () => {
       <div className="border-t border-gray-700 py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm font-livvic">
-            Copyright © 2023-25 All Rights Reserved | Code Get Solution
+            Copyright © 2023-25 All Rights Reserved | HealthCare Plus
           </p>
           <div className="flex gap-4 mt-4 md:mt-0">
             <div className="w-10 h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">
