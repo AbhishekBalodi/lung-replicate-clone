@@ -66,53 +66,53 @@ const AppointmentBooking = () => {
   };
 
   return (
-    <section className="py-16 px-4 bg-medical-light/30">
+    <section className="py-12 lg:py-16 px-4 bg-medical-light/30">
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-foreground mb-4 font-lexend">
+        <div className="text-center mb-8 lg:mb-12">
+          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">
             Book an Appointment & You're Done!
           </h2>
-          <p className="text-lg text-muted-foreground font-livvic">
+          <p className="text-base lg:text-lg text-muted-foreground font-livvic px-4">
             Looking for the best & quick medical treatments without a long waiting time?
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="text-center mb-12">
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/book-appointment">
-              <Button className="bg-lung-green hover:bg-lung-green-light text-white px-8 py-3">
+        <div className="text-center mb-8 lg:mb-12">
+          <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 justify-center">
+            <a href="/book-appointment" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base">
                 Book Now →
               </Button>
             </a>
-            <Button variant="outline" className="border-lung-blue text-lung-blue hover:bg-lung-blue hover:text-white px-8 py-3">
+            <Button variant="outline" className="w-full sm:w-auto border-lung-blue text-lung-blue hover:bg-lung-blue hover:text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base">
               Learn More
             </Button>
           </div>
         </div>
 
         {/* Steps Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-4">
+        <div className="flex justify-center mb-6 lg:mb-8 overflow-x-auto pb-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-max px-4">
             {steps.map((step, index) => {
               const IconComponent = step.icon;
               return (
                 <div key={step.id} className="flex items-center">
                   <div className="text-center">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 transition-colors ${
+                    <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-1 sm:mb-2 transition-colors ${
                       currentStep === step.id 
                         ? "bg-medical-blue text-white" 
                         : currentStep > step.id
                         ? "bg-medical-green text-white"
                         : "bg-gray-200 text-gray-500"
                     }`}>
-                      <IconComponent className="h-6 w-6" />
+                      <IconComponent className="h-4 w-4 sm:h-6 sm:w-6" />
                     </div>
-                    <p className="font-semibold text-sm">{step.title}</p>
-                    <p className="text-xs text-muted-foreground">{step.subtitle}</p>
+                    <p className="font-semibold text-xs sm:text-sm">{step.title}</p>
+                    <p className="text-xs text-muted-foreground hidden sm:block">{step.subtitle}</p>
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`w-12 h-0.5 mx-4 ${
+                    <div className={`w-8 sm:w-12 h-0.5 mx-2 sm:mx-4 ${
                       currentStep > step.id ? "bg-medical-green" : "bg-gray-200"
                     }`} />
                   )}
@@ -123,13 +123,13 @@ const AppointmentBooking = () => {
         </div>
 
         {/* Form Content */}
-        <Card className="p-8 shadow-medium">
+        <Card className="p-4 sm:p-6 lg:p-8 shadow-medium">
           {currentStep === 1 && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold mb-4 text-medical-blue">Personal Information</h3>
-              <p className="text-muted-foreground mb-6">Please provide your details for the appointment</p>
+            <div className="space-y-4 lg:space-y-6">
+              <h3 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-medical-blue">Personal Information</h3>
+              <p className="text-muted-foreground mb-4 lg:mb-6 text-sm lg:text-base">Please provide your details for the appointment</p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 <div>
                   <Label htmlFor="fullName">Full Name *</Label>
                   <Input
@@ -207,13 +207,13 @@ const AppointmentBooking = () => {
           )}
 
           {currentStep === 3 && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold mb-4 text-medical-blue">Choose Doctor</h3>
-              <p className="text-muted-foreground mb-6">Select your preferred doctor for the appointment</p>
+            <div className="space-y-4 lg:space-y-6">
+              <h3 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-medical-blue">Choose Doctor</h3>
+              <p className="text-muted-foreground mb-4 lg:mb-6 text-sm lg:text-base">Select your preferred doctor for the appointment</p>
               
-              <div className="grid gap-3">
+              <div className="grid gap-2 lg:gap-3">
                 {doctors.map((doctor) => (
-                  <label key={doctor} className="flex items-center space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <label key={doctor} className="flex items-center space-x-3 p-3 lg:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       name="doctor"
@@ -222,7 +222,7 @@ const AppointmentBooking = () => {
                       onChange={(e) => updateFormData("doctor", e.target.value)}
                       className="text-medical-blue"
                     />
-                    <span className="font-medium">{doctor}</span>
+                    <span className="font-medium text-sm lg:text-base">{doctor}</span>
                   </label>
                 ))}
               </div>
@@ -230,36 +230,36 @@ const AppointmentBooking = () => {
           )}
 
           {currentStep === 4 && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold mb-4 text-medical-blue">Confirm Your Appointment</h3>
-              <p className="text-muted-foreground mb-6">Please review your appointment details</p>
+            <div className="space-y-4 lg:space-y-6">
+              <h3 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-medical-blue">Confirm Your Appointment</h3>
+              <p className="text-muted-foreground mb-4 lg:mb-6 text-sm lg:text-base">Please review your appointment details</p>
               
-              <div className="bg-gray-50 p-6 rounded-lg space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-4 lg:p-6 rounded-lg space-y-3 lg:space-y-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                   <div>
-                    <p className="font-semibold">Patient Name:</p>
-                    <p className="text-muted-foreground">{formData.fullName}</p>
+                    <p className="font-semibold text-sm lg:text-base">Patient Name:</p>
+                    <p className="text-muted-foreground text-sm lg:text-base">{formData.fullName}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Email:</p>
-                    <p className="text-muted-foreground">{formData.email}</p>
+                    <p className="font-semibold text-sm lg:text-base">Email:</p>
+                    <p className="text-muted-foreground text-sm lg:text-base">{formData.email}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Phone:</p>
-                    <p className="text-muted-foreground">{formData.phone}</p>
+                    <p className="font-semibold text-sm lg:text-base">Phone:</p>
+                    <p className="text-muted-foreground text-sm lg:text-base">{formData.phone}</p>
                   </div>
                   <div>
-                    <p className="font-semibold">Date & Time:</p>
-                    <p className="text-muted-foreground">{formData.date} at {formData.time}</p>
+                    <p className="font-semibold text-sm lg:text-base">Date & Time:</p>
+                    <p className="text-muted-foreground text-sm lg:text-base">{formData.date} at {formData.time}</p>
                   </div>
-                  <div className="md:col-span-2">
-                    <p className="font-semibold">Doctor:</p>
-                    <p className="text-muted-foreground">{formData.doctor}</p>
+                  <div className="lg:col-span-2">
+                    <p className="font-semibold text-sm lg:text-base">Doctor:</p>
+                    <p className="text-muted-foreground text-sm lg:text-base">{formData.doctor}</p>
                   </div>
                   {formData.message && (
-                    <div className="md:col-span-2">
-                      <p className="font-semibold">Message:</p>
-                      <p className="text-muted-foreground">{formData.message}</p>
+                    <div className="lg:col-span-2">
+                      <p className="font-semibold text-sm lg:text-base">Message:</p>
+                      <p className="text-muted-foreground text-sm lg:text-base">{formData.message}</p>
                     </div>
                   )}
                 </div>
@@ -268,22 +268,23 @@ const AppointmentBooking = () => {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between items-center pt-6 mt-6 border-t">
+          <div className="flex flex-col sm:flex-row justify-between items-center pt-4 lg:pt-6 mt-4 lg:mt-6 border-t gap-3 sm:gap-0">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 1}
+              className="w-full sm:w-auto"
             >
               Previous
             </Button>
             
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs sm:text-sm text-muted-foreground order-first sm:order-none">
               Step {currentStep} of 4
             </span>
             
             <Button
               onClick={handleNext}
-              className="bg-medical-blue hover:bg-medical-blue-dark text-white"
+              className="w-full sm:w-auto bg-medical-blue hover:bg-medical-blue-dark text-white"
             >
               {currentStep === 4 ? "Book Appointment" : "Next"}
             </Button>

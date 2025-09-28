@@ -5,24 +5,24 @@ import doctorMain from "@/assets/doctor-main.jpg";
 
 const Hero = () => {
   return (
-    <section className="bg-hero-gradient min-h-[600px] flex items-center py-16 px-4" id="home">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-        <div className="text-foreground space-y-6">
-          <div className="space-y-2">
-            <p className="text-lg font-medium text-muted-foreground">Solution For Healthcare Needs</p>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+    <section className="bg-hero-gradient min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] flex items-center py-8 sm:py-12 lg:py-16 px-4" id="home">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        <div className="text-foreground space-y-4 lg:space-y-6 text-center lg:text-left">
+          <div className="space-y-2 lg:space-y-4">
+            <p className="text-base lg:text-lg font-medium text-muted-foreground">Solution For Healthcare Needs</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
               Best Medical & <span className="text-lung-light-blue">Health Care</span> Solutions
             </h1>
-            <p className="text-lg text-muted-foreground max-w-lg">
+            <p className="text-base lg:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
               Trusted by thousands, we deliver expert care with compassion and precision to meet your health needs.
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-4">
-            <a href="/book-appointment">
+          <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 items-center lg:items-start">
+            <a href="/book-appointment" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
-                className="bg-lung-green hover:bg-lung-green-light text-white font-semibold px-8 py-6 text-lg"
+                className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white font-semibold px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg"
               >
                 Make Appointment
               </Button>
@@ -30,42 +30,42 @@ const Hero = () => {
             <Button 
               variant="outline" 
               size="lg"
-              className="border-2 border-foreground text-foreground hover:bg-foreground hover:text-white font-semibold px-8 py-6 text-lg"
+              className="w-full sm:w-auto border-2 border-foreground text-foreground hover:bg-foreground hover:text-white font-semibold px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg"
             >
               Read More
             </Button>
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative order-first lg:order-last">
           <div className="relative z-10">
             <img 
               src={doctorMain} 
               alt="Professional Doctor" 
-              className="w-full max-w-md mx-auto rounded-2xl shadow-strong"
+              className="w-full max-w-xs sm:max-w-sm lg:max-w-md mx-auto rounded-2xl shadow-strong"
             />
             
             {/* Floating Cards */}
-            <Card className="absolute -top-4 -left-4 bg-white/95 backdrop-blur-sm p-4 shadow-medium">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-lung-green rounded-full">
-                  <Award className="h-5 w-5 text-white" />
+            <Card className="absolute -top-2 -left-2 sm:-top-4 sm:-left-4 bg-white/95 backdrop-blur-sm p-2 sm:p-4 shadow-medium">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <div className="p-1 sm:p-2 bg-lung-green rounded-full">
+                  <Award className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-lg">Over 50+</p>
-                  <p className="text-sm text-muted-foreground">Award Wins</p>
+                  <p className="font-bold text-sm sm:text-lg">Over 50+</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Award Wins</p>
                 </div>
               </div>
             </Card>
             
-            <Card className="absolute -bottom-4 -right-4 bg-lung-blue text-white p-4 shadow-medium">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-full">
-                  <Clock className="h-5 w-5 text-white" />
+            <Card className="absolute -bottom-2 -right-2 sm:-bottom-4 sm:-right-4 bg-lung-blue text-white p-2 sm:p-4 shadow-medium">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <div className="p-1 sm:p-2 bg-white/20 rounded-full">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold">Opening Hours</p>
-                  <p className="text-sm opacity-90">Mon-Sat: 9:00 AM - 07:00 PM</p>
+                  <p className="font-semibold text-sm">Opening Hours</p>
+                  <p className="text-xs opacity-90">Mon-Sat: 9AM - 7PM</p>
                 </div>
               </div>
             </Card>
