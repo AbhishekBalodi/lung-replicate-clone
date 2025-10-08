@@ -305,7 +305,7 @@ const ServiceDetail = () => {
               </h1>
               
               <Link to="/services">
-                <Button variant="outline" className="text-white border-white hover:bg-white hover:text-lung-blue">
+                <Button className="bg-transparent text-white border-2 border-white hover:bg-white hover:text-lung-blue transition-colors">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Services
                 </Button>
