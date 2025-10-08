@@ -165,44 +165,6 @@ const ConditionDetail = () => {
         }
       ]
     },
-    "ild-treatment": {
-      title: "Interstitial Lung Disease (ILD) Specialist in Delhi – Expert ILD Management",
-      heroImage: ildHero,
-      introduction: "Interstitial Lung Disease encompasses over 200 disorders causing progressive scarring (fibrosis) of lung tissue between air sacs. ILD makes breathing increasingly difficult and impairs oxygen transfer to bloodstream. In Delhi, our specialized ILD center provides comprehensive evaluation using high-resolution CT scanning, lung biopsy when needed, and multidisciplinary case review. Early diagnosis is challenging as symptoms resemble other lung conditions.",
-      causes: "ILD causes vary widely. Occupational and environmental exposures include asbestos, silica dust, coal dust, metal dusts, organic antigens (bird droppings, mold spores) causing hypersensitivity pneumonitis. Medications can trigger ILD - certain antibiotics, chemotherapy agents, heart medications, and anti-inflammatory drugs. Autoimmune diseases like rheumatoid arthritis, scleroderma, lupus, and dermatomyositis frequently involve lungs. Idiopathic pulmonary fibrosis (IPF) has unknown cause, typically affects those over 60.",
-      symptoms: [
-        "Progressive shortness of breath, initially with exertion then at rest",
-        "Persistent dry, non-productive cough",
-        "Fatigue and generalized weakness",
-        "Unexplained weight loss",
-        "Chest discomfort or tightness",
-        "Clubbing of fingertips (in advanced disease)",
-        "Fine crackles heard on lung examination",
-        "Rapid, shallow breathing",
-        "Decreased exercise tolerance and endurance"
-      ],
-      diagnosis: "ILD diagnosis requires systematic approach combining multiple modalities. High-resolution CT (HRCT) scan is crucial, revealing characteristic patterns. Pulmonary function tests show restrictive pattern with reduced lung volumes and impaired diffusion capacity. Bronchoscopy with bronchoalveolar lavage analyzes cellular composition. Blood tests screen for autoimmune diseases. Our multidisciplinary ILD board reviews cases ensuring accurate diagnosis.",
-      treatment: "ILD treatment varies by specific diagnosis. Idiopathic pulmonary fibrosis uses anti-fibrotic drugs - nintedanib or pirfenidone slow disease progression. Inflammatory ILDs respond to corticosteroids and immunosuppressants. Supportive care is universal: supplemental oxygen, pulmonary rehabilitation. Advanced disease may necessitate lung transplant evaluation. We provide palliative care addressing breathlessness, anxiety, and end-of-life planning when appropriate.",
-      whyChooseUs: "Our Delhi ILD center has dedicated interstitial lung disease expertise. Our pulmonologists have completed ILD fellowships. We house high-resolution CT scanners with ILD-specific protocols. Our multidisciplinary ILD board meets bi-weekly reviewing complex cases. We perform bronchoscopy with advanced techniques. Access to anti-fibrotic medications with insurance approval assistance.",
-      faqs: [
-        {
-          question: "Can ILD be cured?",
-          answer: "Most ILDs cannot be cured, but treatment can slow progression and manage symptoms. Lung transplantation is potential cure for advanced disease in eligible patients."
-        },
-        {
-          question: "How fast does ILD progress?",
-          answer: "ILD progression varies widely depending on type and individual factors. Some remain stable for years while others progress rapidly. Regular monitoring tracks progression."
-        },
-        {
-          question: "When should I consider lung transplant evaluation?",
-          answer: "Lung transplant evaluation is appropriate when ILD progresses despite maximal medical therapy, with severe lung function impairment, frequent hospitalizations, or deteriorating functional status."
-        },
-        {
-          question: "Can I exercise with ILD?",
-          answer: "Yes, exercise is beneficial for ILD patients improving strength, endurance, and quality of life. Our pulmonary rehabilitation program provides supervised exercise with appropriate oxygen supplementation."
-        }
-      ]
-    },
     "sarcoidosis-treatment": {
       title: "Sarcoidosis Specialist in Delhi – Advanced Lung & Multi-Organ Care",
       heroImage: sarcoidosisHero,

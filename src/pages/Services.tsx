@@ -92,12 +92,6 @@ const Services = () => {
       slug: "pneumonia-treatment"
     },
     {
-      icon: Microscope,
-      title: "Interstitial Lung Disease (ILD)",
-      description: "Comprehensive management of ILD",
-      slug: "ild-treatment"
-    },
-    {
       icon: TestTube,
       title: "Sarcoidosis Treatment",
       description: "Specialized care for rare lung conditions",
