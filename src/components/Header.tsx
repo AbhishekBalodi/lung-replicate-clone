@@ -89,7 +89,7 @@ const Header = () => {
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-2 lg:gap-4">
+          <div className="hidden lg:flex items-center gap-2 lg:gap-4">
             <div className="hidden lg:flex items-center gap-2 text-lung-blue font-semibold text-sm">
               <Phone className="h-4 w-4" />
               <span>+1 555-123-4567</span>
@@ -110,7 +110,7 @@ const Header = () => {
           </div>
 
           {/* Mobile Actions */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex lg:hidden items-center gap-2">
             <a href="/book-appointment">
               <Button size="sm" className="bg-lung-green hover:bg-lung-green-light text-white text-xs px-2 py-1">
                 Book
