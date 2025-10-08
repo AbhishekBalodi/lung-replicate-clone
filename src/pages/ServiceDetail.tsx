@@ -412,14 +412,14 @@ const ServiceDetail = () => {
               </Link>
               
               <a href="tel:+919876543210">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-lung-blue">
+                <Button size="lg" className="w-full sm:w-auto bg-transparent text-white border-2 border-white hover:bg-white hover:text-lung-blue transition-colors">
                   <Phone className="mr-2 h-5 w-5" />
                   Call: +91 98765 43210
                 </Button>
               </a>
               
               <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-lung-blue">
+                <Button size="lg" className="w-full sm:w-auto bg-transparent text-white border-2 border-white hover:bg-white hover:text-lung-blue transition-colors">
                   <MessageCircle className="mr-2 h-5 w-5" />
                   WhatsApp Us
                 </Button>
