@@ -1,65 +1,56 @@
 import { Card } from "@/components/ui/card";
 import { 
-  Heart, 
-  Stethoscope, 
-  Activity, 
-  Shield, 
-  Brain, 
-  Eye, 
-  Zap, 
-  Pill,
+  Wind,
   Microscope,
+  Moon,
+  TestTube,
+  Cigarette,
+  HeartPulse,
   Users,
   Clock,
-  Award
+  Award,
+  Stethoscope
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Services = () => {
+  // Most popular respiratory services
   const services = [
     {
-      icon: Heart,
-      title: "Cardiology",
-      description: "Comprehensive heart care and cardiovascular treatments"
-    },
-    {
-      icon: Stethoscope,
-      title: "General Medicine",
-      description: "Complete primary healthcare and routine checkups"
-    },
-    {
-      icon: Activity,
-      title: "Emergency Care",
-      description: "24/7 emergency medical services and trauma care"
-    },
-    {
-      icon: Shield,
-      title: "Preventive Care",
-      description: "Health screenings and preventive medicine programs"
-    },
-    {
-      icon: Brain,
-      title: "Neurology",
-      description: "Advanced neurological diagnosis and treatment"
-    },
-    {
-      icon: Eye,
-      title: "Ophthalmology",
-      description: "Complete eye care and vision correction services"
-    },
-    {
-      icon: Zap,
-      title: "Diagnostics",
-      description: "State-of-the-art medical imaging and lab services"
-    },
-    {
-      icon: Pill,
-      title: "Pharmacy",
-      description: "Full-service pharmacy with medication management"
+      icon: Wind,
+      title: "Pulmonary Function Test (PFT)",
+      description: "Comprehensive lung capacity and breathing assessment",
+      slug: "pulmonary-function-test"
     },
     {
       icon: Microscope,
-      title: "Pathology",
-      description: "Advanced laboratory testing and pathological analysis"
+      title: "Bronchoscopy",
+      description: "Advanced examination of airways and lungs",
+      slug: "bronchoscopy"
+    },
+    {
+      icon: Moon,
+      title: "Sleep Study (Polysomnography)",
+      description: "Detailed analysis of sleep patterns and disorders",
+      slug: "sleep-study"
+    },
+    {
+      icon: TestTube,
+      title: "Allergy Testing",
+      description: "Allergy testing for asthma & respiratory issues",
+      slug: "allergy-testing"
+    },
+    {
+      icon: Cigarette,
+      title: "Smoking Cessation Programs",
+      description: "Personalized programs to help you quit smoking",
+      slug: "smoking-cessation"
+    },
+    {
+      icon: HeartPulse,
+      title: "Oxygen Therapy",
+      description: "Supplemental oxygen treatment for respiratory conditions",
+      slug: "oxygen-therapy"
     }
   ];
 
@@ -103,17 +94,19 @@ const Services = () => {
           {services.map((service, index) => {
             const IconComponent = service.icon;
             return (
-              <Card key={index} className="p-4 lg:p-6 hover:shadow-medium transition-all duration-300 hover:-translate-y-1 lg:hover:-translate-y-2 group">
-                <div className="flex flex-col sm:flex-row items-start gap-3 lg:gap-4">
-                  <div className="p-2 lg:p-3 bg-medical-green/10 rounded-full group-hover:bg-medical-green group-hover:text-white transition-all duration-300 mx-auto sm:mx-0">
-                    <IconComponent className="h-6 w-6 lg:h-8 lg:w-8 text-medical-green group-hover:text-white" />
+              <Link key={index} to={`/services/${service.slug}`}>
+                <Card className="p-4 lg:p-6 hover:shadow-medium transition-all duration-300 hover:-translate-y-1 lg:hover:-translate-y-2 group cursor-pointer">
+                  <div className="flex flex-col sm:flex-row items-start gap-3 lg:gap-4">
+                    <div className="p-2 lg:p-3 bg-lung-blue/10 rounded-full group-hover:bg-lung-blue group-hover:text-white transition-all duration-300 mx-auto sm:mx-0">
+                      <IconComponent className="h-6 w-6 lg:h-8 lg:w-8 text-lung-blue group-hover:text-white" />
+                    </div>
+                    <div className="flex-1 text-center sm:text-left">
+                      <h3 className="text-lg lg:text-xl font-semibold mb-2 text-foreground">{service.title}</h3>
+                      <p className="text-sm lg:text-base text-muted-foreground">{service.description}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 text-center sm:text-left">
-                    <h3 className="text-lg lg:text-xl font-semibold mb-2 text-foreground">{service.title}</h3>
-                    <p className="text-sm lg:text-base text-muted-foreground">{service.description}</p>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             );
           })}
         </div>
