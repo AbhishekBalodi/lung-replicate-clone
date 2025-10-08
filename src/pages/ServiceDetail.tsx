@@ -3,6 +3,12 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { 
   ChevronRight, 
   ArrowLeft, 
@@ -377,21 +383,29 @@ const ServiceDetail = () => {
               <p className="text-muted-foreground font-lexend">Common questions about this service</p>
             </div>
             
-            <div className="space-y-6">
+            <Accordion type="single" collapsible className="space-y-4">
               {service.faqs.map((faq: any, index: number) => (
-                <Card key={index} className="p-6 hover:shadow-medium transition-shadow">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-lung-blue/10 rounded-full flex items-center justify-center flex-shrink-0">
-                      <HelpCircle className="h-5 w-5 text-lung-blue" />
+                <AccordionItem 
+                  key={index} 
+                  value={`item-${index}`}
+                  className="border border-border rounded-lg overflow-hidden bg-card"
+                >
+                  <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-10 h-10 bg-lung-blue/10 rounded-full flex items-center justify-center flex-shrink-0">
+                        <HelpCircle className="h-5 w-5 text-lung-blue" />
+                      </div>
+                      <h3 className="text-lg font-bold text-foreground font-lexend">{faq.question}</h3>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">{faq.question}</h3>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-4">
+                    <div className="pl-14">
                       <p className="text-muted-foreground font-lexend leading-relaxed">{faq.answer}</p>
                     </div>
-                  </div>
-                </Card>
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </div>
+            </Accordion>
           </div>
         </section>
 
