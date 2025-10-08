@@ -181,7 +181,7 @@ const Services = () => {
                     <h3 className="text-lg font-bold text-foreground mb-3 font-lexend">
                       {service.title}
                     </h3>
-                    <p className="text-muted-foreground text-sm font-livvic">
+                    <p className="text-muted-foreground text-sm font-lexend">
                       {service.description}
                     </p>
                   </Card>
@@ -197,7 +197,7 @@ const Services = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-foreground mb-4 font-lexend">Conditions We Treat</h2>
-            <p className="text-lg text-muted-foreground font-livvic">
+            <p className="text-lg text-muted-foreground font-lexend">
               We provide expert diagnosis and treatment for various respiratory conditions
             </p>
           </div>
@@ -214,7 +214,7 @@ const Services = () => {
                     <h3 className="text-lg font-bold text-foreground mb-3 font-lexend">
                       {condition.title}
                     </h3>
-                    <p className="text-muted-foreground text-sm font-livvic">
+                    <p className="text-muted-foreground text-sm font-lexend">
                       {condition.description}
                     </p>
                   </Card>
@@ -230,7 +230,7 @@ const Services = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-foreground mb-4 font-lexend">Patient Testimonials</h2>
-            <p className="text-lg text-muted-foreground font-livvic">
+            <p className="text-lg text-muted-foreground font-lexend">
               Hear from our satisfied patients
             </p>
           </div>
@@ -243,7 +243,7 @@ const Services = () => {
                     <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-muted-foreground italic mb-6 font-livvic text-center">
+                <p className="text-muted-foreground italic mb-6 font-lexend text-center">
                   "{testimonial.text}"
                 </p>
                 <div className="text-center">
@@ -251,7 +251,7 @@ const Services = () => {
                     <User className="h-4 w-4 text-lung-blue" />
                     <p className="font-semibold text-foreground font-lexend">{testimonial.author}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground font-livvic">{testimonial.location}</p>
+                  <p className="text-sm text-muted-foreground font-lexend">{testimonial.location}</p>
                 </div>
               </Card>
             ))}

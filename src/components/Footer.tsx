@@ -10,7 +10,7 @@ const Footer = () => {
             {/* HealthCare Plus */}
             <div>
               <h3 className="text-lg lg:text-xl font-bold mb-4 lg:mb-6 font-lexend">HealthCare Plus</h3>
-              <p className="text-gray-300 leading-relaxed font-livvic text-sm lg:text-base">
+              <p className="text-gray-300 leading-relaxed font-lexend text-sm lg:text-base">
                 From wellness tips to expert advice, we're here to support your journey to a 
                 healthier you. Our team of dedicated healthcare providers has years of experience.
               </p>
@@ -20,9 +20,9 @@ const Footer = () => {
             <div>
               <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-lexend">Useful Links</h4>
               <ul className="space-y-2 lg:space-y-3">
-                <li><a href="/doctors/john-smith" className="text-gray-300 hover:text-white transition-colors font-livvic text-sm lg:text-base">Doctors</a></li>
-                <li><a href="#contact" className="text-gray-300 hover:text-white transition-colors font-livvic text-sm lg:text-base">Contact Us</a></li>
-                <li><a href="#services" className="text-gray-300 hover:text-white transition-colors font-livvic text-sm lg:text-base">Services</a></li>
+                <li><a href="/doctors/john-smith" className="text-gray-300 hover:text-white transition-colors font-lexend text-sm lg:text-base">Doctors</a></li>
+                <li><a href="#contact" className="text-gray-300 hover:text-white transition-colors font-lexend text-sm lg:text-base">Contact Us</a></li>
+                <li><a href="#services" className="text-gray-300 hover:text-white transition-colors font-lexend text-sm lg:text-base">Services</a></li>
               </ul>
             </div>
 
@@ -30,15 +30,15 @@ const Footer = () => {
             <div>
               <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-lexend">Explore Pages</h4>
               <ul className="space-y-2 lg:space-y-3">
-                <li><a href="/" className="text-gray-300 hover:text-white transition-colors font-livvic text-sm lg:text-base">Home</a></li>
-                <li><a href="#appointment" className="text-gray-300 hover:text-white transition-colors font-livvic text-sm lg:text-base">Book Appointment</a></li>
+                <li><a href="/" className="text-gray-300 hover:text-white transition-colors font-lexend text-sm lg:text-base">Home</a></li>
+                <li><a href="#appointment" className="text-gray-300 hover:text-white transition-colors font-lexend text-sm lg:text-base">Book Appointment</a></li>
               </ul>
             </div>
 
             {/* Opening Hour */}
             <div>
               <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-lexend">Opening Hour</h4>
-              <div className="space-y-1 lg:space-y-2 text-gray-300 font-livvic text-sm lg:text-base">
+              <div className="space-y-1 lg:space-y-2 text-gray-300 font-lexend text-sm lg:text-base">
                 <div className="flex justify-between">
                   <span>Mon - Tues</span>
                   <span>09:00AM - 7:00PM</span>
@@ -71,7 +71,7 @@ const Footer = () => {
                 <MapPin className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                 <h5 className="font-semibold text-white font-lexend text-sm lg:text-base">MEDICAL ADDRESS</h5>
               </div>
-              <p className="text-white/90 font-livvic text-sm lg:text-base">
+              <p className="text-white/90 font-lexend text-sm lg:text-base">
                 123 Main Street, Medical District, NY-10001
               </p>
             </div>
@@ -82,7 +82,7 @@ const Footer = () => {
                 <Mail className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                 <h5 className="font-semibold text-white font-lexend text-sm lg:text-base">EMAIL ADDRESS</h5>
               </div>
-              <p className="text-white/90 font-livvic text-sm lg:text-base">
+              <p className="text-white/90 font-lexend text-sm lg:text-base">
                 info@healthcareplus.com
               </p>
             </div>
@@ -93,7 +93,7 @@ const Footer = () => {
                 <Phone className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                 <h5 className="font-semibold text-white font-lexend text-sm lg:text-base">EMERGENCY CALL</h5>
               </div>
-              <p className="text-white/90 font-livvic text-sm lg:text-base">
+              <p className="text-white/90 font-lexend text-sm lg:text-base">
                 +1 555-123-4567
               </p>
             </div>
@@ -104,7 +104,7 @@ const Footer = () => {
       {/* Bottom Footer */}
       <div className="border-t border-gray-700 py-4 lg:py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-xs lg:text-sm font-livvic text-center md:text-left">
+          <p className="text-gray-400 text-xs lg:text-sm font-lexend text-center md:text-left">
             Copyright © 2023-25 All Rights Reserved | HealthCare Plus
           </p>
           <div className="flex gap-3 lg:gap-4 mt-3 md:mt-0">

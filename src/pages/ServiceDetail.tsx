@@ -293,11 +293,11 @@ const ServiceDetail = () => {
             <div className="max-w-7xl mx-auto px-4 w-full">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 mb-6">
-                <Link to="/" className="text-white/80 hover:text-white transition-colors font-livvic text-sm">Home</Link>
+                <Link to="/" className="text-white/80 hover:text-white transition-colors font-lexend text-sm">Home</Link>
                 <ChevronRight className="h-4 w-4 text-white/60" />
-                <Link to="/services" className="text-white/80 hover:text-white transition-colors font-livvic text-sm">Services</Link>
+                <Link to="/services" className="text-white/80 hover:text-white transition-colors font-lexend text-sm">Services</Link>
                 <ChevronRight className="h-4 w-4 text-white/60" />
-                <span className="text-white font-livvic text-sm">Current Service</span>
+                <span className="text-white font-lexend text-sm">Current Service</span>
               </div>
               
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-6 font-lexend max-w-4xl leading-tight">
@@ -319,7 +319,7 @@ const ServiceDetail = () => {
           <div className="max-w-4xl mx-auto">
             <Card className="p-8">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4 font-lexend">What is This Service?</h2>
-              <p className="text-muted-foreground font-livvic leading-relaxed text-lg">
+              <p className="text-muted-foreground font-lexend leading-relaxed text-lg">
                 {service.introduction}
               </p>
             </Card>
@@ -338,7 +338,7 @@ const ServiceDetail = () => {
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-4 font-lexend">Why This Service is Needed</h2>
                 </div>
               </div>
-              <p className="text-muted-foreground font-livvic leading-relaxed text-lg">
+              <p className="text-muted-foreground font-lexend leading-relaxed text-lg">
                 {service.whyNeeded}
               </p>
             </Card>
@@ -350,7 +350,7 @@ const ServiceDetail = () => {
           <div className="max-w-4xl mx-auto">
             <Card className="p-8">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6 font-lexend">How It Works</h2>
-              <p className="text-muted-foreground font-livvic leading-relaxed text-lg">
+              <p className="text-muted-foreground font-lexend leading-relaxed text-lg">
                 {service.howItWorks}
               </p>
             </Card>
@@ -362,7 +362,7 @@ const ServiceDetail = () => {
           <div className="max-w-4xl mx-auto">
             <Card className="p-8 bg-gradient-to-br from-lung-blue/10 to-lung-blue-dark/10 border-lung-blue/20">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-6 font-lexend">Why Choose Us in Delhi</h2>
-              <p className="text-muted-foreground font-livvic leading-relaxed text-lg">
+              <p className="text-muted-foreground font-lexend leading-relaxed text-lg">
                 {service.whyChooseUs}
               </p>
             </Card>
@@ -374,7 +374,7 @@ const ServiceDetail = () => {
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2 font-lexend">Frequently Asked Questions</h2>
-              <p className="text-muted-foreground font-livvic">Common questions about this service</p>
+              <p className="text-muted-foreground font-lexend">Common questions about this service</p>
             </div>
             
             <div className="space-y-6">
@@ -386,7 +386,7 @@ const ServiceDetail = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">{faq.question}</h3>
-                      <p className="text-muted-foreground font-livvic leading-relaxed">{faq.answer}</p>
+                      <p className="text-muted-foreground font-lexend leading-relaxed">{faq.answer}</p>
                     </div>
                   </div>
                 </Card>
@@ -399,27 +399,31 @@ const ServiceDetail = () => {
         <section className="py-16 px-4 bg-gradient-to-r from-lung-blue to-lung-blue-dark">
           <div className="max-w-4xl mx-auto text-center text-white">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-lexend">Ready to Get Started?</h2>
-            <p className="text-lg md:text-xl mb-8 opacity-90 font-livvic">
+            <p className="text-lg md:text-xl mb-8 opacity-90 font-lexend">
               Book your appointment today and take the first step toward better respiratory health
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/book-appointment">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-white text-lung-blue hover:bg-white/90">
                   <Calendar className="mr-2 h-5 w-5" />
                   Book Appointment
                 </Button>
               </Link>
               
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-lung-blue">
-                <Phone className="mr-2 h-5 w-5" />
-                Call: +91 98765 43210
-              </Button>
+              <a href="tel:+919876543210">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-lung-blue">
+                  <Phone className="mr-2 h-5 w-5" />
+                  Call: +91 98765 43210
+                </Button>
+              </a>
               
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-lung-blue">
-                <MessageCircle className="mr-2 h-5 w-5" />
-                WhatsApp Us
-              </Button>
+              <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-white border-white hover:bg-white hover:text-lung-blue">
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  WhatsApp Us
+                </Button>
+              </a>
             </div>
           </div>
         </section>
