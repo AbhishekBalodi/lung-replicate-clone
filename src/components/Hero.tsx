@@ -6,15 +6,15 @@ import doctorMain from "@/assets/doctor-main.jpg";
 const Hero = () => {
   return (
     <section className="bg-hero-gradient min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] flex items-center py-8 sm:py-12 lg:py-16 px-4" id="home">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
         <div className="text-foreground space-y-4 lg:space-y-6 text-center lg:text-left">
           <div className="space-y-2 lg:space-y-4">
             <p className="text-base lg:text-lg font-medium text-muted-foreground">Solution For Healthcare Needs</p>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
-              Best Medical & <span className="text-lung-light-blue">Health Care</span> Solutions
+              Best Chest Physician in <span className="text-lung-light-blue">Delhi</span> - Expert Pulmonology Care
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
-              Trusted by thousands, we deliver expert care with compassion and precision to meet your health needs.
+              Leading pulmonologist in Delhi specializing in COPD, Asthma, TB, Sleep Apnea, and all respiratory conditions. Book your consultation today!
             </p>
           </div>
           
@@ -41,7 +41,10 @@ const Hero = () => {
           <div className="relative z-10">
             <img 
               src={doctorMain} 
-              alt="Professional Doctor" 
+              alt="Best chest physician and pulmonologist in Delhi - Expert respiratory care specialist"
+              loading="lazy"
+              width="500"
+              height="600"
               className="w-full max-w-xs sm:max-w-sm lg:max-w-md mx-auto rounded-2xl shadow-strong"
             />
             

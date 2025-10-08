@@ -58,13 +58,19 @@ const Header = () => {
       {/* Main Navigation */}
       <nav className="bg-white shadow-soft py-3 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={lungIcon} alt="Healthcare Plus" className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12" />
+          <a href="/" className="flex items-center gap-3" aria-label="Healthcare Plus - Home">
+            <img 
+              src={lungIcon} 
+              alt="Healthcare Plus Logo - Best Chest Physician in Delhi" 
+              className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12"
+              width="48"
+              height="48"
+            />
             <div>
               <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">HEALTHCARE PLUS</h1>
               <p className="text-xs sm:text-sm text-muted-foreground">Your Family Medical Center</p>
             </div>
-          </div>
+          </a>
           
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-6 xl:gap-8">
