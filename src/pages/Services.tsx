@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { 
   Wind, Microscope, Moon, TestTube, Cigarette, 
   HeartPulse, Activity, AlertCircle, ChevronRight,
-  Stethoscope, User, Star
+  Stethoscope, User, Star, Search
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -57,6 +57,12 @@ const Services = () => {
       title: "Critical Care & ICU Support",
       description: "Advanced critical care for severe respiratory conditions",
       slug: "critical-care"
+    },
+    {
+      icon: Search,
+      title: "Lung Cancer Screening",
+      description: "Early detection with low-dose CT scan for high-risk patients",
+      slug: "lung-cancer-screening"
     }
   ];
 
