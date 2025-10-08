@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { 
   Wind, Microscope, Moon, TestTube, Cigarette, 
   HeartPulse, Activity, AlertCircle, ChevronRight,
-  Stethoscope, User, Star, Search
+  Stethoscope, User, Star, Search, Zap
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -110,10 +110,16 @@ const Services = () => {
       slug: "pleural-diseases"
     },
     {
-      icon: Moon,
+      icon: Stethoscope,
       title: "Influenza / Seasonal Flu",
       description: "Advanced treatment to prevent complications",
       slug: "flu-treatment"
+    },
+    {
+      icon: Zap,
+      title: "Sleep Apnea",
+      description: "CPAP therapy and expert care for sleep disorders",
+      slug: "sleep-apnea"
     }
   ];
 
