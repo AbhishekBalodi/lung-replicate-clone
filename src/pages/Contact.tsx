@@ -54,9 +54,10 @@ const Contact = () => {
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">Visit Us</h3>
               <p className="text-muted-foreground font-livvic leading-relaxed text-sm lg:text-base">
-                Dr. John Smith Medical Clinic,<br />
-                123 Main Street, Suite 1,<br />
-                Medical District, New York, 10001
+                North Delhi Chest Centre,<br />
+                321, Main Road, Bhai Parmanand Colony,<br />
+                Near Dr. Mukherjee Nagar,<br />
+                Delhi-110009
               </p>
             </Card>
 
@@ -67,7 +68,7 @@ const Contact = () => {
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">Email Us</h3>
               <p className="text-muted-foreground font-livvic text-sm lg:text-base">
-                info@healthcareplus.com
+                psmann58@yahoo.com
               </p>
             </Card>
 
@@ -78,7 +79,8 @@ const Contact = () => {
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">Call Us</h3>
               <p className="text-muted-foreground font-livvic text-sm lg:text-base">
-                +1 555 123 4567
+                Mobile: +91-9810589799, +91-9810588799<br />
+                Phone: +91-011-65101829
               </p>
             </Card>
           </div>
@@ -102,9 +104,9 @@ const Contact = () => {
               
               {/* Map Info Card */}
               <Card className="absolute top-3 left-3 lg:top-4 lg:left-4 p-3 lg:p-4 bg-white shadow-strong max-w-xs">
-                <h4 className="font-bold text-foreground mb-1 font-lexend text-sm lg:text-base">Dr John Smith Medical</h4>
+                <h4 className="font-bold text-foreground mb-1 font-lexend text-sm lg:text-base">North Delhi Chest Centre</h4>
                 <p className="text-xs lg:text-sm text-muted-foreground mb-2 font-livvic">
-                  123 Main Street, Suite 1, Medical District, New York, 10001
+                  321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009
                 </p>
                 <div className="flex items-center gap-1 mb-2">
                   <span className="text-yellow-500 text-sm">★★★★★</span>

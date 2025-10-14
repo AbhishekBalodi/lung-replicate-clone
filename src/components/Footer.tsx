@@ -40,16 +40,8 @@ const Footer = () => {
               <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-lexend">Opening Hour</h4>
               <div className="space-y-1 lg:space-y-2 text-gray-300 font-lexend text-sm lg:text-base">
                 <div className="flex justify-between">
-                  <span>Mon - Tues</span>
-                  <span>09:00AM - 7:00PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Wed - Thu</span>
-                  <span>09:00AM - 7:00PM</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Fri - Sat</span>
-                  <span>09:00AM - 7:00PM</span>
+                  <span>Mon - Sat</span>
+                  <span>06:00 PM - 08:00 PM</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Sunday</span>
@@ -72,7 +64,7 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-lexend text-sm lg:text-base">MEDICAL ADDRESS</h5>
               </div>
               <p className="text-white/90 font-lexend text-sm lg:text-base">
-                123 Main Street, Medical District, NY-10001
+                North Delhi Chest Centre, 321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009
               </p>
             </div>
 
@@ -83,7 +75,7 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-lexend text-sm lg:text-base">EMAIL ADDRESS</h5>
               </div>
               <p className="text-white/90 font-lexend text-sm lg:text-base">
-                info@healthcareplus.com
+                psmann58@yahoo.com
               </p>
             </div>
 
@@ -94,7 +86,7 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-lexend text-sm lg:text-base">EMERGENCY CALL</h5>
               </div>
               <p className="text-white/90 font-lexend text-sm lg:text-base">
-                +1 555-123-4567
+                +91-9810589799, +91-9810588799, +91-011-65101829
               </p>
             </div>
           </div>
