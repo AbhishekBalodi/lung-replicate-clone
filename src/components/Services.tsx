@@ -78,7 +78,7 @@ const Services = () => {
   ];
 
   return (
-    <section className="py-6 px-4" id="services">
+    <section className="pt-6 px-4 pb-0" id="services">
       <div className="container mx-auto max-w-6xl">
         {/* Services Header */}
         <div className="text-center mb-6 lg:mb-8">

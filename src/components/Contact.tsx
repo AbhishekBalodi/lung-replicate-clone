@@ -41,7 +41,7 @@ const Contact = () => {
   ];
 
   return (
-    <section className="py-6 px-4 bg-medical-light/30" id="contact">
+    <section className="pt-6 pb-6 px-4 bg-medical-light/30" id="contact">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-6 lg:mb-8">
           <h2 className="text-4xl font-bold text-foreground mb-4">Get In Touch</h2>
