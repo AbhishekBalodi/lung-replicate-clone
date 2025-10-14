@@ -68,7 +68,7 @@ const AppointmentBooking = () => {
   return (
     <section className="py-8 px-4 bg-medical-light/30">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-8 lg:mb-12">
+        <div className="text-center mb-6">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4 font-manrope">
             Book an Appointment & You're Done!
           </h2>
@@ -78,7 +78,7 @@ const AppointmentBooking = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="text-center mb-8 lg:mb-12">
+        <div className="text-center mb-6">
           <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 justify-center">
             <a href="/book-appointment" className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base">
@@ -92,7 +92,7 @@ const AppointmentBooking = () => {
         </div>
 
         {/* Steps Navigation */}
-        <div className="flex justify-center mb-6 lg:mb-8 overflow-x-auto pb-4">
+        <div className="flex justify-center mb-6 overflow-x-auto pb-4">
           <div className="flex items-center gap-2 sm:gap-4 min-w-max px-4">
             {steps.map((step, index) => {
               const IconComponent = step.icon;
@@ -101,19 +101,19 @@ const AppointmentBooking = () => {
                   <div className="text-center">
                     <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-1 sm:mb-2 transition-colors ${
                       currentStep === step.id 
-                        ? "bg-medical-blue text-white" 
+                        ? "bg-lung-blue text-white" 
                         : currentStep > step.id
-                        ? "bg-medical-green text-white"
+                        ? "bg-lung-green text-white"
                         : "bg-gray-200 text-gray-500"
                     }`}>
-                      <IconComponent className="h-4 w-4 sm:h-6 sm:w-6" />
+                      <IconComponent className="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
                     <p className="font-semibold text-xs sm:text-sm">{step.title}</p>
                     <p className="text-xs text-muted-foreground hidden sm:block">{step.subtitle}</p>
                   </div>
                   {index < steps.length - 1 && (
                     <div className={`w-8 sm:w-12 h-0.5 mx-2 sm:mx-4 ${
-                      currentStep > step.id ? "bg-medical-green" : "bg-gray-200"
+                      currentStep > step.id ? "bg-lung-green" : "bg-gray-200"
                     }`} />
                   )}
                 </div>
@@ -284,7 +284,7 @@ const AppointmentBooking = () => {
             
             <Button
               onClick={handleNext}
-              className="w-full sm:w-auto bg-medical-blue hover:bg-medical-blue-dark text-white"
+              className="w-full sm:w-auto bg-lung-green hover:bg-lung-green/90 text-white"
             >
               {currentStep === 4 ? "Submit Form" : "Next"}
             </Button>
