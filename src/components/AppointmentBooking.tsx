@@ -79,15 +79,12 @@ const AppointmentBooking = () => {
 
         {/* Action Buttons */}
         <div className="text-center mb-6">
-          <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 justify-center">
+          <div className="flex justify-center">
             <a href="/book-appointment" className="w-full sm:w-auto">
               <Button className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base">
                 Book Now →
               </Button>
             </a>
-            <Button variant="outline" className="w-full sm:w-auto border-lung-blue text-lung-blue hover:bg-lung-blue hover:text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base">
-              Learn More
-            </Button>
           </div>
         </div>
 

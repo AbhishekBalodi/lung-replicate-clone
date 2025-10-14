@@ -18,7 +18,7 @@ const Hero = () => {
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 items-center lg:items-start">
+          <div className="flex justify-center lg:justify-start">
             <a href="/book-appointment" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
@@ -27,13 +27,6 @@ const Hero = () => {
                 Make Appointment
               </Button>
             </a>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="w-full sm:w-auto border-2 border-foreground text-foreground hover:bg-foreground hover:text-white font-semibold px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg"
-            >
-              Read More
-            </Button>
           </div>
         </div>
 
