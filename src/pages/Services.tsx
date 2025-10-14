@@ -96,13 +96,13 @@ const Services = () => {
         <div className="max-w-7xl mx-auto text-center text-white">
           {/* Breadcrumb */}
           <div className="flex items-center justify-center gap-2 mb-8">
-            <a href="/" className="text-white/80 hover:text-white transition-colors font-livvic">Home</a>
+            <a href="/" className="text-white/80 hover:text-white transition-colors font-manrope">Home</a>
             <ChevronRight className="h-4 w-4 text-white/60" />
-            <span className="text-white font-livvic">Our Services</span>
+            <span className="text-white font-manrope">Our Services</span>
           </div>
           
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 font-lexend">Our Services</h1>
-          <p className="text-xl text-white/90 max-w-3xl mx-auto font-livvic">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 font-manrope">Our Services</h1>
+          <p className="text-xl text-white/90 max-w-3xl mx-auto font-manrope">
             Discover how we provide advanced pulmonary care and holistic treatment
           </p>
         </div>
@@ -112,8 +112,8 @@ const Services = () => {
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4 font-lexend">Services Offered</h2>
-            <p className="text-lg text-muted-foreground font-livvic">
+            <h2 className="text-4xl font-bold text-foreground mb-4 font-manrope">Services Offered</h2>
+            <p className="text-lg text-muted-foreground font-manrope">
               Our clinic provides a wide range of pulmonary and respiratory services in Delhi
             </p>
           </div>
@@ -123,14 +123,14 @@ const Services = () => {
               const IconComponent = service.icon;
               return (
                 <Link key={index} to={`/services/${service.slug}`}>
-                  <Card className="p-6 text-center hover:shadow-strong transition-all duration-300 hover:-translate-y-1 group cursor-pointer h-full">
-                    <div className="w-16 h-16 bg-lung-blue rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-lung-blue-dark transition-colors">
+                  <Card className="p-6 text-center hover:shadow-strong transition-all duration-300 hover:-translate-y-1 group cursor-pointer h-[280px] flex flex-col">
+                    <div className="w-16 h-16 bg-lung-blue rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-lung-blue-dark transition-colors flex-shrink-0">
                       <IconComponent className="h-8 w-8 text-white" />
                     </div>
-                    <h3 className="text-lg font-bold text-foreground mb-3 font-lexend">
+                    <h3 className="text-lg font-bold text-foreground mb-3 font-manrope line-clamp-2 flex-shrink-0">
                       {service.title}
                     </h3>
-                    <p className="text-muted-foreground text-sm font-lexend">
+                    <p className="text-muted-foreground text-sm font-manrope line-clamp-3">
                       {service.description}
                     </p>
                   </Card>
@@ -145,8 +145,8 @@ const Services = () => {
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4 font-lexend">Patient Testimonials</h2>
-            <p className="text-lg text-muted-foreground font-lexend">
+            <h2 className="text-4xl font-bold text-foreground mb-4 font-manrope">Patient Testimonials</h2>
+            <p className="text-lg text-muted-foreground font-manrope">
               Hear from our satisfied patients
             </p>
           </div>
@@ -159,15 +159,15 @@ const Services = () => {
                     <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                   ))}
                 </div>
-                <p className="text-muted-foreground italic mb-6 font-lexend text-center">
+                <p className="text-muted-foreground italic mb-6 font-manrope text-center">
                   "{testimonial.text}"
                 </p>
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <User className="h-4 w-4 text-lung-blue" />
-                    <p className="font-semibold text-foreground font-lexend">{testimonial.author}</p>
+                    <p className="font-semibold text-foreground font-manrope">{testimonial.author}</p>
                   </div>
-                  <p className="text-sm text-muted-foreground font-lexend">{testimonial.location}</p>
+                  <p className="text-sm text-muted-foreground font-manrope">{testimonial.location}</p>
                 </div>
               </Card>
             ))}
