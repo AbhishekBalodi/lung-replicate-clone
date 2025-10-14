@@ -66,8 +66,8 @@ const AppointmentBooking = () => {
   };
 
   return (
-    <section className="py-12 lg:py-16 px-4 bg-medical-light/30">
-      <div className="max-w-4xl mx-auto">
+    <section className="py-8 px-4 bg-medical-light/30">
+      <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-8 lg:mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4 font-manrope">
             Book an Appointment & You're Done!
@@ -286,7 +286,7 @@ const AppointmentBooking = () => {
               onClick={handleNext}
               className="w-full sm:w-auto bg-medical-blue hover:bg-medical-blue-dark text-white"
             >
-              {currentStep === 4 ? "Book Appointment" : "Next"}
+              {currentStep === 4 ? "Submit Form" : "Next"}
             </Button>
           </div>
         </Card>

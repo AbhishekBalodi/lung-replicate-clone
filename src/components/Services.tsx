@@ -78,8 +78,8 @@ const Services = () => {
   ];
 
   return (
-    <section className="py-16 px-4" id="services">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-8 px-4" id="services">
+      <div className="container mx-auto max-w-6xl">
         {/* Services Header */}
         <div className="text-center mb-8 lg:mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4">Our Medical Services</h2>
