@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Star, Users, Award, CheckCircle, Calendar, Heart, Briefcase, GraduationCap, Grid3X3, MapPin, Phone, Mail, CreditCard, Shield } from "lucide-react";
 import { useState } from "react";
+import drMannImage from "@/assets/dr-mann.png";
 
 const DoctorProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
@@ -26,8 +27,8 @@ const DoctorProfile = () => {
             <div className="relative">
               <div className="w-48 h-48 rounded-full bg-white p-2">
                 <img 
-                  src="/api/placeholder/200/200" 
-                  alt="Dr. Naveen Kumar Ailawadi" 
+                  src={drMannImage} 
+                  alt="Dr. Mann" 
                   className="w-full h-full rounded-full object-cover"
                 />
               </div>
@@ -42,8 +43,8 @@ const DoctorProfile = () => {
             </div>
             
             <div className="flex-1 text-center lg:text-left">
-              <h1 className="text-4xl font-bold text-white mb-4 font-lexend">
-                Dr. John Smith
+              <h1 className="text-4xl font-bold text-white mb-4 font-manrope">
+                Dr. Mann
               </h1>
               <p className="text-white/90 text-lg mb-6 font-livvic">
                 Director & Unit Head - Internal Medicine, Family Care & Wellness Center
@@ -119,10 +120,10 @@ const DoctorProfile = () => {
                       <Heart className="h-6 w-6 text-red-500" />
                       <h2 className="text-2xl font-bold text-foreground font-lexend">Professional Summary</h2>
                     </div>
-                    <p className="text-muted-foreground leading-relaxed font-livvic">
-                      Dr. John Smith is an expert physician with over 15 years of experience in 
+                    <p className="text-muted-foreground leading-relaxed font-manrope">
+                      Dr. Mann is an expert physician with over 15 years of experience in 
                       internal medicine, family care, and preventive health. He is committed to 
-                      delivering the highest standard of care to his patients. Dr. Smith routinely manages 
+                      delivering the highest standard of care to his patients. Dr. Mann routinely manages 
                       complex cases, including diabetes, hypertension, heart disease, and preventive care. His 
                       extensive clinical expertise ensures accurate diagnosis and effective treatment. He is 
                       known for his patient-centric approach and dedication to comprehensive health care.
@@ -245,8 +246,8 @@ const DoctorProfile = () => {
                               </div>
                               <span className="text-sm text-muted-foreground">Patient #{review}</span>
                             </div>
-                            <p className="text-muted-foreground font-livvic">
-                              Excellent care and treatment. Dr. Smith is very knowledgeable and takes time to explain everything clearly.
+                            <p className="text-muted-foreground font-manrope">
+                              Excellent care and treatment. Dr. Mann is very knowledgeable and takes time to explain everything clearly.
                             </p>
                           </div>
                         </div>
