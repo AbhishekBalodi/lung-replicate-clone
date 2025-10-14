@@ -66,57 +66,6 @@ const Services = () => {
     }
   ];
 
-  const conditions = [
-    {
-      icon: Wind,
-      title: "COPD Treatment",
-      description: "Helping patients breathe easier with advanced therapies",
-      slug: "copd-treatment"
-    },
-    {
-      icon: HeartPulse,
-      title: "Asthma Specialist",
-      description: "Individualized care for chronic and seasonal asthma",
-      slug: "asthma-treatment"
-    },
-    {
-      icon: AlertCircle,
-      title: "Tuberculosis (TB) Treatment",
-      description: "Evidence-based, complete TB care",
-      slug: "tb-treatment"
-    },
-    {
-      icon: Activity,
-      title: "Pneumonia Treatment",
-      description: "Fast diagnosis and effective recovery plans",
-      slug: "pneumonia-treatment"
-    },
-    {
-      icon: TestTube,
-      title: "Sarcoidosis Treatment",
-      description: "Specialized care for rare lung conditions",
-      slug: "sarcoidosis-treatment"
-    },
-    {
-      icon: Stethoscope,
-      title: "Pleural Diseases",
-      description: "Treatment for effusion, pneumothorax & other pleural conditions",
-      slug: "pleural-diseases"
-    },
-    {
-      icon: Stethoscope,
-      title: "Influenza / Seasonal Flu",
-      description: "Advanced treatment to prevent complications",
-      slug: "flu-treatment"
-    },
-    {
-      icon: Zap,
-      title: "Sleep Apnea",
-      description: "CPAP therapy and expert care for sleep disorders",
-      slug: "sleep-apnea"
-    }
-  ];
-
   const testimonials = [
     {
       text: "I was struggling with chronic asthma for years. Dr. Smith provided the right treatment and I finally feel relief. Best chest specialist in Delhi!",
@@ -183,39 +132,6 @@ const Services = () => {
                     </h3>
                     <p className="text-muted-foreground text-sm font-lexend">
                       {service.description}
-                    </p>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Conditions We Treat Section */}
-      <section className="py-16 px-4 bg-muted/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-foreground mb-4 font-lexend">Conditions We Treat</h2>
-            <p className="text-lg text-muted-foreground font-lexend">
-              We provide expert diagnosis and treatment for various respiratory conditions
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {conditions.map((condition, index) => {
-              const IconComponent = condition.icon;
-              return (
-                <Link key={index} to={`/conditions/${condition.slug}`}>
-                  <Card className="p-6 text-center hover:shadow-strong transition-all duration-300 hover:-translate-y-1 group cursor-pointer h-full">
-                    <div className="w-16 h-16 bg-lung-blue rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-lung-blue-dark transition-colors">
-                      <IconComponent className="h-8 w-8 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-foreground mb-3 font-lexend">
-                      {condition.title}
-                    </h3>
-                    <p className="text-muted-foreground text-sm font-lexend">
-                      {condition.description}
                     </p>
                   </Card>
                 </Link>

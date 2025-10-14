@@ -83,6 +83,9 @@ const Header = () => {
             <a href="/services" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Services
             </a>
+            <a href="/treatments" className="text-foreground hover:text-lung-blue transition-colors font-medium">
+              Treatments
+            </a>
             <a href="/contact" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Contact
             </a>
@@ -151,6 +154,13 @@ const Header = () => {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Services
+              </a>
+              <a 
+                href="/treatments" 
+                className="block py-2 text-foreground hover:text-lung-blue transition-colors font-medium"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Treatments
               </a>
               <a 
                 href="/contact" 
