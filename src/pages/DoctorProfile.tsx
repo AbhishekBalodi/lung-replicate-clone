@@ -74,7 +74,7 @@ const DoctorProfile = () => {
                 <Button className="bg-white text-lung-blue hover:bg-white/90 px-8 py-3">
                   Book Appointment
                 </Button>
-                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-lung-blue px-8 py-3">
+                <Button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-lung-blue px-8 py-3">
                   Call Now
                 </Button>
               </div>
