@@ -110,15 +110,15 @@ All colors MUST be HSL.
     scroll-behavior: smooth;
   }
 
-  body {
-    @apply bg-background text-foreground;
-    font-family: 'Lexend Deca', sans-serif;
+body {
+  @apply bg-background text-foreground;
+  font-family: 'Manrope', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Lexend Deca', sans-serif;
+    font-family: 'Manrope', sans-serif;
   }
   
   /* Performance optimization for images */

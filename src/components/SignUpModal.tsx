@@ -82,7 +82,7 @@ const SignUpModal = ({ isOpen, onClose, onSwitchToLogin }: SignUpModalProps) => 
             <div className="w-12 h-12 bg-lung-blue rounded-lg flex items-center justify-center">
               <Heart className="h-6 w-6 text-white" />
             </div>
-            <DialogTitle className="text-2xl font-bold text-center font-lexend">Sign up</DialogTitle>
+            <DialogTitle className="text-2xl font-bold text-center font-manrope">Sign up</DialogTitle>
           </div>
         </DialogHeader>
 

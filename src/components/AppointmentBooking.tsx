@@ -69,10 +69,10 @@ const AppointmentBooking = () => {
     <section className="py-12 lg:py-16 px-4 bg-medical-light/30">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8 lg:mb-12">
-          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">
+          <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4 font-manrope">
             Book an Appointment & You're Done!
           </h2>
-          <p className="text-base lg:text-lg text-muted-foreground font-lexend px-4">
+          <p className="text-base lg:text-lg text-muted-foreground font-manrope px-4">
             Looking for the best & quick medical treatments without a long waiting time?
           </p>
         </div>

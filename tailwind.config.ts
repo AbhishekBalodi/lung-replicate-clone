@@ -71,8 +71,8 @@ export default {
         'hero-gradient': 'var(--hero-gradient)',
       },
       fontFamily: {
-        'lexend': ['Lexend Deca', 'sans-serif'],
-        sans: ['Lexend Deca', 'sans-serif'],
+        'manrope': ['Manrope', 'sans-serif'],
+        sans: ['Manrope', 'sans-serif'],
       },
       boxShadow: {
         'soft': 'var(--shadow-soft)',
