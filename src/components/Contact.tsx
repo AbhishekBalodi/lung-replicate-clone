@@ -41,9 +41,9 @@ const Contact = () => {
   ];
 
   return (
-    <section className="py-8 px-4 bg-medical-light/30" id="contact">
+    <section className="py-6 px-4 bg-medical-light/30" id="contact">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center mb-12">
+        <div className="text-center mb-6 lg:mb-8">
           <h2 className="text-4xl font-bold text-foreground mb-4">Get In Touch</h2>
           <p className="text-lg text-muted-foreground">
             Have questions or need to schedule an appointment? We're here to help.

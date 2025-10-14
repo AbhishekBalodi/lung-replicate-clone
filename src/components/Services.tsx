@@ -78,10 +78,10 @@ const Services = () => {
   ];
 
   return (
-    <section className="py-8 px-4" id="services">
+    <section className="py-6 px-4" id="services">
       <div className="container mx-auto max-w-6xl">
         {/* Services Header */}
-        <div className="text-center mb-8 lg:mb-12">
+        <div className="text-center mb-6 lg:mb-8">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4">Our Medical Services</h2>
           <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
             We provide comprehensive healthcare services with advanced medical technology 
@@ -90,19 +90,19 @@ const Services = () => {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-12 lg:mb-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-8 lg:mb-12">
           {services.map((service, index) => {
             const IconComponent = service.icon;
             return (
               <Link key={index} to={`/services/${service.slug}`}>
-                <Card className="p-4 lg:p-6 hover:shadow-medium transition-all duration-300 hover:-translate-y-1 lg:hover:-translate-y-2 group cursor-pointer">
-                  <div className="flex flex-col sm:flex-row items-start gap-3 lg:gap-4">
-                    <div className="p-2 lg:p-3 bg-lung-blue/10 rounded-full group-hover:bg-lung-blue group-hover:text-white transition-all duration-300 mx-auto sm:mx-0">
+                <Card className="h-[180px] p-4 lg:p-6 hover:shadow-medium transition-all duration-300 hover:-translate-y-1 lg:hover:-translate-y-2 group cursor-pointer flex flex-col">
+                  <div className="flex items-start gap-3 lg:gap-4">
+                    <div className="p-2 lg:p-3 bg-lung-blue/10 rounded-full group-hover:bg-lung-blue group-hover:text-white transition-all duration-300 flex-shrink-0">
                       <IconComponent className="h-6 w-6 lg:h-8 lg:w-8 text-lung-blue group-hover:text-white" />
                     </div>
-                    <div className="flex-1 text-center sm:text-left">
-                      <h3 className="text-lg lg:text-xl font-semibold mb-2 text-foreground">{service.title}</h3>
-                      <p className="text-sm lg:text-base text-muted-foreground">{service.description}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg lg:text-xl font-semibold mb-2 text-foreground line-clamp-2">{service.title}</h3>
+                      <p className="text-sm lg:text-base text-muted-foreground line-clamp-3">{service.description}</p>
                     </div>
                   </div>
                 </Card>
