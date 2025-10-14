@@ -5,11 +5,7 @@ import {
   Moon,
   TestTube,
   Cigarette,
-  HeartPulse,
-  Users,
-  Clock,
-  Award,
-  Stethoscope
+  HeartPulse
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -54,28 +50,6 @@ const Services = () => {
     }
   ];
 
-  const stats = [
-    {
-      icon: Users,
-      number: "15,000+",
-      label: "Patients Treated"
-    },
-    {
-      icon: Award,
-      number: "50+",
-      label: "Medical Awards"
-    },
-    {
-      icon: Clock,
-      number: "24/7",
-      label: "Emergency Care"
-    },
-    {
-      icon: Stethoscope,
-      number: "25+",
-      label: "Expert Doctors"
-    }
-  ];
 
   return (
     <section className="pt-6 px-4 pb-0" id="services">
@@ -109,33 +83,6 @@ const Services = () => {
               </Link>
             );
           })}
-        </div>
-
-        {/* Stats Section */}
-        <div className="bg-medical-gradient rounded-2xl p-6 sm:p-8 text-white">
-          <div className="text-center mb-6 lg:mb-8">
-            <h3 className="text-2xl lg:text-3xl font-bold mb-3 lg:mb-4">Trusted Healthcare Provider</h3>
-            <p className="text-base lg:text-lg opacity-90">
-              Years of excellence in providing quality healthcare services to our community
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-8">
-            {stats.map((stat, index) => {
-              const IconComponent = stat.icon;
-              return (
-                <div key={index} className="text-center">
-                  <div className="flex justify-center mb-3 lg:mb-4">
-                    <div className="p-2 lg:p-3 bg-white/20 rounded-full">
-                      <IconComponent className="h-6 w-6 lg:h-8 lg:w-8" />
-                    </div>
-                  </div>
-                  <div className="text-xl sm:text-2xl lg:text-3xl font-bold mb-1 lg:mb-2">{stat.number}</div>
-                  <div className="text-sm sm:text-base lg:text-lg opacity-90">{stat.label}</div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
     </section>
