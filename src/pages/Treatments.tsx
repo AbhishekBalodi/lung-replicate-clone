@@ -91,17 +91,17 @@ const Treatments = () => {
       <Header />
       <div className="pt-32">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-16 px-4">
+        <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-8 px-4">
           <div className="max-w-7xl mx-auto text-center text-white">
             {/* Breadcrumb */}
-            <div className="flex items-center justify-center gap-2 mb-8">
-              <a href="/" className="text-white/80 hover:text-white transition-colors font-manrope">Home</a>
-              <ChevronRight className="h-4 w-4 text-white/60" />
-              <span className="text-white font-manrope">Treatments</span>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <a href="/" className="text-white/80 hover:text-white transition-colors font-manrope text-sm">Home</a>
+              <ChevronRight className="h-3 w-3 text-white/60" />
+              <span className="text-white font-manrope text-sm">Treatments</span>
             </div>
             
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 font-manrope">Conditions We Treat</h1>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto font-manrope">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2 font-manrope">Conditions We Treat</h1>
+            <p className="text-base text-white/90 max-w-3xl mx-auto font-manrope">
               We provide expert diagnosis and treatment for various respiratory conditions
             </p>
           </div>

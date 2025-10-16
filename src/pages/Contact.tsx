@@ -27,17 +27,17 @@ const Contact = () => {
       <Header />
       <div className="pt-24 sm:pt-28 lg:pt-32">
         {/* Hero Section */}
-      <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-12 lg:py-16 px-4">
+      <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-8 px-4">
         <div className="max-w-7xl mx-auto text-center text-white">
           {/* Breadcrumb */}
-          <div className="flex items-center justify-center gap-2 mb-6 lg:mb-8">
-            <a href="/" className="text-white/80 hover:text-white transition-colors font-livvic text-sm lg:text-base">Home</a>
-            <ChevronRight className="h-3 w-3 lg:h-4 lg:w-4 text-white/60" />
-            <span className="text-white font-livvic text-sm lg:text-base">Contact Us</span>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <a href="/" className="text-white/80 hover:text-white transition-colors font-livvic text-sm">Home</a>
+            <ChevronRight className="h-3 w-3 text-white/60" />
+            <span className="text-white font-livvic text-sm">Contact Us</span>
           </div>
           
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 lg:mb-6 font-lexend">Contact Us</h1>
-          <p className="text-lg lg:text-xl text-white/90 max-w-3xl mx-auto font-livvic px-4">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 font-lexend">Contact Us</h1>
+          <p className="text-base text-white/90 max-w-3xl mx-auto font-livvic px-4">
             Get in touch with us and let's start a conversation
           </p>
         </div>
