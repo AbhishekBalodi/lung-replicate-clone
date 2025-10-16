@@ -21,22 +21,22 @@ const Contact = () => {
     {
       icon: MapPin,
       title: "Our Location",
-      details: "123 Healthcare Avenue\nMedical City, MC 12345"
+      details: "North Delhi Chest Centre\n321, Main Road, Bhai Parmanand Colony,\nNear Dr. Mukherjee Nagar, Delhi-110009"
     },
     {
       icon: Phone,
       title: "Phone Number",
-      details: "+1 (555) 123-4567\nEmergency: +1 (555) 911-HELP"
+      details: "+91-9810589799, +91-9810588799\n+91-011-65101829"
     },
     {
       icon: Mail,
       title: "Email Address",
-      details: "info@healthcareplus.com\nsupport@healthcareplus.com"
+      details: "psmann58@yahoo.com"
     },
     {
       icon: Clock,
       title: "Working Hours",
-      details: "Mon - Sat: 9:00 AM - 7:00 PM\nSun: 10:00 AM - 4:00 PM"
+      details: "Mon - Sat: 06:00 PM - 08:00 PM\nSunday: Closed"
     }
   ];
 
@@ -82,7 +82,7 @@ const Contact = () => {
                 <div className="text-center text-muted-foreground">
                   <MapPin className="h-12 w-12 mx-auto mb-2" />
                   <p>Interactive Map</p>
-                  <p className="text-sm">123 Healthcare Avenue, Medical City</p>
+                  <p className="text-sm">321, Main Road, Delhi-110009</p>
                 </div>
               </div>
             </Card>
