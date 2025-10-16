@@ -7,9 +7,9 @@ const Footer = () => {
       <div className="py-12 lg:py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {/* HealthCare Plus */}
+            {/* Delhi Chest Physician */}
             <div>
-              <h3 className="text-lg lg:text-xl font-bold mb-4 lg:mb-6 font-manrope">HealthCare Plus</h3>
+              <h3 className="text-lg lg:text-xl font-bold mb-4 lg:mb-6 font-manrope">Delhi Chest Physician</h3>
               <p className="text-gray-300 leading-relaxed font-manrope text-sm lg:text-base">
                 From wellness tips to expert advice, we're here to support your journey to a 
                 healthier you. Our team of dedicated healthcare providers has years of experience.
@@ -97,7 +97,7 @@ const Footer = () => {
       <div className="border-t border-gray-700 py-4 lg:py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-xs lg:text-sm font-manrope text-center md:text-left">
-            Copyright © 2023-25 All Rights Reserved | HealthCare Plus
+            Copyright © 2023-25 All Rights Reserved | Delhi Chest Physician
           </p>
           <div className="flex gap-3 lg:gap-4 mt-3 md:mt-0">
             <div className="w-8 h-8 lg:w-10 lg:h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">

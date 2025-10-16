@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Phone, MapPin, Clock, Facebook, Twitter, Instagram, User, Menu, X } from "lucide-react";
-import lungIcon from "@/assets/lung-icon.png";
+import logoImage from "@/assets/delhi-chest-physician-logo.png";
 import SignUpModal from "@/components/SignUpModal";
 import LoginModal from "@/components/LoginModal";
 import { useState } from "react";
@@ -58,18 +58,12 @@ const Header = () => {
       {/* Main Navigation */}
       <nav className="bg-white shadow-soft py-3 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3" aria-label="Healthcare Plus - Home">
+          <a href="/" className="flex items-center gap-3" aria-label="Delhi Chest Physician - Home">
             <img 
-              src={lungIcon} 
-              alt="Healthcare Plus Logo - Best Chest Physician in Delhi" 
-              className="h-8 w-8 sm:h-10 sm:w-10 lg:h-12 lg:w-12"
-              width="48"
-              height="48"
+              src={logoImage} 
+              alt="Delhi Chest Physician - Best Chest Physician in Delhi" 
+              className="h-10 sm:h-12 lg:h-14 w-auto"
             />
-            <div>
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">HEALTHCARE PLUS</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Your Family Medical Center</p>
-            </div>
           </a>
           
           {/* Desktop Navigation */}

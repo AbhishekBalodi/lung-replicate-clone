@@ -12,7 +12,7 @@ const Index = () => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
-    "name": "Healthcare Plus - Best Chest Physician in Delhi",
+    "name": "Delhi Chest Physician - Best Chest Physician in Delhi",
     "description": "Leading chest physician & pulmonologist in Delhi providing expert treatment for COPD, Asthma, TB, Pneumonia, Sleep Apnea & all respiratory diseases",
     "url": "https://www.yoursite.com",
     "telephone": "+91-555-123-4567",
