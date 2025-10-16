@@ -220,7 +220,7 @@ const AppointmentBooking = () => {
                     <img 
                       src={doctor.image} 
                       alt={doctor.name}
-                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                      className="w-24 h-24 rounded-full object-contain border-2 border-gray-200"
                     />
                     <div>
                       <p className="font-semibold text-base text-foreground">{doctor.name}</p>
