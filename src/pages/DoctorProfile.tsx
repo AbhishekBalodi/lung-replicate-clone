@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Star, Users, Award, CheckCircle, Calendar, Heart, Briefcase, GraduationCap, Grid3X3, MapPin, Phone, Mail, CreditCard, Shield } from "lucide-react";
 import { useState } from "react";
-import drMannImage from "@/assets/dr-mann.png";
+import drMannImage from "@/assets/dr-mann-passport.png";
 
 const DoctorProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
@@ -29,7 +29,7 @@ const DoctorProfile = () => {
                 <img 
                   src={drMannImage} 
                   alt="Dr. Mann" 
-                  className="w-full h-full rounded-full object-cover"
+                  className="w-full h-full rounded-full object-cover object-top"
                 />
               </div>
               <div className="flex gap-2">

@@ -1,19 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Award, Clock } from "lucide-react";
-import doctorMain from "@/assets/doctor-main.jpg";
+import doctorMain from "@/assets/dr-mann-passport.png";
 
 const Hero = () => {
   return (
-    <section className="bg-hero-gradient min-h-[500px] sm:min-h-[600px] lg:min-h-[700px] flex items-center py-8 sm:py-12 lg:py-16 px-4" id="home">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full">
-        <div className="text-foreground space-y-4 lg:space-y-6 text-center lg:text-left">
-          <div className="space-y-2 lg:space-y-4">
-            <p className="text-base lg:text-lg font-medium text-muted-foreground">Solution For Healthcare Needs</p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight">
+    <section className="bg-hero-gradient min-h-[400px] sm:min-h-[450px] lg:min-h-[500px] flex items-center py-6 sm:py-8 lg:py-10 px-4" id="home">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center w-full">
+        <div className="text-foreground space-y-3 lg:space-y-4 text-center lg:text-left">
+          <div className="space-y-2 lg:space-y-3">
+            <p className="text-sm lg:text-base font-medium text-muted-foreground">Solution For Healthcare Needs</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
               Best Chest Physician in <span className="text-lung-light-blue">Delhi</span> - Expert Pulmonology Care
             </h1>
-            <p className="text-base lg:text-lg text-muted-foreground max-w-lg mx-auto lg:mx-0">
+            <p className="text-sm lg:text-base text-muted-foreground max-w-lg mx-auto lg:mx-0">
               Leading pulmonologist in Delhi specializing in COPD, Asthma, TB, Sleep Apnea, and all respiratory conditions. Book your consultation today!
             </p>
           </div>
@@ -22,7 +22,7 @@ const Hero = () => {
             <a href="/book-appointment" className="w-full sm:w-auto">
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white font-semibold px-6 lg:px-8 py-4 lg:py-6 text-base lg:text-lg"
+                className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white font-semibold px-5 lg:px-6 py-3 lg:py-4 text-sm lg:text-base rounded-lg"
               >
                 Make Appointment
               </Button>
@@ -36,32 +36,32 @@ const Hero = () => {
               src={doctorMain} 
               alt="Best chest physician and pulmonologist in Delhi - Expert respiratory care specialist"
               loading="lazy"
-              width="500"
-              height="600"
-              className="w-full max-w-xs sm:max-w-sm lg:max-w-md mx-auto rounded-2xl shadow-strong"
+              width="400"
+              height="500"
+              className="w-full max-w-[250px] sm:max-w-[280px] lg:max-w-[320px] mx-auto rounded-2xl shadow-strong"
             />
             
             {/* Floating Cards */}
-            <Card className="absolute -top-2 -left-2 sm:-top-4 sm:-left-4 bg-white/95 backdrop-blur-sm p-2 sm:p-4 shadow-medium">
-              <div className="flex items-center gap-2 lg:gap-3">
+            <Card className="absolute -top-2 -left-2 sm:-top-3 sm:-left-3 bg-white/95 backdrop-blur-sm p-2 sm:p-3 shadow-medium">
+              <div className="flex items-center gap-2">
                 <div className="p-1 sm:p-2 bg-lung-green rounded-full">
-                  <Award className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                  <Award className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-bold text-sm sm:text-lg">Over 50+</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Award Wins</p>
+                  <p className="font-bold text-xs sm:text-sm">Over 50+</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Award Wins</p>
                 </div>
               </div>
             </Card>
             
-            <Card className="absolute -bottom-2 -right-2 sm:-bottom-4 sm:-right-4 bg-lung-blue text-white p-2 sm:p-4 shadow-medium">
-              <div className="flex items-center gap-2 lg:gap-3">
+            <Card className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 bg-lung-blue text-white p-2 sm:p-3 shadow-medium rounded-lg">
+              <div className="flex items-center gap-2">
                 <div className="p-1 sm:p-2 bg-white/20 rounded-full">
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-sm">Opening Hours</p>
-                  <p className="text-xs opacity-90">Mon-Sat: 9AM - 7PM</p>
+                  <p className="font-semibold text-xs sm:text-sm">Opening Hours</p>
+                  <p className="text-[10px] sm:text-xs opacity-90">Mon-Sat: 9AM - 7PM</p>
                 </div>
               </div>
             </Card>
