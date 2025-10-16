@@ -29,7 +29,7 @@ const AppointmentBooking = () => {
   ];
 
   const doctor = {
-    name: "Dr. Vikas Mann",
+    name: "Dr. Paramjeet Singh Mann",
     specialty: "Pulmonologist",
     image: "/src/assets/dr-mann-passport.png"
   };

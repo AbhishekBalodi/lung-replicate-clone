@@ -270,11 +270,11 @@ const BookAppointment = () => {
                 <div className="flex items-center gap-4">
                   <img 
                     src="/src/assets/dr-mann-passport.png" 
-                    alt="Dr. Vikas Mann"
+                    alt="Dr. Paramjeet Singh Mann"
                     className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
                   />
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground font-lexend">Dr. Vikas Mann</h3>
+                    <h3 className="text-lg font-bold text-foreground font-lexend">Dr. Paramjeet Singh Mann</h3>
                     <p className="text-muted-foreground font-livvic">Pulmonologist & Respiratory Medicine</p>
                     <p className="text-sm text-lung-blue font-medium">40+ Years Experience</p>
                   </div>
@@ -314,7 +314,7 @@ const BookAppointment = () => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div><span className="font-medium">Date:</span> {formData.preferredDate}</div>
                   <div><span className="font-medium">Time:</span> {formData.preferredTime}</div>
-                  <div><span className="font-medium">Doctor:</span> Dr. Vikas Mann</div>
+                  <div><span className="font-medium">Doctor:</span> Dr. Paramjeet Singh Mann</div>
                   <div><span className="font-medium">Type:</span> Pulmonology Consultation</div>
                 </div>
               </Card>
