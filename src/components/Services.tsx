@@ -47,6 +47,18 @@ const Services = () => {
       title: "Oxygen Therapy",
       description: "Supplemental oxygen treatment for respiratory conditions",
       slug: "oxygen-therapy"
+    },
+    {
+      icon: Wind,
+      title: "Lung Cancer Screening",
+      description: "Early detection screening for lung cancer",
+      slug: "lung-cancer-screening"
+    },
+    {
+      icon: HeartPulse,
+      title: "Critical Care",
+      description: "Intensive care for severe respiratory conditions",
+      slug: "critical-care"
     }
   ];
 
@@ -64,7 +76,7 @@ const Services = () => {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-6">
           {services.map((service, index) => {
             const IconComponent = service.icon;
             return (

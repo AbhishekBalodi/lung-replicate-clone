@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Calendar, UserCheck, CheckCircle } from "lucide-react";
+import { User, Calendar, UserCheck, CheckCircle, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const AppointmentBooking = () => {
@@ -16,7 +16,8 @@ const AppointmentBooking = () => {
     date: "",
     time: "",
     doctor: "",
-    message: ""
+    message: "",
+    reports: null as File | null
   });
   const { toast } = useToast();
 
@@ -49,7 +50,8 @@ const AppointmentBooking = () => {
         date: "",
         time: "",
         doctor: "",
-        message: ""
+        message: "",
+        reports: null
       });
     }
   };
@@ -60,8 +62,15 @@ const AppointmentBooking = () => {
     }
   };
 
-  const updateFormData = (field: string, value: string) => {
+  const updateFormData = (field: string, value: string | File | null) => {
     setFormData({ ...formData, [field]: value });
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      updateFormData("reports", file);
+    }
   };
 
   return (
@@ -158,7 +167,7 @@ const AppointmentBooking = () => {
                     className="mt-1"
                   />
                 </div>
-                <div>
+                <div className="lg:col-span-2">
                   <Label htmlFor="message">Additional Message (Optional)</Label>
                   <Textarea
                     id="message"
@@ -167,6 +176,34 @@ const AppointmentBooking = () => {
                     placeholder="Any additional information"
                     className="mt-1"
                   />
+                </div>
+                <div className="lg:col-span-2">
+                  <Label htmlFor="reports">Upload Reports (Optional)</Label>
+                  <div className="mt-1">
+                    <label 
+                      htmlFor="reports" 
+                      className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300 hover:border-lung-blue transition-colors"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <Upload className="w-8 h-8 mb-2 text-gray-500" />
+                        {formData.reports ? (
+                          <p className="text-sm text-gray-700 font-medium">{formData.reports.name}</p>
+                        ) : (
+                          <>
+                            <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload reports</span></p>
+                            <p className="text-xs text-gray-500">PDF, JPG, PNG, DOC files accepted</p>
+                          </>
+                        )}
+                      </div>
+                      <Input
+                        id="reports"
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                        onChange={handleFileUpload}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>

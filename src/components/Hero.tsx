@@ -9,7 +9,6 @@ const Hero = () => {
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-center w-full">
         <div className="text-foreground space-y-3 lg:space-y-4 text-center lg:text-left">
           <div className="space-y-2 lg:space-y-3">
-            <p className="text-sm lg:text-base font-medium text-muted-foreground">Solution For Healthcare Needs</p>
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
               Best Chest Physician in <span className="text-lung-light-blue">Delhi</span> - Expert Pulmonology Care
             </h1>
