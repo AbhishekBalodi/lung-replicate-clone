@@ -419,9 +419,9 @@ const ServiceDetail = () => {
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/book-appointment">
-                <Button size="lg" className="w-full sm:w-auto bg-white text-lung-blue hover:bg-white/90">
+                <Button size="lg" className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white rounded-lg">
                   <Calendar className="mr-2 h-5 w-5" />
-                  Book Appointment
+                  Make Appointment
                 </Button>
               </Link>
               
