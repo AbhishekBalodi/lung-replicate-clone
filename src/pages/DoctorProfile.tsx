@@ -411,11 +411,11 @@ const DoctorProfile = () => {
                   <CreditCard className="h-6 w-6 text-lung-blue" />
                   <h3 className="text-xl font-bold text-foreground font-lexend">Payment Options</h3>
                 </div>
-                <div className="flex gap-2">
-                  <span className="px-3 py-1 bg-lung-blue text-white rounded-full text-xs font-medium">Cards</span>
-                  <span className="px-3 py-1 bg-green-500 text-white rounded-full text-xs font-medium">UPI</span>
-                  <span className="px-3 py-1 bg-purple-500 text-white rounded-full text-xs font-medium">Wallet</span>
-                  <span className="px-3 py-1 bg-orange-500 text-white rounded-full text-xs font-medium">Net Banking</span>
+                <div className="flex gap-2 flex-wrap">
+                  <span className="px-3 py-1.5 bg-lung-blue text-white rounded-full text-xs font-medium flex items-center justify-center">Cards</span>
+                  <span className="px-3 py-1.5 bg-green-500 text-white rounded-full text-xs font-medium flex items-center justify-center">UPI</span>
+                  <span className="px-3 py-1.5 bg-purple-500 text-white rounded-full text-xs font-medium flex items-center justify-center">Wallet</span>
+                  <span className="px-3 py-1.5 bg-orange-500 text-white rounded-full text-xs font-medium flex items-center justify-center">Net Banking</span>
                 </div>
               </Card>
             </div>

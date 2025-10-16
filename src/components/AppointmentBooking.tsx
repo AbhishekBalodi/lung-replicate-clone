@@ -94,8 +94,8 @@ const AppointmentBooking = () => {
             {steps.map((step, index) => {
               const IconComponent = step.icon;
               return (
-                <div key={step.id} className="flex items-center">
-                  <div className="text-center">
+              <div key={step.id} className="flex items-center">
+                  <div className="flex flex-col items-center">
                     <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-1 sm:mb-2 transition-colors ${
                       currentStep === step.id 
                         ? "bg-lung-blue text-white" 
@@ -105,8 +105,8 @@ const AppointmentBooking = () => {
                     }`}>
                       <IconComponent className="h-5 w-5 sm:h-7 sm:w-7" />
                     </div>
-                    <p className="font-semibold text-xs sm:text-sm">{step.title}</p>
-                    <p className="text-xs text-muted-foreground hidden sm:block">{step.subtitle}</p>
+                    <p className="font-semibold text-xs sm:text-sm text-center">{step.title}</p>
+                    <p className="text-xs text-muted-foreground hidden sm:block text-center">{step.subtitle}</p>
                   </div>
                   {index < steps.length - 1 && (
                     <div className={`w-8 sm:w-12 h-0.5 mx-2 sm:mx-4 ${
