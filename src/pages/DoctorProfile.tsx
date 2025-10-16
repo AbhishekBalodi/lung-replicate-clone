@@ -10,10 +10,10 @@ const DoctorProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
 
   const stats = [
-    { label: "Patients Treated", value: "15,000+", icon: Users, color: "text-lung-blue" },
-    { label: "Years Experience", value: "15+", icon: Calendar, color: "text-lung-green" },
+    { label: "Patients Treated", value: "50,000+", icon: Users, color: "text-lung-blue" },
+    { label: "Years Experience", value: "40+", icon: Calendar, color: "text-lung-green" },
     { label: "Patient Rating", value: "4.9/5", icon: Star, color: "text-yellow-500" },
-    { label: "Success Rate", value: "96%", icon: CheckCircle, color: "text-lung-green" }
+    { label: "Success Rate", value: "98%", icon: CheckCircle, color: "text-lung-green" }
   ];
 
   return (
@@ -44,20 +44,20 @@ const DoctorProfile = () => {
             
             <div className="flex-1 text-center lg:text-left">
               <h1 className="text-4xl font-bold text-white mb-4 font-manrope">
-                Dr. Mann
+                Dr. Paramjeet Singh Mann
               </h1>
               <p className="text-white/90 text-lg mb-6 font-livvic">
-                Director & Unit Head - Internal Medicine, Family Care & Wellness Center
+                MD (Tuberculosis & Chest Diseases), FCCP | Chest Physician & Pulmonologist
               </p>
               
               <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 text-white/80">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  <span>15+ Years Experience</span>
+                  <span>40+ Years Experience</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Award className="h-5 w-5" />
-                  <span>MedHealth Hospital</span>
+                  <span>FCCP, USA</span>
                 </div>
               </div>
               
@@ -121,12 +121,7 @@ const DoctorProfile = () => {
                       <h2 className="text-2xl font-bold text-foreground font-lexend">Professional Summary</h2>
                     </div>
                     <p className="text-muted-foreground leading-relaxed font-manrope">
-                      Dr. Mann is an expert physician with over 15 years of experience in 
-                      internal medicine, family care, and preventive health. He is committed to 
-                      delivering the highest standard of care to his patients. Dr. Mann routinely manages 
-                      complex cases, including diabetes, hypertension, heart disease, and preventive care. His 
-                      extensive clinical expertise ensures accurate diagnosis and effective treatment. He is 
-                      known for his patient-centric approach and dedication to comprehensive health care.
+                      Dr. Paramjeet Singh Mann is a highly distinguished chest physician and pulmonologist with over 40 years of exceptional experience in respiratory medicine, sleep medicine, and critical care. He holds an M.D. in Tuberculosis and Chest Diseases from the prestigious Vallabhbhai Patel Chest Institute, Delhi University (WHO listed and Medical Council of India recognized). Dr. Mann has received numerous accolades including the Fellowship of the American College of Chest Physicians (FCCP) in 2009, the Rajshiri Dr. Ram Kishore Memorial Medal for topping the MD examination in 1988, and the Best Doctor Award in Oman in 1998. His extensive clinical expertise spans diagnosis and treatment of COPD, asthma, tuberculosis, pneumonia, sleep disorders, and all respiratory conditions, ensuring the highest standard of patient care.
                     </p>
                   </div>
 
@@ -138,27 +133,26 @@ const DoctorProfile = () => {
                     </div>
                     <div className="space-y-6">
                       <div className="border-l-4 border-lung-blue pl-6">
-                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Director & Unit Head, MedHealth Hospital</h3>
-                        <p className="text-lung-blue font-medium mb-2">MedHealth Systems</p>
+                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Director, North Delhi Chest Centre</h3>
+                        <p className="text-lung-blue font-medium mb-2">Present</p>
                         <p className="text-muted-foreground font-livvic">
-                          Leading internal medicine, family care, diabetes management, and preventive health services
+                          Leading comprehensive respiratory care, pulmonary function testing, bronchoscopy, sleep studies, and critical care services in North Delhi
                         </p>
                       </div>
                       <div className="border-l-4 border-lung-blue pl-6">
-                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Senior Consultant</h3>
-                        <p className="text-lung-blue font-medium mb-2">General Medical Center</p>
+                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Regional Tuberculosis Focal Point</h3>
+                        <p className="text-lung-blue font-medium mb-2">South Sharqia Region, Sultanate of Oman (1991-2004)</p>
                         <p className="text-muted-foreground font-livvic">
-                          Department of Internal Medicine & Family Health at General Medical Center
+                          Recognized by WHO Tuberculosis Control Program for outstanding efforts in tuberculosis control and management. Coordinated regional TB control activities and implemented WHO guidelines
                         </p>
                       </div>
                       <div className="border-l-4 border-lung-blue pl-6">
-                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Senior Resident</h3>
-                        <p className="text-lung-blue font-medium mb-2">University Medical Center</p>
+                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Medical Officer</h3>
+                        <p className="text-lung-blue font-medium mb-2">Rajan Babu Tuberculosis Hospital (1985-1990)</p>
                         <p className="text-muted-foreground font-livvic">
-                          Department of Internal Medicine
+                          One of Asia's largest tuberculosis hospitals affiliated with Vallabhbhai Patel Chest Institute, University of Delhi. Played crucial role in diagnosing and treating numerous TB patients
                         </p>
                       </div>
-                      <Button variant="link" className="text-lung-blue font-livvic">Read More</Button>
                     </div>
                   </div>
 
@@ -170,14 +164,24 @@ const DoctorProfile = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <Card className="p-6 bg-lung-green/5 border-lung-green/20">
-                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MD (Internal Medicine)</h3>
-                        <p className="text-lung-green font-medium mb-2">State Medical University</p>
-                        <p className="text-sm text-muted-foreground font-livvic">First Division</p>
+                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MD (Tuberculosis & Chest Diseases)</h3>
+                        <p className="text-lung-green font-medium mb-2">Vallabhbhai Patel Chest Institute, Delhi University</p>
+                        <p className="text-sm text-muted-foreground font-livvic">1988 | WHO Listed & MCI Recognized | Top Rank</p>
+                      </Card>
+                      <Card className="p-6 bg-lung-green/5 border-lung-green/20">
+                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">Diploma (TB & Chest Diseases)</h3>
+                        <p className="text-lung-green font-medium mb-2">Vallabhbhai Patel Chest Institute, Delhi University</p>
+                        <p className="text-sm text-muted-foreground font-livvic">1985 | WHO Listed & MCI Recognized</p>
                       </Card>
                       <Card className="p-6 bg-lung-green/5 border-lung-green/20">
                         <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MBBS</h3>
-                        <p className="text-lung-green font-medium mb-2">National Medical College</p>
-                        <p className="text-sm text-muted-foreground font-livvic">Merit Certificate</p>
+                        <p className="text-lung-green font-medium mb-2">Maulana Azad Medical College, Delhi University</p>
+                        <p className="text-sm text-muted-foreground font-livvic">1981 | WHO Listed & MCI Recognized</p>
+                      </Card>
+                      <Card className="p-6 bg-lung-green/5 border-lung-green/20">
+                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">FCCP</h3>
+                        <p className="text-lung-green font-medium mb-2">American College of Chest Physicians</p>
+                        <p className="text-sm text-muted-foreground font-livvic">2009 | Fellowship</p>
                       </Card>
                     </div>
                   </div>
@@ -190,16 +194,15 @@ const DoctorProfile = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[
-                        "Diabetes Management", "Hypertension", "Heart Disease",
-                        "Preventive Care", "Family Medicine", "Chronic Disease Management",
-                        "Health Screenings", "Wellness Programs", "Adult Medicine"
+                        "Tuberculosis Management", "COPD Treatment", "Asthma Care",
+                        "Pneumonia", "Sleep Disorders", "Critical Care",
+                        "Bronchoscopy", "Pulmonary Function Tests", "Respiratory Medicine"
                       ].map((specialty, index) => (
                         <Card key={index} className="p-4 bg-lung-purple/5 border-lung-purple/20 text-center">
                           <p className="text-lung-purple font-medium font-livvic">{specialty}</p>
                         </Card>
                       ))}
                     </div>
-                    <Button variant="link" className="text-lung-blue font-livvic mt-4">Read More</Button>
                   </div>
 
                   {/* Professional Memberships */}
@@ -210,10 +213,10 @@ const DoctorProfile = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
-                        "American Medical Association (AMA)",
-                        "American College of Physicians (ACP)",
-                        "International Medical Society (IMS)",
-                        "National Board of Medical Examiners (NBME)"
+                        "American College of Chest Physicians (ACCP)",
+                        "WHO Tuberculosis Control Program",
+                        "European Respiratory Society (ERS)",
+                        "Medical Council of India"
                       ].map((membership, index) => (
                         <Card key={index} className="p-4 bg-lung-blue/10 border-lung-blue/20">
                           <div className="flex items-center gap-3">
@@ -349,22 +352,33 @@ const DoctorProfile = () => {
                   <Award className="h-6 w-6 text-yellow-600" />
                   <h3 className="text-xl font-bold text-foreground font-lexend">Awards & Recognition</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-yellow-100 rounded-lg">
-                    <Award className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-foreground font-livvic">Merit Certificate in MBBS</p>
+                <div className="space-y-4">
+                  <div className="p-4 bg-yellow-100 rounded-lg">
+                    <div className="flex items-start gap-3 mb-2">
+                      <Award className="h-6 w-6 text-yellow-600 mt-1" />
+                      <div>
+                        <p className="font-bold text-foreground font-livvic">FCCP Fellowship (2009)</p>
+                        <p className="text-sm text-muted-foreground font-livvic">American College of Chest Physicians, USA</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-3 bg-yellow-100 rounded-lg">
-                    <Award className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-foreground font-livvic">First Division in MD</p>
+                  <div className="p-4 bg-yellow-100 rounded-lg">
+                    <div className="flex items-start gap-3 mb-2">
+                      <Award className="h-6 w-6 text-yellow-600 mt-1" />
+                      <div>
+                        <p className="font-bold text-foreground font-livvic">Best Doctor Award (1998)</p>
+                        <p className="text-sm text-muted-foreground font-livvic">South Sharquia Region, Sultanate of Oman</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-center p-3 bg-yellow-100 rounded-lg">
-                    <Award className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-foreground font-livvic">Best Poster Presentation during MD</p>
-                  </div>
-                  <div className="text-center p-3 bg-yellow-100 rounded-lg">
-                    <Award className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-foreground font-livvic">European Respiratory Society (ERS) Member</p>
+                  <div className="p-4 bg-yellow-100 rounded-lg">
+                    <div className="flex items-start gap-3 mb-2">
+                      <Award className="h-6 w-6 text-yellow-600 mt-1" />
+                      <div>
+                        <p className="font-bold text-foreground font-livvic">Rajshiri Dr. Ram Kishore Memorial Medal (1988)</p>
+                        <p className="text-sm text-muted-foreground font-livvic">Top Candidate in MD Examination, Delhi University</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </Card>

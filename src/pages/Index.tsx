@@ -6,6 +6,7 @@ import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 import FloatingCTA from "@/components/FloatingCTA";
+import Qualifications from "@/components/Qualifications";
 
 const Index = () => {
   const structuredData = {
@@ -59,6 +60,7 @@ const Index = () => {
       <FloatingCTA />
       <div className="pt-32">
       <Hero />
+      <Qualifications />
       <AppointmentBooking />
       <Services />
         <Contact />
