@@ -27,12 +27,11 @@ const AppointmentBooking = () => {
     { id: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle },
   ];
 
-  const doctors = [
-    "Dr. John Smith - Internal Medicine",
-    "Dr. Sarah Johnson - Cardiology", 
-    "Dr. Michael Chen - Neurology",
-    "Dr. Emily Davis - Orthopedics"
-  ];
+  const doctor = {
+    name: "Dr. Vikas Mann",
+    specialty: "Pulmonologist",
+    image: "/src/assets/dr-mann-passport.png"
+  };
 
   const handleNext = () => {
     if (currentStep < 4) {
@@ -120,13 +119,13 @@ const AppointmentBooking = () => {
         </div>
 
         {/* Form Content */}
-        <Card className="p-4 sm:p-6 lg:p-8 shadow-medium">
+        <Card className="p-4 sm:p-5 shadow-medium">
           {currentStep === 1 && (
-            <div className="space-y-4 lg:space-y-6">
-              <h3 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-medical-blue">Personal Information</h3>
-              <p className="text-muted-foreground mb-4 lg:mb-6 text-sm lg:text-base">Please provide your details for the appointment</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-3 text-medical-blue">Personal Information</h3>
+              <p className="text-muted-foreground mb-4 text-sm">Please provide your details for the appointment</p>
               
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="fullName">Full Name *</Label>
                   <Input
@@ -174,11 +173,11 @@ const AppointmentBooking = () => {
           )}
 
           {currentStep === 2 && (
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold mb-4 text-medical-blue">Select Date & Time</h3>
-              <p className="text-muted-foreground mb-6">Choose your preferred appointment date and time</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-3 text-medical-blue">Select Date & Time</h3>
+              <p className="text-muted-foreground mb-4 text-sm">Choose your preferred appointment date and time</p>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="date">Preferred Date *</Label>
                   <Input
@@ -204,34 +203,41 @@ const AppointmentBooking = () => {
           )}
 
           {currentStep === 3 && (
-            <div className="space-y-4 lg:space-y-6">
-              <h3 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-medical-blue">Choose Doctor</h3>
-              <p className="text-muted-foreground mb-4 lg:mb-6 text-sm lg:text-base">Select your preferred doctor for the appointment</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-3 text-medical-blue">Choose Doctor</h3>
+              <p className="text-muted-foreground mb-4 text-sm">Select your preferred doctor for the appointment</p>
               
-              <div className="grid gap-2 lg:gap-3">
-                {doctors.map((doctor) => (
-                  <label key={doctor} className="flex items-center space-x-3 p-3 lg:p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input
-                      type="radio"
-                      name="doctor"
-                      value={doctor}
-                      checked={formData.doctor === doctor}
-                      onChange={(e) => updateFormData("doctor", e.target.value)}
-                      className="text-medical-blue"
+              <div className="flex justify-center">
+                <div 
+                  onClick={() => updateFormData("doctor", `${doctor.name} - ${doctor.specialty}`)}
+                  className={`cursor-pointer border-2 rounded-lg p-6 transition-all hover:shadow-lg w-64 text-center ${
+                    formData.doctor === `${doctor.name} - ${doctor.specialty}` 
+                      ? "border-lung-blue bg-lung-blue/5" 
+                      : "border-gray-200 hover:border-lung-blue/50"
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <img 
+                      src={doctor.image} 
+                      alt={doctor.name}
+                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
                     />
-                    <span className="font-medium text-sm lg:text-base">{doctor}</span>
-                  </label>
-                ))}
+                    <div>
+                      <p className="font-semibold text-base text-foreground">{doctor.name}</p>
+                      <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {currentStep === 4 && (
-            <div className="space-y-4 lg:space-y-6">
-              <h3 className="text-lg lg:text-xl font-semibold mb-3 lg:mb-4 text-medical-blue">Confirm Your Appointment</h3>
-              <p className="text-muted-foreground mb-4 lg:mb-6 text-sm lg:text-base">Please review your appointment details</p>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold mb-3 text-medical-blue">Confirm Your Appointment</h3>
+              <p className="text-muted-foreground mb-4 text-sm">Please review your appointment details</p>
               
-              <div className="bg-gray-50 p-4 lg:p-6 rounded-lg space-y-3 lg:space-y-4">
+              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                   <div>
                     <p className="font-semibold text-sm lg:text-base">Patient Name:</p>
@@ -265,7 +271,7 @@ const AppointmentBooking = () => {
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row justify-between items-center pt-4 lg:pt-6 mt-4 lg:mt-6 border-t gap-3 sm:gap-0">
+          <div className="flex flex-col sm:flex-row justify-between items-center pt-4 mt-4 border-t gap-3 sm:gap-0">
             <Button
               variant="outline"
               onClick={handlePrevious}
