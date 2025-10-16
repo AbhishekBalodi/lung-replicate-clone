@@ -263,20 +263,22 @@ const BookAppointment = () => {
             <div className="grid gap-4">
               <Card 
                 className={`p-6 cursor-pointer border-2 transition-colors ${
-                  formData.selectedDoctor === "dr-naveen" ? "border-lung-blue bg-lung-blue/5" : "border-gray-200 hover:border-lung-blue/50"
+                  formData.selectedDoctor === "dr-mann" ? "border-lung-blue bg-lung-blue/5" : "border-gray-200 hover:border-lung-blue/50"
                 }`}
-                onClick={() => setFormData({...formData, selectedDoctor: "dr-naveen"})}
+                onClick={() => setFormData({...formData, selectedDoctor: "dr-mann"})}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-lung-blue rounded-full flex items-center justify-center">
-                    <Stethoscope className="h-8 w-8 text-white" />
-                  </div>
+                  <img 
+                    src="/src/assets/dr-mann-passport.png" 
+                    alt="Dr. Vikas Mann"
+                    className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
+                  />
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground font-lexend">Dr. Naveen Kumar Ailawadi</h3>
+                    <h3 className="text-lg font-bold text-foreground font-lexend">Dr. Vikas Mann</h3>
                     <p className="text-muted-foreground font-livvic">Pulmonologist & Respiratory Medicine</p>
-                    <p className="text-sm text-lung-blue font-medium">17+ Years Experience</p>
+                    <p className="text-sm text-lung-blue font-medium">40+ Years Experience</p>
                   </div>
-                  {formData.selectedDoctor === "dr-naveen" && (
+                  {formData.selectedDoctor === "dr-mann" && (
                     <CheckCircle className="h-6 w-6 text-lung-blue" />
                   )}
                 </div>
@@ -312,7 +314,7 @@ const BookAppointment = () => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div><span className="font-medium">Date:</span> {formData.preferredDate}</div>
                   <div><span className="font-medium">Time:</span> {formData.preferredTime}</div>
-                  <div><span className="font-medium">Doctor:</span> Dr. Naveen Kumar Ailawadi</div>
+                  <div><span className="font-medium">Doctor:</span> Dr. Vikas Mann</div>
                   <div><span className="font-medium">Type:</span> Pulmonology Consultation</div>
                 </div>
               </Card>
