@@ -81,8 +81,8 @@ const AppointmentBooking = () => {
         <div className="text-center mb-6">
           <div className="flex justify-center">
             <a href="/book-appointment" className="w-full sm:w-auto">
-              <Button className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base">
-                Book Now →
+              <Button className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base rounded-lg">
+                Make Appointment
               </Button>
             </a>
           </div>
