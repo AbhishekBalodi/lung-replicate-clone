@@ -300,28 +300,21 @@ const DoctorProfile = () => {
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-lung-blue mt-1" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">HealthCare Plus Clinic</p>
-                      <p className="text-sm text-muted-foreground font-livvic">Medical District, NY - 10001</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <MapPin className="h-5 w-5 text-lung-blue mt-1" />
-                    <div>
-                      <p className="font-medium text-foreground font-livvic">MedHealth Super Speciality Hospital</p>
-                      <p className="text-sm text-muted-foreground font-livvic">Health Avenue, NY - 10002</p>
+                      <p className="font-medium text-foreground font-livvic">North Delhi Chest Centre</p>
+                      <p className="text-sm text-muted-foreground font-livvic">321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-lung-green/5 rounded-lg">
                     <Phone className="h-5 w-5 text-lung-green" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">1 555 123 4567</p>
-                      <p className="text-sm text-muted-foreground font-livvic">24/7 Helpline</p>
+                      <p className="font-medium text-foreground font-livvic">+91-9810589799</p>
+                      <p className="text-sm text-muted-foreground font-livvic">+91-9810588799, +91-011-65101829</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-lung-blue" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">info@healthcareplus.com</p>
+                      <p className="font-medium text-foreground font-livvic">psmann58@yahoo.com</p>
                       <p className="text-sm text-muted-foreground font-livvic">For appointments</p>
                     </div>
                   </div>
