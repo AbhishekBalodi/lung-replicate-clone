@@ -24,7 +24,7 @@ const DoctorProfile = () => {
       <section className="bg-gradient-to-r from-lung-blue to-lung-blue/80 py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col lg:flex-row items-center gap-8">
-            <div className="relative">
+            <div className="flex flex-col items-center gap-4">
               <div className="w-48 h-48 rounded-full bg-white p-2">
                 <img 
                   src={drMannImage} 
@@ -32,12 +32,12 @@ const DoctorProfile = () => {
                   className="w-full h-full rounded-full object-cover"
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 flex gap-2">
-                <span className="bg-lung-green text-white px-3 py-1 rounded-full text-sm font-medium">
-                  General Medicine
+              <div className="flex gap-2">
+                <span className="bg-lung-green text-white px-4 py-1.5 rounded-full text-sm font-medium">
+                  Pulmonologist
                 </span>
-                <span className="bg-lung-blue-dark text-white px-3 py-1 rounded-full text-sm font-medium">
-                  Family Care
+                <span className="bg-lung-blue-dark text-white px-4 py-1.5 rounded-full text-sm font-medium">
+                  Respiratory Medicine
                 </span>
               </div>
             </div>
