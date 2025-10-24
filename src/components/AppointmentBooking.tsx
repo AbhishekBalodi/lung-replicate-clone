@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Calendar, UserCheck, CheckCircle, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const AppointmentBooking = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -34,25 +35,69 @@ const AppointmentBooking = () => {
     image: "/src/assets/dr-mann-passport.png"
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     } else {
-      toast({
-        title: "Appointment Booked!",
-        description: "Your appointment has been successfully scheduled.",
-      });
-      setCurrentStep(1);
-      setFormData({
-        fullName: "",
-        email: "",
-        phone: "",
-        date: "",
-        time: "",
-        doctor: "",
-        message: "",
-        reports: null
-      });
+      try {
+        // Save to database
+        const { error: dbError } = await supabase
+          .from('appointments')
+          .insert({
+            full_name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            appointment_date: formData.date,
+            appointment_time: formData.time,
+            selected_doctor: formData.doctor,
+            message: formData.message || null,
+            reports_uploaded: !!formData.reports
+          });
+
+        if (dbError) throw dbError;
+
+        // Send confirmation email
+        const { error: emailError } = await supabase.functions.invoke('send-appointment-email', {
+          body: {
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            appointmentDate: formData.date,
+            appointmentTime: formData.time,
+            selectedDoctor: formData.doctor,
+            message: formData.message
+          }
+        });
+
+        if (emailError) {
+          console.error("Email error:", emailError);
+          // Don't throw - appointment is saved even if email fails
+        }
+
+        toast({
+          title: "Appointment Booked!",
+          description: "Your appointment has been successfully scheduled. A confirmation email has been sent.",
+        });
+        
+        setCurrentStep(1);
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          date: "",
+          time: "",
+          doctor: "",
+          message: "",
+          reports: null
+        });
+      } catch (error: any) {
+        console.error("Error booking appointment:", error);
+        toast({
+          title: "Error",
+          description: "Failed to book appointment. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 

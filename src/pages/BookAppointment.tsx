@@ -10,9 +10,12 @@ import {
   Upload, ChevronLeft, ChevronRight 
 } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const BookAppointment = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     // Step 1 - Patient Details
     fullName: "",
@@ -40,9 +43,75 @@ const BookAppointment = () => {
     { number: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle }
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
+    } else {
+      try {
+        // Save to database
+        const { error: dbError } = await supabase
+          .from('appointments')
+          .insert({
+            full_name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            appointment_date: formData.preferredDate,
+            appointment_time: formData.preferredTime,
+            selected_doctor: "Dr. Paramjeet Singh Mann - Pulmonologist",
+            message: `${formData.notes || ''}\nAge: ${formData.age}\nGender: ${formData.gender}\nAddress: ${formData.address}\nMedical History: ${formData.medicalHistory}\nSymptoms: ${formData.currentSymptoms}`,
+            reports_uploaded: !!formData.reports
+          });
+
+        if (dbError) throw dbError;
+
+        // Send confirmation email
+        const { error: emailError } = await supabase.functions.invoke('send-appointment-email', {
+          body: {
+            fullName: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            appointmentDate: formData.preferredDate,
+            appointmentTime: formData.preferredTime,
+            selectedDoctor: "Dr. Paramjeet Singh Mann - Pulmonologist",
+            message: formData.notes
+          }
+        });
+
+        if (emailError) {
+          console.error("Email error:", emailError);
+          // Don't throw - appointment is saved even if email fails
+        }
+
+        toast({
+          title: "Appointment Booked!",
+          description: "Your appointment has been successfully scheduled. A confirmation email has been sent.",
+        });
+        
+        // Reset form and go back to step 1
+        setCurrentStep(1);
+        setFormData({
+          fullName: "",
+          email: "",
+          phone: "",
+          age: "",
+          gender: "",
+          address: "",
+          medicalHistory: "",
+          currentSymptoms: "",
+          preferredDate: "",
+          preferredTime: "",
+          selectedDoctor: "",
+          reports: null,
+          notes: ""
+        });
+      } catch (error: any) {
+        console.error("Error booking appointment:", error);
+        toast({
+          title: "Error",
+          description: "Failed to book appointment. Please try again.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
