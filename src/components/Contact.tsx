@@ -5,16 +5,76 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, Phone, Mail, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 const Contact = () => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: ""
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message Sent!",
-      description: "We'll get back to you as soon as possible.",
-    });
+    setIsSubmitting(true);
+
+    try {
+      // Validation
+      if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Save to database
+      const { error } = await supabase
+        .from('contacts')
+        .insert({
+          first_name: formData.firstName.trim(),
+          last_name: formData.lastName.trim(),
+          name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          email: formData.email.trim(),
+          phone: formData.phone.trim() || null,
+          subject: formData.subject.trim(),
+          message: formData.message.trim()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Thank you for contacting us. We'll get back to you as soon as possible.",
+      });
+
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: ""
+      });
+    } catch (error: any) {
+      console.error("Error submitting contact form:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -118,7 +178,10 @@ const Contact = () => {
                   <Input
                     id="firstName"
                     placeholder="Enter your first name"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({...formData, firstName: e.target.value})}
                     required
+                    maxLength={100}
                     className="mt-1"
                   />
                 </div>
@@ -127,7 +190,10 @@ const Contact = () => {
                   <Input
                     id="lastName"
                     placeholder="Enter your last name"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({...formData, lastName: e.target.value})}
                     required
+                    maxLength={100}
                     className="mt-1"
                   />
                 </div>
@@ -139,7 +205,10 @@ const Contact = () => {
                   id="email"
                   type="email"
                   placeholder="Enter your email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
+                  maxLength={255}
                   className="mt-1"
                 />
               </div>
@@ -150,6 +219,9 @@ const Contact = () => {
                   id="phone"
                   type="tel"
                   placeholder="Enter your phone number"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  maxLength={20}
                   className="mt-1"
                 />
               </div>
@@ -159,7 +231,10 @@ const Contact = () => {
                 <Input
                   id="subject"
                   placeholder="What is this regarding?"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({...formData, subject: e.target.value})}
                   required
+                  maxLength={200}
                   className="mt-1"
                 />
               </div>
@@ -169,16 +244,20 @@ const Contact = () => {
                 <Textarea
                   id="message"
                   placeholder="Please describe how we can help you..."
+                  value={formData.message}
+                  onChange={(e) => setFormData({...formData, message: e.target.value})}
                   required
+                  maxLength={2000}
                   className="mt-1 min-h-[120px]"
                 />
               </div>
               
               <Button
                 type="submit"
-                className="w-full bg-medical-blue hover:bg-medical-blue-dark text-white py-6 text-lg font-semibold"
+                disabled={isSubmitting}
+                className="w-full bg-medical-blue hover:bg-medical-blue-dark text-white py-6 text-lg font-semibold disabled:opacity-50"
               >
-                Send Message
+                {isSubmitting ? "Sending..." : "Send Message"}
               </Button>
             </form>
           </Card>

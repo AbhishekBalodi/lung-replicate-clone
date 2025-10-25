@@ -7,8 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Mail, Phone, ChevronRight, Send } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -16,10 +20,56 @@ const Contact = () => {
     message: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form submitted:", formData);
+    setIsSubmitting(true);
+
+    try {
+      // Validation
+      if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Save to database
+      const { error } = await supabase
+        .from('contacts')
+        .insert({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          subject: formData.subject || "General Inquiry",
+          message: formData.message.trim()
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Thank you for contacting us. We'll respond as soon as possible.",
+      });
+
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: ""
+      });
+    } catch (error: any) {
+      console.error("Error submitting contact form:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -136,6 +186,7 @@ const Contact = () => {
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
                       required
+                      maxLength={200}
                     />
                   </div>
                   <div>
@@ -147,38 +198,45 @@ const Contact = () => {
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
                       required
+                      maxLength={255}
                     />
                   </div>
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium mb-2 font-livvic">Subject</label>
-                  <Select onValueChange={(value) => setFormData({...formData, subject: value})}>
+                  <Select value={formData.subject} onValueChange={(value) => setFormData({...formData, subject: value})}>
                     <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                       <SelectValue placeholder="Select a subject" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="appointment">Book Appointment</SelectItem>
-                      <SelectItem value="consultation">General Consultation</SelectItem>
-                      <SelectItem value="emergency">Emergency</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="Book Appointment">Book Appointment</SelectItem>
+                      <SelectItem value="General Consultation">General Consultation</SelectItem>
+                      <SelectItem value="Emergency">Emergency</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div>
+                  <label className="block text-sm font-medium mb-2 font-livvic">Message *</label>
                   <Textarea
                     placeholder="Your message here..."
                     value={formData.message}
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                     className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 min-h-24 lg:min-h-32"
                     required
+                    maxLength={2000}
                   />
                 </div>
                 
-                <Button type="submit" className="w-full bg-lung-blue hover:bg-lung-blue-dark text-sm lg:text-base py-2 lg:py-3">
+                <Button 
+                  type="submit" 
+                  disabled={isSubmitting}
+                  className="w-full bg-lung-blue hover:bg-lung-blue-dark text-sm lg:text-base py-2 lg:py-3 disabled:opacity-50"
+                >
                   <Send className="h-4 w-4 mr-2" />
-                  Submit Now
+                  {isSubmitting ? "Sending..." : "Submit Now"}
                 </Button>
               </form>
             </div>
