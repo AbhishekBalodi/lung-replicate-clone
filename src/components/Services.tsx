@@ -47,25 +47,13 @@ const Services = () => {
       title: "Oxygen Therapy",
       description: "Supplemental oxygen treatment for respiratory conditions",
       slug: "oxygen-therapy"
-    },
-    {
-      icon: Wind,
-      title: "Lung Cancer Screening",
-      description: "Early detection screening for lung cancer",
-      slug: "lung-cancer-screening"
-    },
-    {
-      icon: HeartPulse,
-      title: "Critical Care",
-      description: "Intensive care for severe respiratory conditions",
-      slug: "critical-care"
     }
   ];
 
 
   return (
     <section className="pt-6 px-4 pb-0" id="services">
-      <div className="container mx-auto max-w-6xl">
+      <div className="container mx-auto max-w-7xl">
         {/* Services Header */}
         <div className="text-center mb-6 lg:mb-8">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4">Our Medical Services</h2>
@@ -76,7 +64,7 @@ const Services = () => {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-6">
           {services.map((service, index) => {
             const IconComponent = service.icon;
             return (
