@@ -36,20 +36,23 @@ const Contact = () => {
         return;
       }
 
-      // Save to database
-      const { error } = await supabase
-        .from('contacts')
-        .insert({
-          first_name: formData.firstName.trim(),
-          last_name: formData.lastName.trim(),
+      // Save to MySQL database via edge function
+      const { data: contactResponse, error: dbError } = await supabase.functions.invoke('mysql-contact', {
+        body: {
           name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
           email: formData.email.trim(),
-          phone: formData.phone.trim() || null,
+          phone: formData.phone.trim() || '',
           subject: formData.subject.trim(),
           message: formData.message.trim()
-        });
+        }
+      });
 
-      if (error) throw error;
+      if (dbError) throw dbError;
+
+      const result = await contactResponse;
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send message');
+      }
 
       toast({
         title: "Message Sent Successfully!",
@@ -69,7 +72,7 @@ const Contact = () => {
       console.error("Error submitting contact form:", error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error.message || "Failed to send message. Please try again.",
         variant: "destructive"
       });
     } finally {

@@ -40,40 +40,26 @@ const AppointmentBooking = () => {
       setCurrentStep(currentStep + 1);
     } else {
       try {
-        // Check if time slot is already booked
-        const { data: existingBooking, error: checkError } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('appointment_date', formData.date)
-          .eq('appointment_time', formData.time)
-          .maybeSingle();
-
-        if (checkError) throw checkError;
-
-        if (existingBooking) {
-          toast({
-            title: "Time Slot Unavailable",
-            description: "This time slot is already booked. Please select a different time.",
-            variant: "destructive"
-          });
-          return;
-        }
-
-        // Save to database
-        const { error: dbError } = await supabase
-          .from('appointments')
-          .insert({
+        // Save to MySQL database via edge function
+        const { data: appointmentResponse, error: dbError } = await supabase.functions.invoke('mysql-appointment', {
+          body: {
             full_name: formData.fullName,
             email: formData.email,
             phone: formData.phone,
             appointment_date: formData.date,
             appointment_time: formData.time,
             selected_doctor: formData.doctor,
-            message: formData.message || null,
+            message: formData.message || '',
             reports_uploaded: !!formData.reports
-          });
+          }
+        });
 
         if (dbError) throw dbError;
+
+        const result = await appointmentResponse;
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to book appointment');
+        }
 
         // Send confirmation email
         const { error: emailError } = await supabase.functions.invoke('send-appointment-email', {
@@ -113,7 +99,7 @@ const AppointmentBooking = () => {
         console.error("Error booking appointment:", error);
         toast({
           title: "Error",
-          description: "Failed to book appointment. Please try again.",
+          description: error.message || "Failed to book appointment. Please try again.",
           variant: "destructive"
         });
       }

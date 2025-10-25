@@ -1,1 +1,10 @@
 project_id = "boxjbqddejbpqbhwvkvo"
+
+[functions.mysql-appointment]
+verify_jwt = false
+
+[functions.mysql-contact]
+verify_jwt = false
+
+[functions.send-appointment-email]
+verify_jwt = false
