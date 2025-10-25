@@ -36,21 +36,26 @@ const Contact = () => {
         return;
       }
 
-      // Save to MySQL database via edge function
-      const { data: contactResponse, error: dbError } = await supabase.functions.invoke('mysql-contact', {
-        body: {
+      // Send to Express.js API
+      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      
+      const response = await fetch(`${apiBaseUrl}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
           email: formData.email.trim(),
           phone: formData.phone.trim() || '',
           subject: formData.subject.trim(),
           message: formData.message.trim()
-        }
+        }),
       });
 
-      if (dbError) throw dbError;
+      const result = await response.json();
 
-      const result = await contactResponse;
-      if (!result.success) {
+      if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to send message');
       }
 

@@ -40,9 +40,15 @@ const AppointmentBooking = () => {
       setCurrentStep(currentStep + 1);
     } else {
       try {
-        // Save to MySQL database via edge function
-        const { data: appointmentResponse, error: dbError } = await supabase.functions.invoke('mysql-appointment', {
-          body: {
+        // Send to Express.js API
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+        
+        const response = await fetch(`${apiBaseUrl}/api/appointment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             full_name: formData.fullName,
             email: formData.email,
             phone: formData.phone,
@@ -51,32 +57,13 @@ const AppointmentBooking = () => {
             selected_doctor: formData.doctor,
             message: formData.message || '',
             reports_uploaded: !!formData.reports
-          }
+          }),
         });
 
-        if (dbError) throw dbError;
+        const result = await response.json();
 
-        const result = await appointmentResponse;
-        if (!result.success) {
+        if (!response.ok || !result.success) {
           throw new Error(result.error || 'Failed to book appointment');
-        }
-
-        // Send confirmation email
-        const { error: emailError } = await supabase.functions.invoke('send-appointment-email', {
-          body: {
-            fullName: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-            appointmentDate: formData.date,
-            appointmentTime: formData.time,
-            selectedDoctor: formData.doctor,
-            message: formData.message
-          }
-        });
-
-        if (emailError) {
-          console.error("Email error:", emailError);
-          // Don't throw - appointment is saved even if email fails
         }
 
         toast({
