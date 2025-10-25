@@ -48,6 +48,25 @@ const BookAppointment = () => {
       setCurrentStep(currentStep + 1);
     } else {
       try {
+        // Check if time slot is already booked
+        const { data: existingBooking, error: checkError } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('appointment_date', formData.preferredDate)
+          .eq('appointment_time', formData.preferredTime)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        if (existingBooking) {
+          toast({
+            title: "Time Slot Unavailable",
+            description: "This time slot is already booked. Please select a different time.",
+            variant: "destructive"
+          });
+          return;
+        }
+
         // Save to database
         const { error: dbError } = await supabase
           .from('appointments')
