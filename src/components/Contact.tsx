@@ -86,7 +86,8 @@ const Contact = () => {
     {
       icon: Phone,
       title: "Phone Number",
-      details: "+91-9810589799, +91-9810588799\n+91-011-65101829"
+      details: null,
+      phones: ["+91-9810589799", "+91-9810588799", "+91-011-65101829"]
     },
     {
       icon: Mail,
@@ -126,7 +127,21 @@ const Contact = () => {
                         </div>
                         <div>
                           <h4 className="font-semibold text-foreground mb-2">{info.title}</h4>
-                          <p className="text-muted-foreground whitespace-pre-line">{info.details}</p>
+                          {info.phones ? (
+                            <div className="text-muted-foreground space-y-1">
+                              {info.phones.map((phone, i) => (
+                                <a 
+                                  key={i} 
+                                  href={`tel:${phone}`}
+                                  className="block hover:text-medical-green transition-colors"
+                                >
+                                  {phone}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-muted-foreground whitespace-pre-line">{info.details}</p>
+                          )}
                         </div>
                       </div>
                     </Card>

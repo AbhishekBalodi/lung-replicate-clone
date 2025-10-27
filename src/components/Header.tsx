@@ -87,10 +87,10 @@ const Header = () => {
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-2 lg:gap-4">
-            <div className="hidden lg:flex items-center gap-2 text-lung-blue font-semibold text-sm">
+            <a href="tel:+919810589799" className="hidden lg:flex items-center gap-2 text-lung-blue font-semibold text-sm hover:text-lung-green transition-colors">
               <Phone className="h-4 w-4" />
               <span>+91-9810589799</span>
-            </div>
+            </a>
             <a href="/book-appointment">
               <Button className="bg-lung-green hover:bg-lung-green-light text-white text-xs lg:text-sm px-3 lg:px-4 py-2 rounded-lg">
                 Make Appointment
@@ -164,10 +164,10 @@ const Header = () => {
                 Contact
               </a>
               <div className="border-t pt-4 space-y-3">
-                <div className="flex items-center gap-2 text-lung-blue font-semibold text-sm">
+                <a href="tel:+919810589799" className="flex items-center gap-2 text-lung-blue font-semibold text-sm hover:text-lung-green transition-colors">
                   <Phone className="h-4 w-4" />
                   <span>+91-9810589799</span>
-                </div>
+                </a>
                 <Button 
                   variant="outline" 
                   className="w-full border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"

@@ -85,9 +85,11 @@ const Footer = () => {
                 <Phone className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                 <h5 className="font-semibold text-white font-manrope text-sm lg:text-base">EMERGENCY CALL</h5>
               </div>
-              <p className="text-white/90 font-manrope text-sm lg:text-base">
-                +91-9810589799, +91-9810588799, +91-011-65101829
-              </p>
+              <div className="text-white/90 font-manrope text-sm lg:text-base space-y-1">
+                <a href="tel:+919810589799" className="block hover:text-lung-green transition-colors">+91-9810589799</a>
+                <a href="tel:+919810588799" className="block hover:text-lung-green transition-colors">+91-9810588799</a>
+                <a href="tel:+91011-65101829" className="block hover:text-lung-green transition-colors">+91-011-65101829</a>
+              </div>
             </div>
           </div>
         </div>
