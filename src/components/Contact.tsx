@@ -36,27 +36,19 @@ const Contact = () => {
         return;
       }
 
-      // Send to Express.js API
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-      
-      const response = await fetch(`${apiBaseUrl}/api/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Save to Supabase database
+      const { error } = await supabase
+        .from('contacts')
+        .insert({
           name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
           email: formData.email.trim(),
-          phone: formData.phone.trim() || '',
+          phone: formData.phone.trim() || null,
           subject: formData.subject.trim(),
           message: formData.message.trim()
-        }),
-      });
+        });
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to send message');
+      if (error) {
+        throw error;
       }
 
       toast({
@@ -263,7 +255,7 @@ const Contact = () => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-medical-blue hover:bg-medical-blue-dark text-white py-6 text-lg font-semibold disabled:opacity-50"
+                className="w-full bg-medical-green hover:bg-medical-green/90 text-white py-6 text-lg font-semibold rounded-full disabled:opacity-50"
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
               </Button>
