@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Star, Users, Award, CheckCircle, Calendar, Heart, Briefcase, GraduationCap, Grid3X3, MapPin, Phone, Mail, CreditCard, Shield } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import drMannImage from "@/assets/dr-mann-passport.png";
 
 const DoctorProfile = () => {
@@ -194,13 +195,21 @@ const DoctorProfile = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {[
-                        "Tuberculosis Management", "COPD Treatment", "Asthma Care",
-                        "Pneumonia", "Sleep Disorders", "Critical Care",
-                        "Bronchoscopy", "Pulmonary Function Tests", "Respiratory Medicine"
+                        { name: "Tuberculosis Management", link: "/conditions/tb-treatment" },
+                        { name: "COPD Treatment", link: "/conditions/copd-treatment" },
+                        { name: "Asthma Care", link: "/conditions/asthma-treatment" },
+                        { name: "Pneumonia", link: "/conditions/pneumonia-treatment" },
+                        { name: "Sleep Disorders", link: "/conditions/sleep-apnea" },
+                        { name: "Critical Care", link: "/services/critical-care" },
+                        { name: "Bronchoscopy", link: "/services/bronchoscopy" },
+                        { name: "Pulmonary Function Tests", link: "/services/pulmonary-function-test" },
+                        { name: "Respiratory Medicine", link: "/" }
                       ].map((specialty, index) => (
-                        <Card key={index} className="p-4 bg-lung-purple/5 border-lung-purple/20 text-center">
-                          <p className="text-lung-purple font-medium font-livvic">{specialty}</p>
-                        </Card>
+                        <Link key={index} to={specialty.link}>
+                          <Card className="p-4 bg-lung-purple/5 border-lung-purple/20 text-center hover:shadow-medium transition-all hover:-translate-y-1 cursor-pointer">
+                            <p className="text-lung-purple font-medium font-livvic">{specialty.name}</p>
+                          </Card>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -232,26 +241,44 @@ const DoctorProfile = () => {
 
               {activeTab === "reviews" && (
                 <div>
-                  <h2 className="text-2xl font-bold text-foreground mb-6 font-lexend">Patient Reviews</h2>
-                  <div className="space-y-4">
-                    {[1,2,3].map((review) => (
-                      <Card key={review} className="p-6">
-                        <div className="flex items-start gap-4">
+                  <h2 className="text-2xl font-bold text-foreground mb-6 font-lexend">Patient Testimonials</h2>
+                  <div className="space-y-6">
+                    {[
+                      {
+                        text: "I was struggling with chronic asthma for years. Dr. Mann provided the right treatment and I finally feel relief. Best chest specialist in Delhi!",
+                        author: "Rajesh Kumar",
+                        location: "South Delhi",
+                        rating: 5
+                      },
+                      {
+                        text: "Highly professional and empathetic doctor. Got the best care for my father's COPD.",
+                        author: "Priya Sharma",
+                        location: "Delhi NCR",
+                        rating: 5
+                      },
+                      {
+                        text: "The lung rehabilitation program has been life-changing. I can now do activities I couldn't do before.",
+                        author: "Amit Patel",
+                        location: "East Delhi",
+                        rating: 5
+                      }
+                    ].map((testimonial, index) => (
+                      <Card key={index} className="p-6 hover:shadow-strong transition-shadow">
+                        <div className="flex gap-1 mb-4">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                            <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                          ))}
+                        </div>
+                        <p className="text-muted-foreground italic mb-6 font-manrope">
+                          "{testimonial.text}"
+                        </p>
+                        <div className="flex items-center gap-2">
                           <div className="w-12 h-12 bg-lung-blue/10 rounded-full flex items-center justify-center">
                             <Users className="h-6 w-6 text-lung-blue" />
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="flex text-yellow-400">
-                                {[1,2,3,4,5].map((star) => (
-                                  <Star key={star} className="h-4 w-4 fill-current" />
-                                ))}
-                              </div>
-                              <span className="text-sm text-muted-foreground">Patient #{review}</span>
-                            </div>
-                            <p className="text-muted-foreground font-manrope">
-                              Excellent care and treatment. Dr. Mann is very knowledgeable and takes time to explain everything clearly.
-                            </p>
+                          <div>
+                            <p className="font-semibold text-foreground font-manrope">{testimonial.author}</p>
+                            <p className="text-sm text-muted-foreground font-manrope">{testimonial.location}</p>
                           </div>
                         </div>
                       </Card>

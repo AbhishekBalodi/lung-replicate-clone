@@ -5,7 +5,9 @@ import {
   Moon,
   TestTube,
   Cigarette,
-  HeartPulse
+  HeartPulse,
+  Activity,
+  AlertCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -47,6 +49,18 @@ const Services = () => {
       title: "Oxygen Therapy",
       description: "Supplemental oxygen treatment for respiratory conditions",
       slug: "oxygen-therapy"
+    },
+    {
+      icon: Wind,
+      title: "Lung Rehabilitation",
+      description: "Exercise and education programs for lung health",
+      slug: "lung-rehabilitation"
+    },
+    {
+      icon: Microscope,
+      title: "Critical Care Support",
+      description: "Advanced critical care for severe respiratory conditions",
+      slug: "critical-care"
     }
   ];
 
@@ -64,21 +78,21 @@ const Services = () => {
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-6">
           {services.map((service, index) => {
             const IconComponent = service.icon;
             return (
               <Link key={index} to={`/services/${service.slug}`}>
-                <Card className="h-[180px] p-4 lg:p-6 hover:shadow-medium transition-all duration-300 hover:-translate-y-1 lg:hover:-translate-y-2 group cursor-pointer flex flex-col">
-                  <div className="flex items-start gap-3 lg:gap-4">
-                    <div className="p-2 lg:p-3 bg-lung-blue/10 rounded-full group-hover:bg-lung-blue group-hover:text-white transition-all duration-300 flex-shrink-0">
-                      <IconComponent className="h-6 w-6 lg:h-8 lg:w-8 text-lung-blue group-hover:text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg lg:text-xl font-semibold mb-2 text-foreground line-clamp-2">{service.title}</h3>
-                      <p className="text-sm lg:text-base text-muted-foreground line-clamp-3">{service.description}</p>
-                    </div>
+                <Card className="p-6 text-center hover:shadow-strong transition-all duration-300 hover:-translate-y-1 group cursor-pointer h-[280px] flex flex-col">
+                  <div className="w-16 h-16 bg-lung-blue rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-lung-blue-dark transition-colors flex-shrink-0">
+                    <IconComponent className="h-8 w-8 text-white" />
                   </div>
+                  <h3 className="text-lg font-bold text-foreground mb-3 font-manrope line-clamp-2 flex-shrink-0">
+                    {service.title}
+                  </h3>
+                  <p className="text-muted-foreground text-sm font-manrope line-clamp-3">
+                    {service.description}
+                  </p>
                 </Card>
               </Link>
             );

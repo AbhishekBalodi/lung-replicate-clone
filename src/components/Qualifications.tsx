@@ -7,7 +7,7 @@ const Qualifications = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4 font-lexend">
-            Dr. Paramjeet Singh Mann's Qualifications
+            About Dr. Paramjeet Singh Mann
           </h2>
           <p className="text-muted-foreground text-lg font-livvic max-w-3xl mx-auto">
             Over 40 years of distinguished service in respiratory medicine with prestigious qualifications from WHO-listed institutions

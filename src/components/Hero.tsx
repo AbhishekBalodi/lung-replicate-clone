@@ -60,7 +60,8 @@ const Hero = () => {
                 </div>
                 <div>
                   <p className="font-semibold text-xs sm:text-sm">Opening Hours</p>
-                  <p className="text-[10px] sm:text-xs opacity-90">Mon-Sat: 9AM - 7PM</p>
+                  <p className="text-[10px] sm:text-xs opacity-90">10 AM - 3 PM Sant Parmanand</p>
+                  <p className="text-[10px] sm:text-xs opacity-90">5 PM - 8 PM North Delhi</p>
                 </div>
               </div>
             </Card>

@@ -41,7 +41,7 @@ const Header = () => {
             </div>
             <div className="flex items-center gap-2">
               <Clock className="h-3 w-3 lg:h-4 lg:w-4" />
-              <span>Mon-Sat: 06:00 PM - 08:00 PM</span>
+              <span>10 AM - 3 PM Daily - Sant Parmanand Hospital | 5 PM - 8 PM Daily - North Delhi Chest Center</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -71,8 +71,8 @@ const Header = () => {
             <a href="/" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Home
             </a>
-            <a href="/doctors/dr-mann" className="text-foreground hover:text-lung-blue transition-colors font-medium">
-              Doctors
+            <a href="/doctors/paramjeet-singh-mann" className="text-foreground hover:text-lung-blue transition-colors font-medium">
+              About
             </a>
             <a href="/services" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Services
@@ -136,11 +136,11 @@ const Header = () => {
                 Home
               </a>
               <a 
-                href="/doctors/dr-mann" 
+                href="/doctors/paramjeet-singh-mann" 
                 className="block py-2 text-foreground hover:text-lung-blue transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Doctors
+                About
               </a>
               <a 
                 href="/services" 
