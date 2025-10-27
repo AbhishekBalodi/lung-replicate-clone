@@ -139,10 +139,10 @@ const Contact = () => {
                 <Phone className="h-6 w-6 lg:h-8 lg:w-8 text-white" />
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">Call Us</h3>
-              <p className="text-muted-foreground font-livvic text-sm lg:text-base">
-                Mobile: +91-9810589799, +91-9810588799<br />
-                Phone: +91-011-65101829
-              </p>
+              <div className="text-muted-foreground font-livvic text-sm lg:text-base">
+                <div>Mobile: <a href="tel:+919810589799" className="hover:text-lung-blue transition-colors">+91-9810589799</a>, <a href="tel:+919810588799" className="hover:text-lung-blue transition-colors">+91-9810588799</a></div>
+                <div>Phone: <a href="tel:+91011-65101829" className="hover:text-lung-blue transition-colors">+91-011-65101829</a></div>
+              </div>
             </Card>
           </div>
 
