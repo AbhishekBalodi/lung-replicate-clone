@@ -169,9 +169,9 @@ const Contact = () => {
           </div>
 
           {/* Contact Form */}
-          <Card className="p-8 shadow-medium">
+          <Card className="p-8 shadow-medium self-start">
             <h3 className="text-2xl font-semibold mb-6 text-foreground">Send us a Message</h3>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 flex flex-col">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="firstName">First Name *</Label>
@@ -255,9 +255,9 @@ const Contact = () => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-medical-green hover:bg-medical-green/90 text-white py-6 text-lg font-semibold rounded-full disabled:opacity-50"
+                className="w-full bg-medical-green hover:bg-medical-green/90 text-white py-6 text-lg font-semibold rounded-full disabled:opacity-50 mt-4"
               >
-                {isSubmitting ? "Sending..." : "Send Message"}
+                {isSubmitting ? "Sending..." : "Send"}
               </Button>
             </form>
           </Card>
