@@ -1,10 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
-import { 
-  Wind, HeartPulse, AlertCircle, Activity,
-  TestTube, Stethoscope, Zap, ChevronRight, Star, User
-} from "lucide-react";
+import { Activity, AlertCircle, ChevronRight, HeartPulse, Microscope, Star, Stethoscope, TestTube, User, Wind, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
 
@@ -57,7 +54,39 @@ const Treatments = () => {
       title: "Sleep Apnea",
       description: "CPAP therapy and expert care for sleep disorders",
       slug: "sleep-apnea"
-    }
+    },
+
+    {
+  icon: Activity,
+  title: "Eosinophilic Lung Diseases",
+  description: "Diagnosis and care for eosinophilic pneumonias",
+  slug: "eosinophilic-lung-diseases",
+},
+{
+  icon: AlertCircle,
+  title: "Multidrug-Resistant Tuberculosis (MDR-TB)",
+  description: "Specialized care for multidrug-resistant tuberculosis",
+  slug: "mdr-tb-treatment",
+},
+{
+  icon: Microscope,
+  title: "Lung Cancers",
+  description: "Evaluation, staging, and coordinated treatment",
+  slug: "lung-cancer",
+},
+{
+  icon: TestTube,
+  title: "Fungal Lung Diseases",
+  description: "Expert diagnosis and antifungal therapy",
+  slug: "fungal-lung-diseases",
+},
+{
+  icon: AlertCircle,
+  title: "Parasitic Lung Diseases",
+  description: "Targeted therapy for rare parasitic infections",
+  slug: "parasitic-lung-diseases",
+}
+
   ];
 
   const testimonials = [

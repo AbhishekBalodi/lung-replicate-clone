@@ -1,14 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { 
-  Wind,
-  Microscope,
-  Moon,
-  TestTube,
-  Cigarette,
-  HeartPulse,
-  Activity,
-  AlertCircle
-} from "lucide-react";
+import { Activity, AlertCircle, Cigarette, HeartPulse, Microscope, Moon, TestTube, Wind } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Services = () => {
@@ -62,7 +53,43 @@ const Services = () => {
       description: "Advanced critical care for severe respiratory conditions",
       slug: "critical-care"
     }
-  ];
+  ,
+{
+  icon: Activity,
+  title: "Spirometry",
+  description: "Accurate test to assess airflow and lung capacity",
+  slug: "spirometry",
+},
+{
+  icon: TestTube,
+  title: "Pleural Aspiration",
+  description: "Safe fluid removal from pleural space for relief and diagnosis",
+  slug: "pleural-aspiration",
+},
+{
+  icon: AlertCircle,
+  title: "Intercostal Chest Tube (ICT) Insertion",
+  description: "Chest drain placement to remove air, blood, or fluid",
+  slug: "ict-insertion",
+},
+{
+  icon: Microscope,
+  title: "Pleuroscopy",
+  description: "Minimally invasive visual examination of pleural cavity",
+  slug: "pleuroscopy",
+},
+{
+  icon: TestTube,
+  title: "Arterial Blood Gas (ABG) Analysis",
+  description: "On-site test for oxygen, CO₂, and pH to guide therapy",
+  slug: "abg-analysis",
+},
+{
+  icon: Moon,
+  title: "CPAP & BiPAP Therapy",
+  description: "Non-invasive breathing support for sleep apnea & COPD",
+  slug: "cpap-bipap-therapy",
+}];
 
 
   return (

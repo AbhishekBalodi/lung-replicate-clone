@@ -63,7 +63,45 @@ const Services = () => {
       title: "Lung Cancer Screening",
       description: "Early detection with low-dose CT scan for high-risk patients",
       slug: "lung-cancer-screening"
-    }
+    },
+
+   {
+  icon: Activity,
+  title: "Spirometry",
+  description: "Accurate test to assess airflow and lung capacity",
+  slug: "spirometry",
+},
+{
+  icon: TestTube,
+  title: "Pleural Aspiration",
+  description: "Safe fluid removal from pleural space for relief and diagnosis",
+  slug: "pleural-aspiration",
+},
+{
+  icon: AlertCircle,
+  title: "Intercostal Chest Tube (ICT) Insertion",
+  description: "Chest drain placement to remove air, blood, or fluid",
+  slug: "ict-insertion",
+},
+{
+  icon: Microscope,
+  title: "Pleuroscopy",
+  description: "Minimally invasive visual examination of pleural cavity",
+  slug: "pleuroscopy",
+},
+{
+  icon: TestTube,
+  title: "Arterial Blood Gas (ABG) Analysis",
+  description: "On-site test for oxygen, CO₂, and pH to guide therapy",
+  slug: "abg-analysis",
+},
+{
+  icon: Moon,
+  title: "CPAP & BiPAP Therapy",
+  description: "Non-invasive breathing support for sleep apnea & COPD",
+  slug: "cpap-bipap-therapy",
+}
+
   ];
 
   const testimonials = [

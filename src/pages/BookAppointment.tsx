@@ -49,9 +49,8 @@ const BookAppointment = () => {
     } else {
       try {
         // Send to Express.js API
-        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
         
-        const response = await fetch(`${apiBaseUrl}/api/appointment`, {
+        const response = await fetch(`/api/appointment`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

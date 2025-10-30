@@ -32,6 +32,78 @@ const ServiceDetail = () => {
   const { slug } = useParams();
 
   const serviceDetails: Record<string, any> = {
+"cpap-bipap-therapy": {
+  title: "Cpap Bipap Therapy in Delhi",
+  heroImage: lungCancerScreeningHero,
+  introduction: "Content coming soon.",
+  whyNeeded: "TBD",
+  howItWorks: "TBD",
+  whyChooseUs: "Experienced pulmonologist, safe and effective care.",
+  faqs: [
+    { question: "Is it safe?", answer: "Yes, performed by specialists." }
+  ]
+},
+
+"abg-analysis": {
+  title: "Abg Analysis in Delhi",
+  heroImage: bronchoscopyHero,
+  introduction: "Content coming soon.",
+  whyNeeded: "TBD",
+  howItWorks: "TBD",
+  whyChooseUs: "Experienced pulmonologist, safe and effective care.",
+  faqs: [
+    { question: "Is it safe?", answer: "Yes, performed by specialists." }
+  ]
+},
+
+"pleuroscopy": {
+  title: "Pleuroscopy in Delhi",
+  heroImage: bronchoscopyHero,
+  introduction: "Content coming soon.",
+  whyNeeded: "TBD",
+  howItWorks: "TBD",
+  whyChooseUs: "Experienced pulmonologist, safe and effective care.",
+  faqs: [
+    { question: "Is it safe?", answer: "Yes, performed by specialists." }
+  ]
+},
+
+"ict-insertion": {
+  title: "Ict Insertion in Delhi",
+  heroImage: bronchoscopyHero,
+  introduction: "Content coming soon.",
+  whyNeeded: "TBD",
+  howItWorks: "TBD",
+  whyChooseUs: "Experienced pulmonologist, safe and effective care.",
+  faqs: [
+    { question: "Is it safe?", answer: "Yes, performed by specialists." }
+  ]
+},
+
+"pleural-aspiration": {
+  title: "Pleural Aspiration in Delhi",
+  heroImage: bronchoscopyHero,
+  introduction: "Content coming soon.",
+  whyNeeded: "TBD",
+  howItWorks: "TBD",
+  whyChooseUs: "Experienced pulmonologist, safe and effective care.",
+  faqs: [
+    { question: "Is it safe?", answer: "Yes, performed by specialists." }
+  ]
+},
+
+"spirometry": {
+  title: "Spirometry in Delhi",
+  heroImage: pftHero,
+  introduction: "Content coming soon.",
+  whyNeeded: "TBD",
+  howItWorks: "TBD",
+  whyChooseUs: "Experienced pulmonologist, safe and effective care.",
+  faqs: [
+    { question: "Is it safe?", answer: "Yes, performed by specialists." }
+  ]
+},
+
     "pulmonary-function-test": {
       title: "Pulmonary Function Test (PFT) in Delhi – Accurate Lung Function Diagnosis",
       heroImage: pftHero,

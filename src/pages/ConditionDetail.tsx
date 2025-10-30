@@ -35,6 +35,76 @@ const ConditionDetail = () => {
   const { slug } = useParams();
 
   const conditionDetails: Record<string, any> = {
+"parasitic-lung-diseases": {
+  title: "Parasitic Lung Diseases in Delhi",
+  heroImage: pleuralHero,
+  introduction: "Content coming soon.",
+  causes: "TBD",
+  symptoms: ["TBD"],
+  diagnosis: "TBD",
+  treatment: "TBD",
+  whyChooseUs: "Comprehensive diagnostics and specialist care.",
+  faqs: [
+    { question: "Is it curable?", answer: "Depends on the condition and stage." }
+  ]
+},
+
+"fungal-lung-diseases": {
+  title: "Fungal Lung Diseases in Delhi",
+  heroImage: pneumoniaHero,
+  introduction: "Content coming soon.",
+  causes: "TBD",
+  symptoms: ["TBD"],
+  diagnosis: "TBD",
+  treatment: "TBD",
+  whyChooseUs: "Comprehensive diagnostics and specialist care.",
+  faqs: [
+    { question: "Is it curable?", answer: "Depends on the condition and stage." }
+  ]
+},
+
+"lung-cancer": {
+  title: "Lung Cancer in Delhi",
+  heroImage: pneumoniaHero,
+  introduction: "Content coming soon.",
+  causes: "TBD",
+  symptoms: ["TBD"],
+  diagnosis: "TBD",
+  treatment: "TBD",
+  whyChooseUs: "Comprehensive diagnostics and specialist care.",
+  faqs: [
+    { question: "Is it curable?", answer: "Depends on the condition and stage." }
+  ]
+},
+
+"mdr-tb-treatment": {
+  title: "Mdr Tb Treatment in Delhi",
+  heroImage: tbHero,
+  introduction: "Content coming soon.",
+  causes: "TBD",
+  symptoms: ["TBD"],
+  diagnosis: "TBD",
+  treatment: "TBD",
+  whyChooseUs: "Comprehensive diagnostics and specialist care.",
+  faqs: [
+    { question: "Is it curable?", answer: "Depends on the condition and stage." }
+  ]
+},
+
+"eosinophilic-lung-diseases": {
+  title: "Eosinophilic Lung Diseases in Delhi",
+  heroImage: ildHero,
+  introduction: "Content coming soon.",
+  causes: "TBD",
+  symptoms: ["TBD"],
+  diagnosis: "TBD",
+  treatment: "TBD",
+  whyChooseUs: "Comprehensive diagnostics and specialist care.",
+  faqs: [
+    { question: "Is it curable?", answer: "Depends on the condition and stage." }
+  ]
+},
+
     "copd-treatment": {
       title: "COPD Treatment in Delhi – Expert Care for Chronic Lung Disease",
       heroImage: copdHero,

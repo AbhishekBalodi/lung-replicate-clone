@@ -37,9 +37,8 @@ const Contact = () => {
       }
 
       // Send to Express.js API
-      const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
       
-      const response = await fetch(`${apiBaseUrl}/api/contact`, {
+      const response = await fetch(`/api/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

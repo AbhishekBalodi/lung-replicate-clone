@@ -1,7 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
-import { GraduationCap, Award, Users, Calendar } from "lucide-react";
+import { GraduationCap, Award, Users, Calendar, Star, User } from "lucide-react";
 
 const Qualifications = () => {
   const qualifications = [
@@ -38,6 +38,28 @@ const Qualifications = () => {
     "International Medical Society (IMS)",
     "National Board of Medical Examiners (NBME)"
   ];
+
+  const testimonials = [
+    {
+      text: "I was struggling with chronic asthma for years. Dr. Smith provided the right treatment and I finally feel relief. Best chest specialist in Delhi!",
+      author: "Rajesh Kumar",
+      location: "South Delhi",
+      rating: 5
+    },
+    {
+      text: "Highly professional and empathetic doctor. Got the best care for my father's COPD.",
+      author: "Priya Sharma",
+      location: "Delhi NCR",
+      rating: 5
+    },
+    {
+      text: "The lung rehabilitation program has been life-changing. I can now do activities I couldn't do before.",
+      author: "Amit Patel",
+      location: "East Delhi",
+      rating: 5
+    }
+  ];
+
 
   return (
     <div className="min-h-screen">
@@ -118,6 +140,42 @@ const Qualifications = () => {
                   <Users className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="font-bold font-lexend text-center">{membership}</h3>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      
+
+      {/* Patient Testimonials Section */}
+      <section className="py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-foreground mb-4 font-manrope">Patient Testimonials</h2>
+            <p className="text-lg text-muted-foreground font-manrope">
+              Hear from our satisfied patients
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <Card key={index} className="p-6 hover:shadow-strong transition-shadow">
+                <div className="flex gap-1 mb-4 justify-center">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-muted-foreground italic mb-6 font-manrope text-center">
+                  "{testimonial.text}"
+                </p>
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <User className="h-4 w-4 text-lung-blue" />
+                    <p className="font-semibold text-foreground font-manrope">{testimonial.author}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground font-manrope">{testimonial.location}</p>
+                </div>
               </Card>
             ))}
           </div>
