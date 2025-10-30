@@ -236,29 +236,30 @@ const BookAppointment = () => {
 
             {/* Reports Upload Section */}
             <div className="mt-8">
-              <div className="flex items-center gap-2 mb-4">
-                <Upload className="h-5 w-5 text-muted-foreground" />
-                <Label className="text-sm font-medium">Reports (Optional)</Label>
-              </div>
-              
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-lung-blue transition-colors">
-                <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <div className="space-y-2">
-                  <p className="text-lung-blue font-medium cursor-pointer">Click to upload reports</p>
-                  <p className="text-sm text-muted-foreground">PDF, JPG, PNG, DOC files accepted</p>
+              <Label htmlFor="reports" className="text-sm font-medium mb-2 block">Upload Reports (Optional)</Label>
+              <label 
+                htmlFor="reports" 
+                className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300 hover:border-lung-blue transition-colors"
+              >
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Upload className="w-8 h-8 mb-2 text-gray-500" />
+                  {formData.reports ? (
+                    <p className="text-sm text-gray-700 font-medium">{formData.reports.name}</p>
+                  ) : (
+                    <>
+                      <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload reports</span></p>
+                      <p className="text-xs text-gray-500">PDF, JPG, PNG, DOC files accepted</p>
+                    </>
+                  )}
                 </div>
-                <input
+                <Input
+                  id="reports"
                   type="file"
-                  onChange={handleFileUpload}
+                  className="hidden"
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  onChange={handleFileUpload}
                 />
-              </div>
-              {formData.reports && (
-                <p className="mt-2 text-sm text-lung-green">
-                  ✓ {formData.reports.name} uploaded successfully
-                </p>
-              )}
+              </label>
             </div>
           </div>
         );
