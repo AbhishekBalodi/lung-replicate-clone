@@ -53,15 +53,19 @@ const Hero = () => {
               </div>
             </Card>
             
-            <Card className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 bg-lung-blue text-white p-2 sm:p-3 shadow-medium rounded-lg">
-              <div className="flex items-center gap-2">
-                <div className="p-1 sm:p-2 bg-white/20 rounded-full">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+            <Card className="absolute -bottom-2 -right-2 sm:-bottom-3 sm:-right-3 bg-lung-blue text-white p-3 sm:p-4 shadow-medium rounded-lg w-72 sm:w-80">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-full flex-shrink-0">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                 </div>
-                <div>
+                <div className="space-y-1">
                   <p className="font-semibold text-xs sm:text-sm">Opening Hours</p>
-                  <p className="text-[10px] sm:text-xs opacity-90">10 AM - 3 PM Sant Parmanand</p>
-                  <p className="text-[10px] sm:text-xs opacity-90">5 PM - 8 PM North Delhi</p>
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] sm:text-xs opacity-90">10 AM - 3 PM Daily</p>
+                    <p className="text-[9px] sm:text-[10px] opacity-75">Sant Parmanand Hospital, Civil Lines</p>
+                    <p className="text-[10px] sm:text-xs opacity-90 mt-1">5 PM - 8 PM Daily</p>
+                    <p className="text-[9px] sm:text-[10px] opacity-75">North Delhi Chest Center</p>
+                  </div>
                 </div>
               </div>
             </Card>

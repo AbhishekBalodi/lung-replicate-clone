@@ -1,4 +1,5 @@
 import { Facebook, Twitter, Instagram, MapPin, Phone, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -20,9 +21,10 @@ const Footer = () => {
             <div>
               <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-manrope">Useful Links</h4>
               <ul className="space-y-2 lg:space-y-3">
-                <li><a href="/doctors/dr-mann" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Doctors</a></li>
-                <li><a href="#contact" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Contact Us</a></li>
-                <li><a href="#services" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Services</a></li>
+                <li><Link to="/about" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">About</Link></li>
+                <li><Link to="/services" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Services</Link></li>
+                <li><Link to="/book-appointment" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Book Appointment</Link></li>
+                <li><Link to="/contact" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Contact Us</Link></li>
               </ul>
             </div>
 
@@ -30,22 +32,57 @@ const Footer = () => {
             <div>
               <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-manrope">Explore Pages</h4>
               <ul className="space-y-2 lg:space-y-3">
-                <li><a href="/" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Home</a></li>
-                <li><a href="#appointment" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Book Appointment</a></li>
+                <li><Link to="/treatments" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Treatments</Link></li>
+                <li><Link to="/qualifications" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">Qualifications</Link></li>
+                <li><Link to="/services" className="text-gray-300 hover:text-white transition-colors font-manrope text-sm lg:text-base">All Services</Link></li>
               </ul>
+              
+              {/* Social Media Links */}
+              <div className="mt-4 lg:mt-6">
+                <h4 className="font-semibold mb-3 font-manrope text-sm lg:text-base">Follow Us</h4>
+                <div className="flex gap-3 lg:gap-4">
+                  <a 
+                    href="https://facebook.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-8 h-8 lg:w-10 lg:h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-all"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
+                  </a>
+                  <a 
+                    href="https://instagram.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-8 h-8 lg:w-10 lg:h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-all"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
+                  </a>
+                  <a 
+                    href="https://twitter.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="w-8 h-8 lg:w-10 lg:h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-all"
+                    aria-label="Twitter"
+                  >
+                    <Twitter className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
+                  </a>
+                </div>
+              </div>
             </div>
 
             {/* Opening Hour */}
             <div>
-              <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-manrope">Opening Hour</h4>
-              <div className="space-y-1 lg:space-y-2 text-gray-300 font-manrope text-sm lg:text-base">
-                <div className="flex justify-between">
-                  <span>Mon - Sat</span>
-                  <span>06:00 PM - 08:00 PM</span>
+              <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-manrope">Opening Hours</h4>
+              <div className="space-y-2 text-gray-300 font-manrope text-sm lg:text-base">
+                <div>
+                  <p>10 AM - 3 PM Daily</p>
+                  <p className="text-xs opacity-75">Sant Parmanand Hospital, Civil Lines</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Sunday</span>
-                  <span className="text-red-400">Closed</span>
+                <div className="mt-3">
+                  <p>5 PM - 8 PM Daily</p>
+                  <p className="text-xs opacity-75">North Delhi Chest Center</p>
                 </div>
               </div>
             </div>
@@ -97,21 +134,18 @@ const Footer = () => {
 
       {/* Bottom Footer */}
       <div className="border-t border-gray-700 py-4 lg:py-6 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
-          <p className="text-gray-400 text-xs lg:text-sm font-manrope text-center md:text-left">
-            Copyright © 2023-25 All Rights Reserved | Delhi Chest Physician
+        <div className="max-w-7xl mx-auto flex justify-center items-center">
+          <p className="text-gray-400 text-xs lg:text-sm font-manrope text-center">
+            Copyright © 2023-25 All Rights Reserved | Delhi Chest Physician | Made by{' '}
+            <a 
+              href="https://brandingidiots.com/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-lung-blue hover:underline"
+            >
+              BrandingIdiots
+            </a>
           </p>
-          <div className="flex gap-3 lg:gap-4 mt-3 md:mt-0">
-            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">
-              <Facebook className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
-            </div>
-            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">
-              <Instagram className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
-            </div>
-            <div className="w-8 h-8 lg:w-10 lg:h-10 bg-lung-blue rounded-full flex items-center justify-center hover:bg-lung-blue-dark transition-colors cursor-pointer">
-              <Twitter className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
-            </div>
-          </div>
         </div>
       </div>
     </footer>

@@ -78,7 +78,7 @@ const ConditionDetail = () => {
 },
 
 "mdr-tb-treatment": {
-  title: "Mdr Tb Treatment in Delhi",
+  title: "Multidrug-Resistant Tuberculosis (MDR-TB) Treatment in Delhi",
   heroImage: tbHero,
   introduction: "Content coming soon.",
   causes: "TBD",

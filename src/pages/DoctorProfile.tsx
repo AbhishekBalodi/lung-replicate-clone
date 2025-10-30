@@ -72,12 +72,16 @@ const DoctorProfile = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button className="bg-lung-green hover:bg-lung-green-light text-white px-8 py-3 rounded-lg">
-                  Make Appointment
-                </Button>
-                <Button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-lung-blue px-8 py-3">
-                  Call Now
-                </Button>
+                <Link to="/book-appointment">
+                  <Button className="bg-lung-green hover:bg-lung-green-light text-white px-8 py-3 rounded-lg w-full">
+                    Make Appointment
+                  </Button>
+                </Link>
+                <a href="tel:+91-555-123-4567">
+                  <Button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-lung-blue px-8 py-3 w-full">
+                    Call Now
+                  </Button>
+                </a>
               </div>
             </div>
           </div>

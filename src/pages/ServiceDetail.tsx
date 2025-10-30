@@ -33,7 +33,7 @@ const ServiceDetail = () => {
 
   const serviceDetails: Record<string, any> = {
 "cpap-bipap-therapy": {
-  title: "Cpap Bipap Therapy in Delhi",
+  title: "CPAP & BiPAP Therapy in Delhi",
   heroImage: lungCancerScreeningHero,
   introduction: "Content coming soon.",
   whyNeeded: "TBD",
@@ -45,7 +45,7 @@ const ServiceDetail = () => {
 },
 
 "abg-analysis": {
-  title: "Abg Analysis in Delhi",
+  title: "Arterial Blood Gas (ABG) Analysis in Delhi",
   heroImage: bronchoscopyHero,
   introduction: "Content coming soon.",
   whyNeeded: "TBD",
@@ -69,7 +69,7 @@ const ServiceDetail = () => {
 },
 
 "ict-insertion": {
-  title: "Ict Insertion in Delhi",
+  title: "Intercostal Chest Tube (ICT) Insertion in Delhi",
   heroImage: bronchoscopyHero,
   introduction: "Content coming soon.",
   whyNeeded: "TBD",

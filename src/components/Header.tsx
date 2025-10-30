@@ -31,30 +31,6 @@ const Header = () => {
       />
       
       <header className="w-full fixed top-0 left-0 z-50 bg-white shadow-md">
-      {/* Top Info Bar */}
-      <div className="bg-lung-blue text-white py-2 px-4 hidden sm:block">
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row justify-between items-center text-xs lg:text-sm">
-          <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-6 mb-2 lg:mb-0">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-3 w-3 lg:h-4 lg:w-4" />
-              <span className="text-center lg:text-left">321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-3 w-3 lg:h-4 lg:w-4" />
-              <span>10 AM - 3 PM Daily - Sant Parmanand Hospital | 5 PM - 8 PM Daily - North Delhi Chest Center</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden md:inline">Follow Us:</span>
-            <div className="flex gap-2">
-              <Facebook className="h-3 w-3 lg:h-4 lg:w-4 cursor-pointer hover:text-lung-green transition-colors" />
-              <Twitter className="h-3 w-3 lg:h-4 lg:w-4 cursor-pointer hover:text-lung-green transition-colors" />
-              <Instagram className="h-3 w-3 lg:h-4 lg:w-4 cursor-pointer hover:text-lung-green transition-colors" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Navigation */}
       <nav className="bg-white shadow-soft py-3 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

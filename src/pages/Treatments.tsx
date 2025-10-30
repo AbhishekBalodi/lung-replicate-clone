@@ -120,7 +120,7 @@ const Treatments = () => {
       <Header />
       <div className="pt-32">
         {/* Hero Section */}
-        <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-8 px-4">
+        <section id="treatments-top" className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-8 px-4">
           <div className="max-w-7xl mx-auto text-center text-white">
             {/* Breadcrumb */}
             <div className="flex items-center justify-center gap-2 mb-3">
