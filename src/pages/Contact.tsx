@@ -36,6 +36,17 @@ const Contact = () => {
         return;
       }
 
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast({
+          title: "Invalid Email",
+          description: "Please enter a valid email address.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Send to Express.js API
       
       const response = await fetch(`/api/contact`, {
@@ -196,6 +207,7 @@ const Contact = () => {
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
                       required
+                      minLength={2}
                       maxLength={200}
                     />
                   </div>
@@ -208,6 +220,7 @@ const Contact = () => {
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400"
                       required
+                      pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                       maxLength={255}
                     />
                   </div>
@@ -236,6 +249,7 @@ const Contact = () => {
                     onChange={(e) => setFormData({...formData, message: e.target.value})}
                     className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 min-h-24 lg:min-h-32"
                     required
+                    minLength={10}
                     maxLength={2000}
                   />
                 </div>

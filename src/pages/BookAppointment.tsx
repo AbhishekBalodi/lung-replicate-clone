@@ -43,9 +43,74 @@ const BookAppointment = () => {
     { number: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle }
   ];
 
+  const validateStep = () => {
+    if (currentStep === 1) {
+      if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || 
+          !formData.age.trim() || !formData.gender) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields (marked with *).",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast({
+          title: "Invalid Email",
+          description: "Please enter a valid email address.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      const phoneRegex = /^\d{10,13}$/;
+      if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+        toast({
+          title: "Invalid Phone Number",
+          description: "Phone number must contain 10-13 digits only.",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      const age = parseInt(formData.age);
+      if (isNaN(age) || age < 1 || age > 120) {
+        toast({
+          title: "Invalid Age",
+          description: "Please enter a valid age between 1 and 120.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } else if (currentStep === 2) {
+      if (!formData.preferredDate || !formData.preferredTime) {
+        toast({
+          title: "Validation Error",
+          description: "Please select both date and time.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } else if (currentStep === 3) {
+      if (!formData.selectedDoctor) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a doctor.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleNext = async () => {
     if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
+      if (validateStep()) {
+        setCurrentStep(currentStep + 1);
+      }
     } else {
       try {
         // Send to Express.js API
@@ -157,16 +222,25 @@ const BookAppointment = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     required
+                    pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                   />
                 </div>
                 <div>
                   <Label htmlFor="phone" className="text-sm font-medium mb-2 block">Phone Number *</Label>
                   <Input
                     id="phone"
-                    placeholder="+91 98765 43210"
+                    type="tel"
+                    placeholder="Enter 10-13 digit phone number"
                     value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 13) {
+                        setFormData({...formData, phone: value});
+                      }
+                    }}
                     required
+                    pattern="[0-9]{10,13}"
+                    maxLength={13}
                   />
                 </div>
               </div>
@@ -181,6 +255,8 @@ const BookAppointment = () => {
                     value={formData.age}
                     onChange={(e) => setFormData({...formData, age: e.target.value})}
                     required
+                    min="1"
+                    max="120"
                   />
                 </div>
                 <div>
@@ -276,16 +352,17 @@ const BookAppointment = () => {
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="date" className="text-sm font-medium mb-2 block">Preferred Date *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.preferredDate}
-                  onChange={(e) => setFormData({...formData, preferredDate: e.target.value})}
-                  required
-                />
-              </div>
+                <div>
+                  <Label htmlFor="date" className="text-sm font-medium mb-2 block">Preferred Date *</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.preferredDate}
+                    onChange={(e) => setFormData({...formData, preferredDate: e.target.value})}
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                  />
+                </div>
               <div>
                 <Label htmlFor="time" className="text-sm font-medium mb-2 block">Preferred Time *</Label>
                 <select

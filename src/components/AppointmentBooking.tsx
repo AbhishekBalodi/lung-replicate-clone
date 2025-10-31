@@ -35,9 +35,63 @@ const AppointmentBooking = () => {
     image: "/src/assets/dr-mann-passport.png"
   };
 
+  const validateStep = () => {
+    if (currentStep === 1) {
+      if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Please fill in all required fields (marked with *).",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        toast({
+          title: "Invalid Email",
+          description: "Please enter a valid email address.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      const phoneRegex = /^\d{10,13}$/;
+      if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+        toast({
+          title: "Invalid Phone Number",
+          description: "Phone number must contain 10-13 digits only.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } else if (currentStep === 2) {
+      if (!formData.date || !formData.time) {
+        toast({
+          title: "Validation Error",
+          description: "Please select both date and time.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    } else if (currentStep === 3) {
+      if (!formData.doctor) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a doctor.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
+    return true;
+  };
+
   const handleNext = async () => {
     if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
+      if (validateStep()) {
+        setCurrentStep(currentStep + 1);
+      }
     } else {
       try {
         // Send to Express.js API
@@ -179,6 +233,9 @@ const AppointmentBooking = () => {
                     onChange={(e) => updateFormData("fullName", e.target.value)}
                     placeholder="Enter your full name"
                     className="mt-1"
+                    required
+                    minLength={2}
+                    maxLength={100}
                   />
                 </div>
                 <div>
@@ -190,6 +247,8 @@ const AppointmentBooking = () => {
                     onChange={(e) => updateFormData("email", e.target.value)}
                     placeholder="Enter your email"
                     className="mt-1"
+                    required
+                    pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                   />
                 </div>
                 <div>
@@ -198,9 +257,16 @@ const AppointmentBooking = () => {
                     id="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => updateFormData("phone", e.target.value)}
-                    placeholder="Enter your phone number"
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      if (value.length <= 13) {
+                        updateFormData("phone", value);
+                      }
+                    }}
+                    placeholder="Enter 10-13 digit phone number"
                     className="mt-1"
+                    pattern="[0-9]{10,13}"
+                    maxLength={13}
                   />
                 </div>
                 <div className="lg:col-span-2">
@@ -259,6 +325,8 @@ const AppointmentBooking = () => {
                     value={formData.date}
                     onChange={(e) => updateFormData("date", e.target.value)}
                     className="mt-1"
+                    required
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
                 <div>
@@ -269,6 +337,7 @@ const AppointmentBooking = () => {
                     value={formData.time}
                     onChange={(e) => updateFormData("time", e.target.value)}
                     className="mt-1"
+                    required
                   />
                 </div>
               </div>

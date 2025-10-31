@@ -19,6 +19,27 @@ const Contact = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+    
+    // Validation
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.subject.trim() || !formData.message.trim()) {
+      alert('Please fill in all required fields (marked with *).');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    if (formData.phone) {
+      const phoneRegex = /^\d{10,13}$/;
+      if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+        alert('Phone number must contain 10-13 digits only.');
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/contact`, {
@@ -74,37 +95,50 @@ const Contact = () => {
               <div>
                 <Label htmlFor="firstName">First Name *</Label>
                 <Input id="firstName" value={formData.firstName}
-                  onChange={e => setFormData({ ...formData, firstName: e.target.value })} required />
+                  onChange={e => setFormData({ ...formData, firstName: e.target.value })} 
+                  required minLength={2} maxLength={50} />
               </div>
               <div>
                 <Label htmlFor="lastName">Last Name *</Label>
                 <Input id="lastName" value={formData.lastName}
-                  onChange={e => setFormData({ ...formData, lastName: e.target.value })} required />
+                  onChange={e => setFormData({ ...formData, lastName: e.target.value })} 
+                  required minLength={2} maxLength={50} />
               </div>
             </div>
 
             <div>
               <Label htmlFor="email">Email Address *</Label>
               <Input id="email" type="email" value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })} required />
+                onChange={e => setFormData({ ...formData, email: e.target.value })} 
+                required pattern="[^\s@]+@[^\s@]+\.[^\s@]+" maxLength={255} />
             </div>
 
             <div>
               <Label htmlFor="phone">Phone Number</Label>
-              <Input id="phone" value={formData.phone}
-                onChange={e => setFormData({ ...formData, phone: e.target.value })} />
+              <Input id="phone" type="tel" value={formData.phone}
+                onChange={e => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  if (value.length <= 13) {
+                    setFormData({ ...formData, phone: value });
+                  }
+                }}
+                placeholder="10-13 digits"
+                pattern="[0-9]{10,13}"
+                maxLength={13} />
             </div>
 
             <div>
               <Label htmlFor="subject">Subject *</Label>
               <Input id="subject" value={formData.subject}
-                onChange={e => setFormData({ ...formData, subject: e.target.value })} required />
+                onChange={e => setFormData({ ...formData, subject: e.target.value })} 
+                required minLength={3} maxLength={200} />
             </div>
 
             <div>
               <Label htmlFor="message">Message *</Label>
               <Textarea id="message" value={formData.message}
-                onChange={e => setFormData({ ...formData, message: e.target.value })} required className="min-h-[80px]" />
+                onChange={e => setFormData({ ...formData, message: e.target.value })} 
+                required minLength={10} maxLength={2000} className="min-h-[80px]" />
             </div>
 
             <Button type="submit" disabled={isSubmitting}
