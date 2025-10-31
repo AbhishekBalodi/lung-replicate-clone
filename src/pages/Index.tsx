@@ -59,7 +59,7 @@ const Index = () => {
       />
       <Header />
       <FloatingCTA />
-      <div className="pt-32">
+      <div className="pt-0">
       <Hero />
       <QuickStats />
       <Qualifications />

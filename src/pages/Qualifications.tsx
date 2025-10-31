@@ -66,7 +66,7 @@ const Qualifications = () => {
       <Header />
       
       {/* Hero Section */}
-      <section className="bg-muted/30 py-16 px-4">
+      <section className="bg-muted/30 py-32 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-foreground mb-4 font-lexend">
             My Qualifications & Awards

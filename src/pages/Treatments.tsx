@@ -118,7 +118,7 @@ const Treatments = () => {
         keywords="COPD treatment, asthma specialist, TB treatment, pneumonia care, respiratory conditions, chest physician Delhi"
       />
       <Header />
-      <div className="pt-32">
+      <div className="pt-20">
         {/* Hero Section */}
         <section id="treatments-top" className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-8 px-4">
           <div className="max-w-7xl mx-auto text-center text-white">

@@ -20,7 +20,7 @@ const DoctorProfile = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="pt-32">
+      <div className="pt-20">
         {/* Doctor Hero Section */}
       <section className="bg-gradient-to-r from-lung-blue to-lung-blue/80 py-16 px-4">
         <div className="max-w-7xl mx-auto">
