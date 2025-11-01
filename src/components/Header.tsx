@@ -1,36 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Phone, MapPin, Clock, Facebook, Twitter, Instagram, User, Menu, X } from "lucide-react";
 import logoImage from "@/assets/delhi-chest-physician-logo.png";
-import SignUpModal from "@/components/SignUpModal";
-import LoginModal from "@/components/LoginModal";
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
-  const [isSignUpOpen, setIsSignUpOpen] = useState(false);
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
-    <>
-      <SignUpModal 
-        isOpen={isSignUpOpen} 
-        onClose={() => setIsSignUpOpen(false)}
-        onSwitchToLogin={() => {
-          setIsSignUpOpen(false);
-          setIsLoginOpen(true);
-        }}
-      />
-      
-      <LoginModal
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onSwitchToSignUp={() => {
-          setIsLoginOpen(false);
-          setIsSignUpOpen(true);
-        }}
-      />
-      
-      <header className="w-full fixed top-0 left-0 z-50 bg-white shadow-md">
+    <header className="w-full fixed top-0 left-0 z-50 bg-white shadow-md">
       {/* Main Navigation */}
       <nav className="bg-white shadow-soft py-3 px-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -72,14 +52,27 @@ const Header = () => {
                 Make Appointment
               </Button>
             </a>
-            <Button 
-              variant="outline" 
-              className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white text-xs lg:text-sm px-3 lg:px-4 py-2"
-              onClick={() => setIsLoginOpen(true)}
-            >
-              <User className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
-              Login
-            </Button>
+            {user ? (
+              <Link to="/dashboard">
+                <Button 
+                  variant="outline" 
+                  className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white text-xs lg:text-sm px-3 lg:px-4 py-2"
+                >
+                  <User className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/auth">
+                <Button 
+                  variant="outline" 
+                  className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white text-xs lg:text-sm px-3 lg:px-4 py-2"
+                >
+                  <User className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Actions */}
@@ -144,24 +137,33 @@ const Header = () => {
                   <Phone className="h-4 w-4" />
                   <span>+91-9810589799</span>
                 </a>
-                <Button 
-                  variant="outline" 
-                  className="w-full border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"
-                  onClick={() => {
-                    setIsLoginOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                >
-                  <User className="h-4 w-4 mr-2" />
-                  Login
-                </Button>
+                {user ? (
+                  <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Login
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           </div>
         )}
       </nav>
-      </header>
-    </>
+    </header>
   );
 };
 

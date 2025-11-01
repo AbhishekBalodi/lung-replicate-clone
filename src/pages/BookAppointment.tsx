@@ -9,13 +9,17 @@ import {
   User, Calendar, Stethoscope, CheckCircle, 
   Upload, ChevronLeft, ChevronRight 
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const BookAppointment = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     // Step 1 - Patient Details
     fullName: "",
@@ -35,6 +39,18 @@ const BookAppointment = () => {
     reports: null as File | null,
     notes: ""
   });
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to book an appointment",
+        variant: "destructive"
+      });
+      navigate('/auth');
+    }
+  }, [user, navigate, toast]);
 
   const steps = [
     { number: 1, title: "Patient Details", subtitle: "Enter your info", icon: User },
@@ -112,15 +128,20 @@ const BookAppointment = () => {
         setCurrentStep(currentStep + 1);
       }
     } else {
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to book an appointment",
+          variant: "destructive",
+        });
+        return;
+      }
+
       try {
-        // Send to Express.js API
-        
-        const response = await fetch(`/api/appointment`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+        const { error } = await supabase
+          .from('appointments')
+          .insert({
+            user_id: user.id,
             full_name: formData.fullName,
             email: formData.email,
             phone: formData.phone,
@@ -129,37 +150,16 @@ const BookAppointment = () => {
             selected_doctor: "Dr. Paramjeet Singh Mann - Pulmonologist",
             message: `${formData.notes || ''}\nAge: ${formData.age}\nGender: ${formData.gender}\nAddress: ${formData.address}\nMedical History: ${formData.medicalHistory}\nSymptoms: ${formData.currentSymptoms}`,
             reports_uploaded: !!formData.reports
-          }),
-        });
+          });
 
-        const result = await response.json();
-
-        if (!response.ok || !result.success) {
-          throw new Error(result.error || 'Failed to book appointment');
-        }
+        if (error) throw error;
 
         toast({
           title: "Appointment Booked!",
-          description: "Your appointment has been successfully scheduled. A confirmation email has been sent.",
+          description: "Your appointment has been successfully scheduled.",
         });
-        
-        // Reset form and go back to step 1
-        setCurrentStep(1);
-        setFormData({
-          fullName: "",
-          email: "",
-          phone: "",
-          age: "",
-          gender: "",
-          address: "",
-          medicalHistory: "",
-          currentSymptoms: "",
-          preferredDate: "",
-          preferredTime: "",
-          selectedDoctor: "",
-          reports: null,
-          notes: ""
-        });
+
+        navigate('/dashboard');
       } catch (error: any) {
         console.error("Error booking appointment:", error);
         toast({
