@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, User, LogOut, Trash2, Edit } from 'lucide-react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Edit, Trash2 } from "lucide-react";
+import ConsoleShell from "@/layouts/ConsoleShell";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,42 +31,46 @@ interface Appointment {
   created_at: string;
 }
 
-const Dashboard = () => {
-  const { user, signOut, loading: authLoading } = useAuth();
+export default function Dashboard() {
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  // Local state for quick booking widget
+  const [visitType, setVisitType] = useState<"In-clinic" | "Video">("In-clinic");
+  const [doctor, setDoctor] = useState<string>("Dr. Priya Mehta");
+  const [date, setDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [time, setTime] = useState<string>("");
+
+  // redirect if not logged in
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
+    if (!authLoading && !user) navigate("/auth");
+  }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (user) {
-      fetchAppointments();
-    }
+    if (user) fetchAppointments();
   }, [user]);
 
   const fetchAppointments = async () => {
     try {
       const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('appointment_date', { ascending: true });
+        .from("appointments")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("appointment_date", { ascending: true });
 
       if (error) throw error;
       setAppointments(data || []);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -74,167 +78,286 @@ const Dashboard = () => {
 
   const handleDelete = async () => {
     if (!deleteId) return;
-
     try {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', deleteId);
-
+      const { error } = await supabase.from("appointments").delete().eq("id", deleteId);
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Appointment cancelled successfully"
-      });
-      
+      toast({ title: "Success", description: "Appointment cancelled successfully" });
       fetchAppointments();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
       setDeleteId(null);
     }
   };
 
-  const handleLogout = async () => {
-    await signOut();
-    navigate('/');
+  // Generate a simple slot grid for the selected date (UI only; no backend change)
+  const slots = useMemo(() => {
+    // typical clinic blocks
+    return ["09:00 AM", "09:30 AM", "10:00 AM", "11:00 AM", "12:00 PM", "12:30 PM", "03:00 PM", "03:30 PM", "04:00 PM"];
+  }, []);
+
+  const confirmFromDashboard = () => {
+    if (!date || !time) {
+      toast({ title: "Select a date & time", description: "Choose both to continue." });
+      return;
+    }
+    const params = new URLSearchParams({
+      doctor,
+      visitType,
+      date,
+      time,
+      source: "dashboard",
+    });
+    navigate(`/book-appointment?${params.toString()}`);
   };
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
+      <div className="min-h-screen grid place-items-center">
+        <p className="text-slate-500">Loading…</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <main className="flex-1 container mx-auto px-4 py-8 mt-20">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold">My Dashboard</h1>
-              <p className="text-muted-foreground mt-2">
-                Welcome back! Manage your appointments here.
-              </p>
-            </div>
-            <Button onClick={handleLogout} variant="outline">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
+    <ConsoleShell todayCount={appointments.length}>
+      {/* Main grid: left KPIs + table, right booking column */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Left column (spans 2) */}
+        <div className="xl:col-span-2 space-y-6">
+          {/* KPI cards */}
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">Total Appointments</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-semibold">{appointments.length}</div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">Upcoming</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-semibold">
+                  {appointments.filter(a => new Date(a.appointment_date) >= new Date()).length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+  <CardHeader className="pb-3">
+    <CardTitle className="text-sm font-medium">Account Email</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {/* wrap long emails instead of overflowing */}
+    <div className="text-sm break-all">{user?.email}</div>
+  </CardContent>
+</Card>
+
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{appointments.length}</div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Upcoming</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {appointments.filter(apt => new Date(apt.appointment_date) >= new Date()).length}
-                </div>
-              </CardContent>
-            </Card>
+          {/* Appointments table */}
+          <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
+  <CardHeader className="pb-3">
+    <CardTitle>Your Appointments</CardTitle>
+    <CardDescription>View and manage your scheduled appointments</CardDescription>
+  </CardHeader>
 
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium">Account Email</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm truncate">{user?.email}</div>
-              </CardContent>
-            </Card>
-          </div>
+            <CardContent className="p-0 overflow-hidden">
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Appointments</CardTitle>
-              <CardDescription>
-                View and manage your scheduled appointments
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {appointments.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">No appointments found</p>
-                  <Button onClick={() => navigate('/book-appointment')}>
-                    Book Your First Appointment
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {appointments.map((appointment) => (
-                    <Card key={appointment.id} className="bg-secondary/20">
-                      <CardContent className="pt-6">
-                        <div className="flex justify-between items-start">
-                          <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">{appointment.full_name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span>{new Date(appointment.appointment_date).toLocaleDateString()}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-muted-foreground" />
-                              <span>{appointment.appointment_time}</span>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              Doctor: {appointment.selected_doctor}
-                            </div>
-                            {appointment.message && (
-                              <div className="text-sm text-muted-foreground mt-2">
-                                Note: {appointment.message}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/book-appointment?edit=${appointment.id}`)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => setDeleteId(appointment.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
+              <div className="overflow-x-auto">
+              {/* min width so columns don’t squish */}
+              <div className="min-w-[980px]">
+               {/* header row stays at the top of the scroller */}
+              {/* Header row */}
+              <div className="grid grid-cols-6 gap-3 font-medium text-slate-500 px-5 py-3 border-t border-slate-100">
+                <div>When</div>
+                <div>Patient</div>
+                <div>Doctor</div>
+                <div>Room</div>
+                <div>Notes</div>
+                <div>Actions</div>
+              </div>
+
+              {/* Rows */}
+              <div className="max-h-[320px] overflow-y-auto divide-y">
+                {appointments.map(a => (
+                  <div key={a.id} className="grid grid-cols-6 gap-3 items-center px-5 py-4">
+                    {/* When */}
+                    <div>
+                      <div className="font-medium">
+                        {new Date(a.appointment_date).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs rounded-md bg-slate-100 inline-block px-2 py-0.5 mt-1">
+                        {a.appointment_time}
+                      </div>
+                    </div>
+
+                    {/* Patient */}
+                    <div className="font-medium">{a.full_name}</div>
+
+                    {/* Doctor */}
+                    <div>{a.selected_doctor}</div>
+
+                    {/* Room (static tag to match mock) */}
+                    <div>
+                      <span className="text-xs rounded-md bg-emerald-100 text-emerald-800 px-2 py-0.5">
+                        Room 1
+                      </span>
+                    </div>
+
+                    {/* Notes */}
+                    <div className="text-sm text-slate-500 truncate">{a.message ?? "-"}</div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
+                        className="px-3"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Reschedule
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeleteId(a.id)}
+                        className="px-3"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {!appointments.length && (
+                  <div className="text-center py-12 text-slate-500">
+                    No appointments
+                    <div className="mt-4">
+                      <Button onClick={() => navigate("/book-appointment")}>
+                        Book Your First Appointment
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              </div>
+              </div>
             </CardContent>
           </Card>
         </div>
-      </main>
 
-      <Footer />
+        {/* Right column: Quick booking (UI only; routes to existing booking page) */}
+        <div className="space-y-6">
+          <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <CardHeader>
+              <CardTitle>Book an Appointment</CardTitle>
+              <CardDescription>Live availability</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Visit type & Doctor */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-500">Visit Type</label>
+                  <select
+                    value={visitType}
+                    onChange={(e) => setVisitType(e.target.value as any)}
+                    className="w-full mt-1 border border-slate-200 rounded-md px-3 py-2 outline-none focus:ring focus:ring-emerald-100"
+                  >
+                    <option>In-clinic</option>
+                    <option>Video</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500">Preferred Doctor</label>
+                  <select
+                    value={doctor}
+                    onChange={(e) => setDoctor(e.target.value)}
+                    className="w-full mt-1 border border-slate-200 rounded-md px-3 py-2 outline-none focus:ring focus:ring-emerald-100"
+                  >
+                    <option>Dr. Priya Mehta</option>
+                    <option>Dr. Paramjeet Singh Mann</option>
+                  </select>
+                </div>
+              </div>
 
+              {/* Date selector */}
+              <div>
+                <label className="text-xs text-slate-500">Choose Date</label>
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full mt-1 border border-slate-200 rounded-md px-3 py-2 outline-none focus:ring focus:ring-emerald-100"
+                />
+              </div>
+
+              {/* Times grid */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-600">Available Slots on Selected Day</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {slots.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTime(t)}
+                      className={[
+                        "rounded-md px-3 py-2 border text-sm",
+                        time === t
+                          ? "border-emerald-600 bg-emerald-50 text-emerald-800"
+                          : "border-slate-200 hover:bg-slate-50",
+                      ].join(" ")}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="font-medium mb-2 text-slate-700">Appointment Summary</div>
+                <dl className="text-sm grid grid-cols-2 gap-y-1">
+                  <dt className="text-slate-500">Doctor</dt>
+                  <dd className="text-slate-900">{doctor}</dd>
+                  <dt className="text-slate-500">Visit Type</dt>
+                  <dd className="text-slate-900">{visitType}</dd>
+                  <dt className="text-slate-500">Date</dt>
+                  <dd className="text-slate-900">{date || "-"}</dd>
+                  <dt className="text-slate-500">Time</dt>
+                  <dd className="text-slate-900">{time || "-"}</dd>
+                  <dt className="text-slate-500">Clinic</dt>
+                  <dd className="text-slate-900">12, Park Street, Kolkata</dd>
+                  <dt className="text-slate-500">Fee</dt>
+                  <dd className="text-emerald-700 font-semibold">₹800</dd>
+                </dl>
+
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    onClick={confirmFromDashboard}
+                    className="bg-emerald-700 hover:bg-emerald-800 text-white"
+                  >
+                    Confirm Booking
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/book-appointment")}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Cancel dialog */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -249,8 +372,6 @@ const Dashboard = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </ConsoleShell>
   );
-};
-
-export default Dashboard;
+}
