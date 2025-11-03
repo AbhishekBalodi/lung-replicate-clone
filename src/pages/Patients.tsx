@@ -4,58 +4,57 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Search, User, Calendar, Pill } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type Patient = {
-  id: string;
+  id: number | null;
   full_name: string;
   phone: string | null;
   email: string | null;
-  is_new_patient: boolean;
-  first_visit_date: string;
-  last_visit_date: string | null;
-  notes: string | null;
 };
 
 type Appointment = {
-  id: string;
+  id: string | number;
   appointment_date: string;
   appointment_time: string;
   message: string | null;
-  created_at: string;
+  created_at?: string | null;
 };
 
-type PrescribedMedicine = {
-  id: string;
+type BackendMedicine = {
+  id: number;
   medicine_name: string;
   dosage: string | null;
   frequency: string | null;
   duration: string | null;
   instructions: string | null;
-  prescribed_date: string;
+  prescribed_date?: string | null; // ← MySQL column you have
+  created_at?: string | null;      // fallback if you add it later
 };
+
+const API_ROOT =
+  (import.meta as any)?.env?.VITE_API_URL
+    ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, "")}/api`
+    : "/api";
 
 export default function PatientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [medicines, setMedicines] = useState<PrescribedMedicine[]>([]);
+  const [medicines, setMedicines] = useState<BackendMedicine[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load all patients
+  /** Load all patients (server merges patients + appointments and upserts) */
   const loadPatients = async () => {
     try {
-      const { data, error } = await supabase
-        .from("patients")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      if (error) throw error;
-      setPatients(data || []);
+      const res = await fetch(`${API_ROOT}/patients`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to load patients");
+      setPatients(Array.isArray(data) ? data : data.items || []);
     } catch (err: any) {
       toast.error("Failed to load patients: " + err.message);
     }
@@ -65,33 +64,27 @@ export default function PatientsPage() {
     loadPatients();
   }, []);
 
-  // Search/select patient
+  /** Search using ?q= so matches from appointments are included */
   const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      toast.error("Please enter a patient name");
+    const q = searchTerm.trim();
+    if (!q) {
+      toast.error("Please enter a patient name, email, or phone");
       return;
     }
-
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("patients")
-        .select("*")
-        .ilike("full_name", `%${searchTerm}%`)
-        .single();
-
-      if (error) throw error;
-      
-      if (data) {
-        setSelectedPatient(data);
-        await loadPatientData(data.id, data.full_name);
-      }
-    } catch (err: any) {
-      if (err.code === 'PGRST116') {
+      const res = await fetch(`${API_ROOT}/patients?q=${encodeURIComponent(q)}`);
+      const data: Patient[] = res.ok ? await res.json() : [];
+      if (!data.length) {
         toast.error("Patient not found");
-      } else {
-        toast.error("Error searching patient: " + err.message);
+        setSelectedPatient(null);
+        setAppointments([]);
+        setMedicines([]);
+        return;
       }
+      await selectPatient(data[0]);
+    } catch (err: any) {
+      toast.error("Error searching patient: " + err.message);
       setSelectedPatient(null);
       setAppointments([]);
       setMedicines([]);
@@ -100,37 +93,42 @@ export default function PatientsPage() {
     }
   };
 
-  // Load patient appointments and medicines
-  const loadPatientData = async (patientId: string, fullName: string) => {
-    try {
-      // Load appointments
-      const { data: apptData, error: apptError } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("full_name", fullName)
-        .order("appointment_date", { ascending: false });
-
-      if (apptError) throw apptError;
-      setAppointments(apptData || []);
-
-      // Load prescribed medicines
-      const { data: medData, error: medError } = await supabase
-        .from("prescribed_medicines")
-        .select("*")
-        .eq("patient_id", patientId)
-        .order("prescribed_date", { ascending: false });
-
-      if (medError) throw medError;
-      setMedicines(medData || []);
-    } catch (err: any) {
-      toast.error("Error loading patient data: " + err.message);
-    }
-  };
-
+  /** Load details for a specific patient */
   const selectPatient = async (patient: Patient) => {
     setSelectedPatient(patient);
     setSearchTerm(patient.full_name);
-    await loadPatientData(patient.id, patient.full_name);
+
+    // 1) Appointments (Supabase)
+    try {
+      const { data: apptData, error: apptError } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("full_name", patient.full_name)
+        .order("appointment_date", { ascending: false });
+
+      if (apptError) throw apptError;
+      setAppointments((apptData as Appointment[]) || []);
+    } catch (err: any) {
+      toast.error("Error loading appointments: " + err.message);
+      setAppointments([]);
+    }
+
+    // 2) Medicines (Express/MySQL)
+    try {
+      if (!patient.id) {
+        // If patient exists only via appointments union and doesn’t have an id yet,
+        // there won’t be medicines tied to a numeric patient_id.
+        setMedicines([]);
+        return;
+      }
+      const res = await fetch(`${API_ROOT}/patients/${patient.id}`);
+      const js = await res.json();
+      if (!res.ok) throw new Error(js?.error || "Failed to load patient details");
+      setMedicines(js.medicines || []);
+    } catch (err: any) {
+      toast.error("Error loading prescriptions: " + err.message);
+      setMedicines([]);
+    }
   };
 
   return (
@@ -146,50 +144,50 @@ export default function PatientsPage() {
           <div className="flex gap-3">
             <div className="flex-1">
               <Input
-                placeholder="Search patient by name..."
+                placeholder="Search patient by name, email, or phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 className="bg-white"
               />
             </div>
-            <Button onClick={handleSearch} disabled={loading} className="bg-emerald-700 hover:bg-emerald-800">
+            <Button
+              onClick={handleSearch}
+              disabled={loading}
+              className="bg-emerald-700 hover:bg-emerald-800"
+            >
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
           </div>
         </Card>
 
-        {/* Patient List */}
+        {/* Patient List (when none selected) */}
         {!selectedPatient && patients.length > 0 && (
           <Card className="p-4">
             <h3 className="font-semibold mb-4 text-emerald-900">All Patients</h3>
             <div className="divide-y">
-              {patients.map((patient) => (
+              {patients.map((p) => (
                 <button
-                  key={patient.id}
-                  onClick={() => selectPatient(patient)}
+                  key={(p.id ?? 0) + (p.email || "") + (p.phone || "")}
+                  onClick={() => selectPatient(p)}
                   className="w-full text-left py-3 px-2 hover:bg-emerald-50 rounded transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <User className="h-5 w-5 text-emerald-700" />
                       <div>
-                        <div className="font-medium text-emerald-900">{patient.full_name}</div>
+                        <div className="font-medium text-emerald-900">{p.full_name}</div>
                         <div className="text-sm text-emerald-700">
-                          {patient.phone} • {patient.email}
+                          {p.phone || "N/A"} • {p.email || "N/A"}
                         </div>
                       </div>
                     </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        patient.is_new_patient
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {patient.is_new_patient ? "New Patient" : "Regular Patient"}
-                    </span>
+                    {!p.id && (
+                      <span className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                        From Appointment
+                      </span>
+                    )}
                   </div>
                 </button>
               ))}
@@ -204,15 +202,11 @@ export default function PatientsPage() {
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-emerald-900">Patient Information</h3>
-                <span
-                  className={`text-sm px-3 py-1 rounded ${
-                    selectedPatient.is_new_patient
-                      ? "bg-blue-100 text-blue-800"
-                      : "bg-green-100 text-green-800"
-                  }`}
-                >
-                  {selectedPatient.is_new_patient ? "New Patient" : "Regular Patient"}
-                </span>
+                {!selectedPatient.id && (
+                  <span className="text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800">
+                    From Appointment
+                  </span>
+                )}
               </div>
 
               <div className="space-y-3">
@@ -230,26 +224,6 @@ export default function PatientsPage() {
                     <p className="text-sm">{selectedPatient.email || "N/A"}</p>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-emerald-900">First Visit</Label>
-                    <p>{format(new Date(selectedPatient.first_visit_date), "MMM dd, yyyy")}</p>
-                  </div>
-                  <div>
-                    <Label className="text-emerald-900">Last Visit</Label>
-                    <p>
-                      {selectedPatient.last_visit_date
-                        ? format(new Date(selectedPatient.last_visit_date), "MMM dd, yyyy")
-                        : "N/A"}
-                    </p>
-                  </div>
-                </div>
-                {selectedPatient.notes && (
-                  <div>
-                    <Label className="text-emerald-900">Notes</Label>
-                    <p className="text-sm">{selectedPatient.notes}</p>
-                  </div>
-                )}
               </div>
 
               <Button
@@ -316,18 +290,24 @@ export default function PatientsPage() {
                         <th className="text-left py-2 px-3 text-emerald-900">Frequency</th>
                         <th className="text-left py-2 px-3 text-emerald-900">Duration</th>
                         <th className="text-left py-2 px-3 text-emerald-900">Date</th>
+                        <th className="text-left py-2 px-3 text-emerald-900">Instructions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {medicines.map((med) => (
-                        <tr key={med.id} className="border-b border-emerald-50">
-                          <td className="py-2 px-3 font-medium">{med.medicine_name}</td>
-                          <td className="py-2 px-3">{med.dosage || "N/A"}</td>
-                          <td className="py-2 px-3">{med.frequency || "N/A"}</td>
-                          <td className="py-2 px-3">{med.duration || "N/A"}</td>
+                      {medicines.map((m) => (
+                        <tr key={m.id} className="border-b border-emerald-50">
+                          <td className="py-2 px-3 font-medium">{m.medicine_name}</td>
+                          <td className="py-2 px-3">{m.dosage || "N/A"}</td>
+                          <td className="py-2 px-3">{m.frequency || "N/A"}</td>
+                          <td className="py-2 px-3">{m.duration || "N/A"}</td>
                           <td className="py-2 px-3">
-                            {format(new Date(med.prescribed_date), "MMM dd, yyyy")}
+                            {m.prescribed_date
+                              ? format(new Date(m.prescribed_date), "MMM dd, yyyy")
+                              : m.created_at
+                              ? format(new Date(m.created_at), "MMM dd, yyyy")
+                              : "-"}
                           </td>
+                          <td className="py-2 px-3">{m.instructions || "-"}</td>
                         </tr>
                       ))}
                     </tbody>

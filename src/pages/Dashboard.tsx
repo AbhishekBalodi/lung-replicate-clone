@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Check } from "lucide-react";
 import ConsoleShell from "@/layouts/ConsoleShell";
 
 import {
@@ -20,16 +19,19 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface Appointment {
-  id: string;
+  id: number; // MySQL numeric id
   full_name: string;
   email: string;
   phone: string;
-  appointment_date: string;
-  appointment_time: string;
+  appointment_date: string; // yyyy-mm-dd
+  appointment_time: string; // HH:mm
   selected_doctor: string;
   message: string | null;
-  created_at: string;
+  created_at?: string | null;
+  status?: string | null;
 }
+
+const API_BASE = "/api/appointment";
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
@@ -38,7 +40,8 @@ export default function Dashboard() {
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [actionBusyId, setActionBusyId] = useState<number | null>(null);
 
   // Local state for quick booking widget
   const [visitType, setVisitType] = useState<"In-clinic" | "Video">("In-clinic");
@@ -61,15 +64,14 @@ export default function Dashboard() {
 
   const fetchAppointments = async () => {
     try {
-      const { data, error } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("appointment_date", { ascending: true });
-
-      if (error) throw error;
-      setAppointments(data || []);
+      setLoading(true);
+      // OPTION A: fetch ALL appointments (no email filter)
+      const res = await fetch(`${API_BASE}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to fetch appointments");
+      setAppointments(Array.isArray(data) ? data : []);
     } catch (e: any) {
+      setAppointments([]);
       toast({ title: "Error", description: e.message, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -77,11 +79,11 @@ export default function Dashboard() {
   };
 
   const handleDelete = async () => {
-    if (!deleteId) return;
+    if (deleteId == null) return;
     try {
-      const { error } = await supabase.from("appointments").delete().eq("id", deleteId);
-      if (error) throw error;
-
+      const res = await fetch(`${API_BASE}/${deleteId}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to cancel appointment");
       toast({ title: "Success", description: "Appointment cancelled successfully" });
       fetchAppointments();
     } catch (e: any) {
@@ -91,10 +93,35 @@ export default function Dashboard() {
     }
   };
 
+  // ✅ Mark as Done (sync to patients via Express)
+  const markDone = async (id: number) => {
+    try {
+      setActionBusyId(id);
+      const res = await fetch(`${API_BASE}/${id}/done`, { method: "PATCH" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to mark as done");
+      toast({ title: "Completed", description: "Appointment marked as done." });
+      fetchAppointments();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setActionBusyId(null);
+    }
+  };
+
   // Generate a simple slot grid for the selected date (UI only; no backend change)
   const slots = useMemo(() => {
-    // typical clinic blocks
-    return ["09:00 AM", "09:30 AM", "10:00 AM", "11:00 AM", "12:00 PM", "12:30 PM", "03:00 PM", "03:30 PM", "04:00 PM"];
+    return [
+      "09:00 AM",
+      "09:30 AM",
+      "10:00 AM",
+      "11:00 AM",
+      "12:00 PM",
+      "12:30 PM",
+      "03:00 PM",
+      "03:30 PM",
+      "04:00 PM",
+    ];
   }, []);
 
   const confirmFromDashboard = () => {
@@ -130,7 +157,9 @@ export default function Dashboard() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">Total Appointments</CardTitle>
+                <CardTitle className="text-sm font-medium text-slate-600">
+                  Total Appointments
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-4xl font-semibold">{appointments.length}</div>
@@ -143,112 +172,128 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-4xl font-semibold">
-                  {appointments.filter(a => new Date(a.appointment_date) >= new Date()).length}
+                  {appointments.filter((a) => new Date(a.appointment_date) >= new Date()).length}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
-  <CardHeader className="pb-3">
-    <CardTitle className="text-sm font-medium">Account Email</CardTitle>
-  </CardHeader>
-  <CardContent>
-    {/* wrap long emails instead of overflowing */}
-    <div className="text-sm break-all">{user?.email}</div>
-  </CardContent>
-</Card>
-
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Account Email</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm break-all">{user?.email}</div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Appointments table */}
           <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
-  <CardHeader className="pb-3">
-    <CardTitle>Your Appointments</CardTitle>
-    <CardDescription>View and manage your scheduled appointments</CardDescription>
-  </CardHeader>
+            <CardHeader className="pb-3">
+              <CardTitle>Your Appointments</CardTitle>
+              <CardDescription>View and manage your scheduled appointments</CardDescription>
+            </CardHeader>
 
             <CardContent className="p-0 overflow-hidden">
-
+              {/* horizontal scroll container */}
               <div className="overflow-x-auto">
-              {/* min width so columns don’t squish */}
-              <div className="min-w-[980px]">
-               {/* header row stays at the top of the scroller */}
-              {/* Header row */}
-              <div className="grid grid-cols-6 gap-3 font-medium text-slate-500 px-5 py-3 border-t border-slate-100">
-                <div>When</div>
-                <div>Patient</div>
-                <div>Doctor</div>
-                <div>Room</div>
-                <div>Notes</div>
-                <div>Actions</div>
-              </div>
-
-              {/* Rows */}
-              <div className="max-h-[320px] overflow-y-auto divide-y">
-                {appointments.map(a => (
-                  <div key={a.id} className="grid grid-cols-6 gap-3 items-center px-5 py-4">
-                    {/* When */}
-                    <div>
-                      <div className="font-medium">
-                        {new Date(a.appointment_date).toLocaleDateString()}
-                      </div>
-                      <div className="text-xs rounded-md bg-slate-100 inline-block px-2 py-0.5 mt-1">
-                        {a.appointment_time}
-                      </div>
-                    </div>
-
-                    {/* Patient */}
-                    <div className="font-medium">{a.full_name}</div>
-
-                    {/* Doctor */}
-                    <div>{a.selected_doctor}</div>
-
-                    {/* Room (static tag to match mock) */}
-                    <div>
-                      <span className="text-xs rounded-md bg-emerald-100 text-emerald-800 px-2 py-0.5">
-                        Room 1
-                      </span>
-                    </div>
-
-                    {/* Notes */}
-                    <div className="text-sm text-slate-500 truncate">{a.message ?? "-"}</div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
-                        className="px-3"
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        Reschedule
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setDeleteId(a.id)}
-                        className="px-3"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Cancel
-                      </Button>
-                    </div>
+                {/* min width so columns don’t squish */}
+                <div className="min-w-[980px]">
+                  {/* Header row */}
+                  <div className="grid grid-cols-6 gap-3 font-medium text-slate-500 px-5 py-3 border-t border-slate-100">
+                    <div>When</div>
+                    <div>Patient</div>
+                    <div>Doctor</div>
+                    <div>Room</div>
+                    <div>Notes</div>
+                    <div className="text-right">Actions</div>
                   </div>
-                ))}
 
-                {!appointments.length && (
-                  <div className="text-center py-12 text-slate-500">
-                    No appointments
-                    <div className="mt-4">
-                      <Button onClick={() => navigate("/book-appointment")}>
-                        Book Your First Appointment
-                      </Button>
-                    </div>
+                  {/* Rows */}
+                  <div className="max-h-[320px] overflow-y-auto divide-y">
+                    {appointments.map((a) => (
+                      <div
+                        key={a.id}
+                        className="grid grid-cols-6 gap-3 items-center px-5 py-4"
+                      >
+                        {/* When */}
+                        <div>
+                          <div className="font-medium">
+                            {new Date(a.appointment_date).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs rounded-md bg-slate-100 inline-block px-2 py-0.5 mt-1">
+                            {a.appointment_time}
+                          </div>
+                        </div>
+
+                        {/* Patient */}
+                        <div className="font-medium">{a.full_name}</div>
+
+                        {/* Doctor */}
+                        <div>{a.selected_doctor}</div>
+
+                        {/* Room */}
+                        <div>
+                          <span className="text-xs rounded-md bg-emerald-100 text-emerald-800 px-2 py-0.5">
+                            Room 1
+                          </span>
+                        </div>
+
+                        {/* Notes */}
+                        <div className="text-sm text-slate-500 truncate">
+                          {a.message ?? "-"}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-wrap gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="px-3 shrink-0"
+                            disabled={actionBusyId === a.id}
+                            onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Reschedule
+                          </Button>
+
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="px-3 shrink-0"
+                            disabled={actionBusyId === a.id}
+                            onClick={() => setDeleteId(a.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Cancel
+                          </Button>
+
+                          <Button
+                            variant="default"
+                            size="sm"
+                            className="bg-emerald-600 text-white hover:bg-emerald-700 px-3 shrink-0"
+                            disabled={actionBusyId === a.id}
+                            onClick={() => markDone(a.id)}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Done
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {!appointments.length && (
+                      <div className="text-center py-12 text-slate-500">
+                        No appointments
+                        <div className="mt-4">
+                          <Button onClick={() => navigate("/book-appointment")}>
+                            Book Your First Appointment
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -358,7 +403,7 @@ export default function Dashboard() {
       </div>
 
       {/* Cancel dialog */}
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog open={deleteId != null} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Appointment?</AlertDialogTitle>

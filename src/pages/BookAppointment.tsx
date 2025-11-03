@@ -5,21 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { 
-  User, Calendar, Stethoscope, CheckCircle, 
-  Upload, ChevronLeft, ChevronRight 
+import {
+  User, Calendar, Stethoscope, CheckCircle,
+  Upload, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+
+// If your backend is on a different origin, replace with full URL or env var.
+const APPOINTMENTS_API = "/api/appointment";
 
 const BookAppointment = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     // Step 1 - Patient Details
     fullName: "",
@@ -33,7 +36,7 @@ const BookAppointment = () => {
     // Step 2 - Date & Time
     preferredDate: "",
     preferredTime: "",
-    // Step 3 - Doctor
+    // Step 3 - Doctor (store the final string your backend expects)
     selectedDoctor: "",
     // Step 4 - Additional
     reports: null as File | null,
@@ -61,7 +64,7 @@ const BookAppointment = () => {
 
   const validateStep = () => {
     if (currentStep === 1) {
-      if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || 
+      if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() ||
           !formData.age.trim() || !formData.gender) {
         toast({
           title: "Validation Error",
@@ -70,7 +73,7 @@ const BookAppointment = () => {
         });
         return false;
       }
-      
+
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
         toast({
@@ -80,9 +83,10 @@ const BookAppointment = () => {
         });
         return false;
       }
-      
+
+      const phoneDigitsOnly = formData.phone.replace(/\D/g, "");
       const phoneRegex = /^\d{10,13}$/;
-      if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+      if (!phoneRegex.test(phoneDigitsOnly)) {
         toast({
           title: "Invalid Phone Number",
           description: "Phone number must contain 10-13 digits only.",
@@ -127,61 +131,73 @@ const BookAppointment = () => {
       if (validateStep()) {
         setCurrentStep(currentStep + 1);
       }
-    } else {
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to book an appointment",
-          variant: "destructive",
-        });
-        return;
+      return;
+    }
+
+    // Final submit (step 4)
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to book an appointment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Build payload expected by your Express route/Zod schema
+      const payload = {
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        appointment_date: formData.preferredDate,
+        appointment_time: formData.preferredTime,
+        selected_doctor: formData.selectedDoctor || "Dr. Paramjeet Singh Mann - Pulmonologist",
+        message:
+          `${formData.notes || ""}\n` +
+          `Age: ${formData.age}\n` +
+          `Gender: ${formData.gender}\n` +
+          `Address: ${formData.address}\n` +
+          `Medical History: ${formData.medicalHistory}\n` +
+          `Symptoms: ${formData.currentSymptoms}`,
+        reports_uploaded: !!formData.reports
+      };
+
+      const res = await fetch(APPOINTMENTS_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || `Request failed with status ${res.status}`);
       }
 
-      try {
-        const { error } = await supabase
-          .from('appointments')
-          .insert({
-            user_id: user.id,
-            full_name: formData.fullName,
-            email: formData.email,
-            phone: formData.phone,
-            appointment_date: formData.preferredDate,
-            appointment_time: formData.preferredTime,
-            selected_doctor: "Dr. Paramjeet Singh Mann - Pulmonologist",
-            message: `${formData.notes || ''}\nAge: ${formData.age}\nGender: ${formData.gender}\nAddress: ${formData.address}\nMedical History: ${formData.medicalHistory}\nSymptoms: ${formData.currentSymptoms}`,
-            reports_uploaded: !!formData.reports
-          });
+      toast({
+        title: "Appointment Booked!",
+        description: "Your appointment has been successfully scheduled."
+      });
 
-        if (error) throw error;
-
-        toast({
-          title: "Appointment Booked!",
-          description: "Your appointment has been successfully scheduled.",
-        });
-
-        navigate('/dashboard');
-      } catch (error: any) {
-        console.error("Error booking appointment:", error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to book appointment. Please try again.",
-          variant: "destructive"
-        });
-      }
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Error booking appointment:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to book appointment. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFormData({...formData, reports: file});
-    }
+    const file = e.target.files?.[0] || null;
+    setFormData({ ...formData, reports: file });
+    // Note: backend currently only stores a boolean. Actual upload can be added later.
   };
 
   const renderStepContent = () => {
@@ -196,7 +212,7 @@ const BookAppointment = () => {
             <p className="text-muted-foreground mb-8 font-livvic">
               Please provide your details for the appointment
             </p>
-            
+
             <div className="space-y-6">
               <div>
                 <Label htmlFor="fullName" className="flex items-center gap-2 text-sm font-medium mb-2">
@@ -207,7 +223,7 @@ const BookAppointment = () => {
                   id="fullName"
                   placeholder="Enter your full name"
                   value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
                 />
               </div>
@@ -220,7 +236,7 @@ const BookAppointment = () => {
                     type="email"
                     placeholder="your.email@example.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     required
                     pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
                   />
@@ -235,7 +251,7 @@ const BookAppointment = () => {
                     onChange={(e) => {
                       const value = e.target.value.replace(/\D/g, '');
                       if (value.length <= 13) {
-                        setFormData({...formData, phone: value});
+                        setFormData({ ...formData, phone: value });
                       }
                     }}
                     required
@@ -253,7 +269,7 @@ const BookAppointment = () => {
                     type="number"
                     placeholder="25"
                     value={formData.age}
-                    onChange={(e) => setFormData({...formData, age: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
                     required
                     min="1"
                     max="120"
@@ -264,7 +280,7 @@ const BookAppointment = () => {
                   <select
                     id="gender"
                     value={formData.gender}
-                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     required
                   >
@@ -282,7 +298,7 @@ const BookAppointment = () => {
                   id="address"
                   placeholder="Enter your complete address"
                   value={formData.address}
-                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="min-h-20"
                 />
               </div>
@@ -293,7 +309,7 @@ const BookAppointment = () => {
                   id="medicalHistory"
                   placeholder="Any previous medical conditions, surgeries, or ongoing treatments"
                   value={formData.medicalHistory}
-                  onChange={(e) => setFormData({...formData, medicalHistory: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, medicalHistory: e.target.value })}
                   className="min-h-20"
                 />
               </div>
@@ -304,7 +320,7 @@ const BookAppointment = () => {
                   id="currentSymptoms"
                   placeholder="Describe your current symptoms or reason for consultation"
                   value={formData.currentSymptoms}
-                  onChange={(e) => setFormData({...formData, currentSymptoms: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, currentSymptoms: e.target.value })}
                   className="min-h-20"
                 />
               </div>
@@ -313,8 +329,8 @@ const BookAppointment = () => {
             {/* Reports Upload Section */}
             <div className="mt-8">
               <Label htmlFor="reports" className="text-sm font-medium mb-2 block">Upload Reports (Optional)</Label>
-              <label 
-                htmlFor="reports" 
+              <label
+                htmlFor="reports"
                 className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 border-gray-300 hover:border-lung-blue transition-colors"
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
@@ -339,7 +355,7 @@ const BookAppointment = () => {
             </div>
           </div>
         );
-      
+
       case 2:
         return (
           <div className="space-y-6">
@@ -350,25 +366,25 @@ const BookAppointment = () => {
             <p className="text-muted-foreground mb-8 font-livvic">
               Choose your preferred appointment date and time
             </p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="date" className="text-sm font-medium mb-2 block">Preferred Date *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.preferredDate}
-                    onChange={(e) => setFormData({...formData, preferredDate: e.target.value})}
-                    required
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
+              <div>
+                <Label htmlFor="date" className="text-sm font-medium mb-2 block">Preferred Date *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={formData.preferredDate}
+                  onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
+                  required
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
               <div>
                 <Label htmlFor="time" className="text-sm font-medium mb-2 block">Preferred Time *</Label>
                 <select
                   id="time"
                   value={formData.preferredTime}
-                  onChange={(e) => setFormData({...formData, preferredTime: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
                   className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   required
                 >
@@ -386,7 +402,7 @@ const BookAppointment = () => {
             </div>
           </div>
         );
-      
+
       case 3:
         return (
           <div className="space-y-6">
@@ -397,26 +413,37 @@ const BookAppointment = () => {
             <p className="text-muted-foreground mb-8 font-livvic">
               Select your preferred doctor for the consultation
             </p>
-            
+
             <div className="grid gap-4">
-              <Card 
+              <Card
                 className={`p-6 cursor-pointer border-2 transition-colors ${
-                  formData.selectedDoctor === "dr-mann" ? "border-lung-blue bg-lung-blue/5" : "border-gray-200 hover:border-lung-blue/50"
+                  formData.selectedDoctor === "Dr. Paramjeet Singh Mann - Pulmonologist"
+                    ? "border-lung-blue bg-lung-blue/5"
+                    : "border-gray-200 hover:border-lung-blue/50"
                 }`}
-                onClick={() => setFormData({...formData, selectedDoctor: "dr-mann"})}
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    selectedDoctor: "Dr. Paramjeet Singh Mann - Pulmonologist"
+                  })
+                }
               >
                 <div className="flex items-center gap-4">
-                  <img 
-                    src="/src/assets/dr-mann-passport.png" 
+                  <img
+                    src="/src/assets/dr-mann-passport.png"
                     alt="Dr. Paramjeet Singh Mann"
                     className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
                   />
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground font-lexend">Dr. Paramjeet Singh Mann</h3>
-                    <p className="text-muted-foreground font-livvic">Pulmonologist & Respiratory Medicine</p>
+                    <h3 className="text-lg font-bold text-foreground font-lexend">
+                      Dr. Paramjeet Singh Mann
+                    </h3>
+                    <p className="text-muted-foreground font-livvic">
+                      Pulmonologist & Respiratory Medicine
+                    </p>
                     <p className="text-sm text-lung-blue font-medium">40+ Years Experience</p>
                   </div>
-                  {formData.selectedDoctor === "dr-mann" && (
+                  {formData.selectedDoctor === "Dr. Paramjeet Singh Mann - Pulmonologist" && (
                     <CheckCircle className="h-6 w-6 text-lung-blue" />
                   )}
                 </div>
@@ -424,7 +451,7 @@ const BookAppointment = () => {
             </div>
           </div>
         );
-      
+
       case 4:
         return (
           <div className="space-y-6">
@@ -435,7 +462,7 @@ const BookAppointment = () => {
             <p className="text-muted-foreground mb-8 font-livvic">
               Please review your appointment details before confirmation
             </p>
-            
+
             <div className="space-y-6">
               <Card className="p-6">
                 <h3 className="text-lg font-bold mb-4 font-lexend">Patient Information</h3>
@@ -452,7 +479,7 @@ const BookAppointment = () => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div><span className="font-medium">Date:</span> {formData.preferredDate}</div>
                   <div><span className="font-medium">Time:</span> {formData.preferredTime}</div>
-                  <div><span className="font-medium">Doctor:</span> Dr. Paramjeet Singh Mann</div>
+                  <div><span className="font-medium">Doctor:</span> {formData.selectedDoctor || "Dr. Paramjeet Singh Mann"}</div>
                   <div><span className="font-medium">Type:</span> Pulmonology Consultation</div>
                 </div>
               </Card>
@@ -463,14 +490,14 @@ const BookAppointment = () => {
                   id="notes"
                   placeholder="Any additional information or special requests"
                   value={formData.notes}
-                  onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   className="min-h-20"
                 />
               </div>
             </div>
           </div>
         );
-      
+
       default:
         return null;
     }
@@ -481,88 +508,88 @@ const BookAppointment = () => {
       <Header />
       <div className="pt-32">
         {/* Hero Section */}
-      <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-16 px-4">
-        <div className="max-w-4xl mx-auto text-center text-white">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 font-lexend">Book an Appointment & You're Done!</h1>
-          <p className="text-xl text-white/90 max-w-3xl mx-auto font-livvic">
-            Looking for the best & quick pulmonary treatments without a long waiting time?
-          </p>
-        </div>
-      </section>
-
-      {/* Progress Steps */}
-      <section className="py-8 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center gap-4 md:gap-8">
-            {steps.map((step, index) => {
-              const IconComponent = step.icon;
-              const isActive = currentStep === step.number;
-              const isCompleted = currentStep > step.number;
-              
-              return (
-                <div key={step.number} className="flex items-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                      isActive ? "bg-lung-blue text-white" : 
-                      isCompleted ? "bg-lung-green text-white" : 
-                      "bg-gray-200 text-gray-500"
-                    }`}>
-                      <IconComponent className="h-6 w-6" />
-                    </div>
-                    <div className="text-center">
-                      <p className={`text-sm font-medium ${isActive ? "text-lung-blue" : "text-muted-foreground"}`}>
-                        {step.title}
-                      </p>
-                      <p className="text-xs text-muted-foreground">{step.subtitle}</p>
-                    </div>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div className={`w-8 h-0.5 mx-4 ${
-                      currentStep > step.number ? "bg-lung-green" : "bg-gray-200"
-                    }`} />
-                  )}
-                </div>
-              );
-            })}
+        <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-16 px-4">
+          <div className="max-w-4xl mx-auto text-center text-white">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 font-lexend">Book an Appointment & You're Done!</h1>
+            <p className="text-xl text-white/90 max-w-3xl mx-auto font-livvic">
+              Looking for the best & quick pulmonary treatments without a long waiting time?
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Form Content */}
-      <section className="py-16 px-4">
-        <div className="max-w-4xl mx-auto">
-          <Card className="p-8">
-            {renderStepContent()}
-            
-            {/* Navigation */}
-            <div className="flex items-center justify-between mt-12 pt-8 border-t">
-              <Button
-                onClick={handlePrevious}
-                disabled={currentStep === 1}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              
-              <span className="text-sm text-muted-foreground font-livvic">
-                Step {currentStep} of {steps.length}
-              </span>
-              
-              <Button
-                onClick={handleNext}
-                className="bg-lung-blue hover:bg-lung-blue-dark text-white flex items-center gap-2"
-              >
-                {currentStep === 4 ? "Confirm Booking" : "Next"}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+        {/* Progress Steps */}
+        <section className="py-8 px-4 bg-muted/30">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-center gap-4 md:gap-8">
+              {steps.map((step, index) => {
+                const IconComponent = step.icon;
+                const isActive = currentStep === step.number;
+                const isCompleted = currentStep > step.number;
+
+                return (
+                  <div key={step.number} className="flex items-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
+                        isActive ? "bg-lung-blue text-white" :
+                        isCompleted ? "bg-lung-green text-white" :
+                        "bg-gray-200 text-gray-500"
+                      }`}>
+                        <IconComponent className="h-6 w-6" />
+                      </div>
+                      <div className="text-center">
+                        <p className={`text-sm font-medium ${isActive ? "text-lung-blue" : "text-muted-foreground"}`}>
+                          {step.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{step.subtitle}</p>
+                      </div>
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div className={`w-8 h-0.5 mx-4 ${
+                        currentStep > step.number ? "bg-lung-green" : "bg-gray-200"
+                      }`} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </Card>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <Footer />
+        {/* Form Content */}
+        <section className="py-16 px-4">
+          <div className="max-w-4xl mx-auto">
+            <Card className="p-8">
+              {renderStepContent()}
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between mt-12 pt-8 border-t">
+                <Button
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+
+                <span className="text-sm text-muted-foreground font-livvic">
+                  Step {currentStep} of {steps.length}
+                </span>
+
+                <Button
+                  onClick={handleNext}
+                  className="bg-lung-blue hover:bg-lung-blue-dark text-white flex items-center gap-2"
+                >
+                  {currentStep === 4 ? "Confirm Booking" : "Next"}
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+          </div>
+        </section>
+
+        <Footer />
       </div>
     </div>
   );
