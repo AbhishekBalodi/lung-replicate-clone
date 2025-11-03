@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-const Contact = () => {
+const Contact = ({ mapSrc }: { mapSrc?: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const defaultMapSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3499.0!2d77.1733!3d28.6667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDQwJzAwLjEiTiA3N8KwMTAnMjMuOSJF!5e0!3m2!1sen!2sin!4v1234567890123";
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -73,7 +75,7 @@ const Contact = () => {
   <div className="relative">
     <div className="bg-gray-200 rounded-lg overflow-hidden h-64 sm:h-80 lg:h-96">
       <iframe
-        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3499.0!2d77.1733!3d28.6667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDQwJzAwLjEiTiA3N8KwMTAnMjMuOSJF!5e0!3m2!1sen!2sin!4v1234567890123"
+        src={mapSrc || defaultMapSrc}
         width="100%"
         height="100%"
         style={{ border: 0 }}

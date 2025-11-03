@@ -1,5 +1,4 @@
-
-import AdminLayout from "@/layouts/AdminLayout";
+import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +35,7 @@ export default function Medicines(){
   }
 
   return (
-    <AdminLayout>
+    <ConsoleShell>
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold">Medicines Catalog</h1>
         <Button className="bg-[#1f7a68] hover:bg-[#196758]" onClick={add}>New Medicine</Button>
@@ -66,6 +65,6 @@ export default function Medicines(){
           </div>
         </Card>
       </div>
-    </AdminLayout>
+    </ConsoleShell>
   );
 }

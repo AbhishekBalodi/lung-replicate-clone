@@ -95,6 +95,196 @@ export type Database = {
         }
         Relationships: []
       }
+      medicines_catalog: {
+        Row: {
+          created_at: string | null
+          default_frequency: string | null
+          duration: string | null
+          form: string | null
+          id: string
+          name: string
+          route: string | null
+          strength: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_frequency?: string | null
+          duration?: string | null
+          form?: string | null
+          id?: string
+          name: string
+          route?: string | null
+          strength?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_frequency?: string | null
+          duration?: string | null
+          form?: string | null
+          id?: string
+          name?: string
+          route?: string | null
+          strength?: string | null
+        }
+        Relationships: []
+      }
+      patient_visits: {
+        Row: {
+          appointment_id: string | null
+          created_at: string | null
+          diagnosis: string | null
+          id: string
+          notes: string | null
+          patient_id: string | null
+          symptoms: string | null
+          visit_date: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          created_at?: string | null
+          diagnosis?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          symptoms?: string | null
+          visit_date?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          created_at?: string | null
+          diagnosis?: string | null
+          id?: string
+          notes?: string | null
+          patient_id?: string | null
+          symptoms?: string | null
+          visit_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_visits_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "patient_visits_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          date_of_birth: string | null
+          email: string | null
+          first_visit_date: string | null
+          full_name: string
+          id: string
+          is_new_patient: boolean | null
+          last_visit_date: string | null
+          notes: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_visit_date?: string | null
+          full_name: string
+          id?: string
+          is_new_patient?: boolean | null
+          last_visit_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          first_visit_date?: string | null
+          full_name?: string
+          id?: string
+          is_new_patient?: boolean | null
+          last_visit_date?: string | null
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      prescribed_medicines: {
+        Row: {
+          created_at: string | null
+          dosage: string | null
+          duration: string | null
+          frequency: string | null
+          id: string
+          instructions: string | null
+          medicine_id: string | null
+          medicine_name: string
+          patient_id: string | null
+          prescribed_date: string | null
+          visit_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dosage?: string | null
+          duration?: string | null
+          frequency?: string | null
+          id?: string
+          instructions?: string | null
+          medicine_id?: string | null
+          medicine_name: string
+          patient_id?: string | null
+          prescribed_date?: string | null
+          visit_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dosage?: string | null
+          duration?: string | null
+          frequency?: string | null
+          id?: string
+          instructions?: string | null
+          medicine_id?: string | null
+          medicine_name?: string
+          patient_id?: string | null
+          prescribed_date?: string | null
+          visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescribed_medicines_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescribed_medicines_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescribed_medicines_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "patient_visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
