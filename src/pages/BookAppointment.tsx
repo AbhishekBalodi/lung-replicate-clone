@@ -9,10 +9,9 @@ import {
   User, Calendar, Stethoscope, CheckCircle,
   Upload, ChevronLeft, ChevronRight
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 
 // If your backend is on a different origin, replace with full URL or env var.
 const APPOINTMENTS_API = "/api/appointment";
@@ -20,7 +19,6 @@ const APPOINTMENTS_API = "/api/appointment";
 const BookAppointment = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const { toast } = useToast();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -42,18 +40,6 @@ const BookAppointment = () => {
     reports: null as File | null,
     notes: ""
   });
-
-  // Redirect to auth if not logged in
-  useEffect(() => {
-    if (!user) {
-      toast({
-        title: "Login Required",
-        description: "Please login to book an appointment",
-        variant: "destructive"
-      });
-      navigate('/auth');
-    }
-  }, [user, navigate, toast]);
 
   const steps = [
     { number: 1, title: "Patient Details", subtitle: "Enter your info", icon: User },
@@ -135,15 +121,6 @@ const BookAppointment = () => {
     }
 
     // Final submit (step 4)
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to book an appointment",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       // Build payload expected by your Express route/Zod schema
       const payload = {
@@ -179,7 +156,7 @@ const BookAppointment = () => {
         description: "Your appointment has been successfully scheduled."
       });
 
-      navigate("/dashboard");
+      navigate("/");
     } catch (error: any) {
       console.error("Error booking appointment:", error);
       toast({
