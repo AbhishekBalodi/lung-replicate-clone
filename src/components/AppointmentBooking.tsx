@@ -7,9 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { User, Calendar, UserCheck, CheckCircle, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const AppointmentBooking = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -119,22 +127,8 @@ const AppointmentBooking = () => {
           throw new Error(result.error || 'Failed to book appointment');
         }
 
-        toast({
-          title: "Appointment Booked!",
-          description: "Your appointment has been successfully scheduled. A confirmation email has been sent.",
-        });
-        
-        setCurrentStep(1);
-        setFormData({
-          fullName: "",
-          email: "",
-          phone: "",
-          date: "",
-          time: "",
-          doctor: "",
-          message: "",
-          reports: null
-        });
+        // Show confirmation modal
+        setShowConfirmModal(true);
       } catch (error: any) {
         console.error("Error booking appointment:", error);
         toast({
@@ -163,8 +157,48 @@ const AppointmentBooking = () => {
     }
   };
 
+  const handleCloseModal = () => {
+    setShowConfirmModal(false);
+    setCurrentStep(1);
+    setFormData({
+      fullName: "",
+      email: "",
+      phone: "",
+      date: "",
+      time: "",
+      doctor: "",
+      message: "",
+      reports: null
+    });
+  };
+
   return (
-    <section className="py-8 px-4 bg-medical-light/30">
+    <>
+      <Dialog open={showConfirmModal} onOpenChange={handleCloseModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-lung-green/10">
+              <CheckCircle className="h-8 w-8 text-lung-green" />
+            </div>
+            <DialogTitle className="text-center text-2xl font-bold">
+              Thank You for Booking!
+            </DialogTitle>
+            <DialogDescription className="text-center text-base pt-2">
+              Thank you for booking an appointment with us. Our representative will call you soon to confirm your appointment details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={handleCloseModal}
+              className="bg-lung-green hover:bg-lung-green/90 text-white px-8"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <section className="py-8 px-4 bg-medical-light/30">
       <div className="container mx-auto max-w-6xl">
         <div className="text-center mb-6">
           <h2 className="text-3xl lg:text-4xl font-bold text-foreground mb-3 lg:mb-4 font-manrope">
@@ -437,6 +471,7 @@ const AppointmentBooking = () => {
         </Card>
       </div>
     </section>
+    </>
   );
 };
 

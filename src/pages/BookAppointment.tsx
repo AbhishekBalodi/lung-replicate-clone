@@ -12,12 +12,20 @@ import {
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // If your backend is on a different origin, replace with full URL or env var.
 const APPOINTMENTS_API = "/api/appointment";
 
 const BookAppointment = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -151,12 +159,8 @@ const BookAppointment = () => {
         throw new Error(data?.error || `Request failed with status ${res.status}`);
       }
 
-      toast({
-        title: "Appointment Booked!",
-        description: "Your appointment has been successfully scheduled."
-      });
-
-      navigate("/");
+      // Show confirmation modal
+      setShowConfirmModal(true);
     } catch (error: any) {
       console.error("Error booking appointment:", error);
       toast({
@@ -175,6 +179,27 @@ const BookAppointment = () => {
     const file = e.target.files?.[0] || null;
     setFormData({ ...formData, reports: file });
     // Note: backend currently only stores a boolean. Actual upload can be added later.
+  };
+
+  const handleCloseModal = () => {
+    setShowConfirmModal(false);
+    setCurrentStep(1);
+    setFormData({
+      fullName: "",
+      email: "",
+      phone: "",
+      age: "",
+      gender: "",
+      address: "",
+      medicalHistory: "",
+      currentSymptoms: "",
+      preferredDate: "",
+      preferredTime: "",
+      selectedDoctor: "",
+      reports: null,
+      notes: ""
+    });
+    navigate("/");
   };
 
   const renderStepContent = () => {
@@ -471,8 +496,33 @@ const BookAppointment = () => {
   };
 
   return (
-    <div className="min-h-screen">
-      <Header />
+    <>
+      <Dialog open={showConfirmModal} onOpenChange={handleCloseModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-lung-green/10">
+              <CheckCircle className="h-8 w-8 text-lung-green" />
+            </div>
+            <DialogTitle className="text-center text-2xl font-bold">
+              Thank You for Booking!
+            </DialogTitle>
+            <DialogDescription className="text-center text-base pt-2">
+              Thank you for booking an appointment with us. Our representative will call you soon to confirm your appointment details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center pt-4">
+            <Button 
+              onClick={handleCloseModal}
+              className="bg-lung-green hover:bg-lung-green/90 text-white px-8"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="min-h-screen">
+        <Header />
       <div className="pt-32">
         {/* Hero Section */}
         <section className="bg-gradient-to-r from-lung-blue to-lung-blue-dark py-16 px-4">
@@ -558,7 +608,8 @@ const BookAppointment = () => {
 
         <Footer />
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
