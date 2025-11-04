@@ -358,23 +358,13 @@ const BookAppointment = () => {
               </div>
               <div>
                 <Label htmlFor="time" className="text-sm font-medium mb-2 block">Preferred Time *</Label>
-                <select
+                <Input
                   id="time"
+                  type="time"
                   value={formData.preferredTime}
                   onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
-                  className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   required
-                >
-                  <option value="">Select Time</option>
-                  <option value="09:00">09:00 AM</option>
-                  <option value="10:00">10:00 AM</option>
-                  <option value="11:00">11:00 AM</option>
-                  <option value="12:00">12:00 PM</option>
-                  <option value="14:00">02:00 PM</option>
-                  <option value="15:00">03:00 PM</option>
-                  <option value="16:00">04:00 PM</option>
-                  <option value="17:00">05:00 PM</option>
-                </select>
+                />
               </div>
             </div>
           </div>
