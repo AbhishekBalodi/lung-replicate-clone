@@ -387,7 +387,7 @@ const BookAppointment = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="date" className="text-sm font-medium mb-2 block">Preferred Date *</Label>
+                <Label htmlFor="date" className="text-sm font-medium mb-4 block">Preferred Date *</Label>
                 <Input
                   id="date"
                   type="date"
@@ -399,8 +399,13 @@ const BookAppointment = () => {
                 />
               </div>
               <div>
+<<<<<<< Updated upstream
                 <Label htmlFor="time" className="text-sm font-medium mb-2 block">Preferred Time *</Label>
                 <p className="text-xs text-muted-foreground mb-2">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
+=======
+                <Label htmlFor="time" className="text-sm font-medium  block">Preferred Time *</Label>
+                <p className="text-xs text-muted-foreground mb-1">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
+>>>>>>> Stashed changes
                 <Input
                   id="time"
                   type="time"

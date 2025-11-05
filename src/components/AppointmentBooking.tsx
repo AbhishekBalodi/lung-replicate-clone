@@ -368,13 +368,17 @@ const AppointmentBooking = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="date">Preferred Date *</Label>
+                  <Label htmlFor="date" className="mb-5">Preferred Date *</Label>
                   <Input
                     id="date"
                     type="date"
                     value={formData.date}
                     onChange={(e) => updateFormData("date", e.target.value)}
+<<<<<<< Updated upstream
                     className="mt-2"
+=======
+                    className="mt-4"
+>>>>>>> Stashed changes
                     required
                     min={new Date().toISOString().split('T')[0]}
                   />
