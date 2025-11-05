@@ -394,11 +394,12 @@ const BookAppointment = () => {
                   onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
                   required
                   min={new Date().toISOString().split('T')[0]}
+                  className="mt-1"
                 />
               </div>
               <div>
                 <Label htmlFor="time" className="text-sm font-medium mb-2 block">Preferred Time *</Label>
-                <p className="text-xs text-muted-foreground mb-1">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
+                <p className="text-xs text-muted-foreground mb-2">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
                 <Input
                   id="time"
                   type="time"
@@ -407,6 +408,7 @@ const BookAppointment = () => {
                   required
                   min="10:00"
                   max="20:00"
+                  className="mt-1"
                 />
               </div>
             </div>

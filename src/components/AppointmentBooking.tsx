@@ -373,7 +373,7 @@ const AppointmentBooking = () => {
                     type="date"
                     value={formData.date}
                     onChange={(e) => updateFormData("date", e.target.value)}
-                    className="mt-1"
+                    className="mt-2"
                     required
                     min={new Date().toISOString().split('T')[0]}
                   />
