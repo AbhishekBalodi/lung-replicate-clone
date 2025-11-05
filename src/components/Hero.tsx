@@ -23,7 +23,7 @@ const Hero = () => {
                 size="lg" 
                 className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white font-semibold px-5 lg:px-6 py-3 lg:py-4 text-sm lg:text-base rounded-lg"
               >
-                Make Appointment
+                Book Appointment
               </Button>
             </a>
           </div>

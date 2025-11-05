@@ -49,7 +49,7 @@ const Header = () => {
             </a>
             <a href="/book-appointment">
               <Button className="bg-lung-green hover:bg-lung-green-light text-white text-xs lg:text-sm px-3 lg:px-4 py-2 rounded-lg">
-                Make Appointment
+                Book Appointment
               </Button>
             </a>
             {user ? (
