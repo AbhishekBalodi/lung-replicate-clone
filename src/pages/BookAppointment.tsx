@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import drMannImage from "@/assets/dr-mann-passport.png";
 
 // If your backend is on a different origin, replace with full URL or env var.
 const APPOINTMENTS_API = "/api/appointment";
@@ -442,7 +443,7 @@ const BookAppointment = () => {
               >
                 <div className="flex items-center gap-4">
                   <img
-                    src="/src/assets/dr-mann-passport.png"
+                    src={drMannImage}
                     alt="Dr. Paramjeet Singh Mann"
                     className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
                   />

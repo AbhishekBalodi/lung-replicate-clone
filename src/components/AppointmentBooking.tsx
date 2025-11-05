@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import drMannImage from "@/assets/dr-mann-passport.png";
 
 const AppointmentBooking = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -40,7 +41,7 @@ const AppointmentBooking = () => {
   const doctor = {
     name: "Dr. Paramjeet Singh Mann",
     specialty: "Pulmonologist",
-    image: "/src/assets/dr-mann-passport.png"
+    image: drMannImage
   };
 
   const validateStep = () => {
