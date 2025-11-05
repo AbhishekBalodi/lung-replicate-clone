@@ -43,9 +43,54 @@ router.post('/', async (req, res) => {
   }
   const v = parsed.data;
 
+  // Validate time is within allowed hours: 10 AM - 3 PM and 5 PM - 8 PM
+  const timeRegex = /^(\d{2}):(\d{2})$/;
+  const timeMatch = v.appointment_time.match(timeRegex);
+  if (!timeMatch) {
+    return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
+  }
+  
+  const [hours, minutes] = timeMatch.slice(1).map(Number);
+  const isValidTimeSlot = 
+    (hours >= 10 && hours < 15) || // 10 AM to 3 PM (before 3 PM)
+    (hours >= 17 && hours < 20);   // 5 PM to 8 PM (before 8 PM)
+  
+  if (!isValidTimeSlot) {
+    return res.status(400).json({ 
+      error: 'Appointments are only available between 10 AM - 3 PM and 5 PM - 8 PM' 
+    });
+  }
+
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
+
+    // Check for conflicting appointments (same date/time or within 5 minutes)
+    const appointmentDateTime = `${v.appointment_date} ${v.appointment_time}`;
+    const checkConflictSql = `
+      SELECT id, appointment_time 
+      FROM \`${TBL}\` 
+      WHERE \`${COL.appointment_date}\` = ? 
+        AND \`${COL.status}\` != 'cancelled'
+        AND ABS(TIMESTAMPDIFF(MINUTE, 
+          CONCAT(\`${COL.appointment_date}\`, ' ', \`${COL.appointment_time}\`), 
+          ?
+        )) < 5
+      LIMIT 1
+    `;
+    
+    const [conflicts] = await conn.execute(checkConflictSql, [
+      v.appointment_date,
+      appointmentDateTime
+    ]);
+
+    if (conflicts.length > 0) {
+      await conn.rollback();
+      conn.release();
+      return res.status(409).json({ 
+        error: 'This time slot is already booked or too close to another appointment. Please choose a different time.' 
+      });
+    }
 
     // 1) Insert appointment (default 'scheduled')
     const sql =

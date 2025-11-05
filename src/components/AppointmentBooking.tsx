@@ -82,6 +82,21 @@ const AppointmentBooking = () => {
         });
         return false;
       }
+      
+      // Validate time is within allowed hours
+      const [hours] = formData.time.split(':').map(Number);
+      const isValidTimeSlot = 
+        (hours >= 10 && hours < 15) || // 10 AM to 3 PM
+        (hours >= 17 && hours < 20);   // 5 PM to 8 PM
+      
+      if (!isValidTimeSlot) {
+        toast({
+          title: "Invalid Time",
+          description: "Please select a time between 10 AM - 3 PM or 5 PM - 8 PM.",
+          variant: "destructive"
+        });
+        return false;
+      }
     } else if (currentStep === 3) {
       if (!formData.doctor) {
         toast({
@@ -365,13 +380,21 @@ const AppointmentBooking = () => {
                 </div>
                 <div>
                   <Label htmlFor="time">Preferred Time *</Label>
+                  <p className="text-xs text-muted-foreground mb-1">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
                   <Input
                     id="time"
                     type="time"
                     value={formData.time}
-                    onChange={(e) => updateFormData("time", e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const [hours] = value.split(':').map(Number);
+                      // Allow setting even if out of range, but validate on submit
+                      updateFormData("time", value);
+                    }}
                     className="mt-1"
                     required
+                    min="10:00"
+                    max="20:00"
                   />
                 </div>
               </div>

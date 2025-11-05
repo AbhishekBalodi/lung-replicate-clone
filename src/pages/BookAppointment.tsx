@@ -107,6 +107,21 @@ const BookAppointment = () => {
         });
         return false;
       }
+      
+      // Validate time is within allowed hours
+      const [hours] = formData.preferredTime.split(':').map(Number);
+      const isValidTimeSlot = 
+        (hours >= 10 && hours < 15) || // 10 AM to 3 PM
+        (hours >= 17 && hours < 20);   // 5 PM to 8 PM
+      
+      if (!isValidTimeSlot) {
+        toast({
+          title: "Invalid Time",
+          description: "Please select a time between 10 AM - 3 PM or 5 PM - 8 PM.",
+          variant: "destructive"
+        });
+        return false;
+      }
     } else if (currentStep === 3) {
       if (!formData.selectedDoctor) {
         toast({
@@ -383,12 +398,15 @@ const BookAppointment = () => {
               </div>
               <div>
                 <Label htmlFor="time" className="text-sm font-medium mb-2 block">Preferred Time *</Label>
+                <p className="text-xs text-muted-foreground mb-1">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
                 <Input
                   id="time"
                   type="time"
                   value={formData.preferredTime}
                   onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
                   required
+                  min="10:00"
+                  max="20:00"
                 />
               </div>
             </div>
