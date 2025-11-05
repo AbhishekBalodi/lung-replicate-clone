@@ -374,11 +374,7 @@ const AppointmentBooking = () => {
                     type="date"
                     value={formData.date}
                     onChange={(e) => updateFormData("date", e.target.value)}
-<<<<<<< Updated upstream
                     className="mt-2"
-=======
-                    className="mt-4"
->>>>>>> Stashed changes
                     required
                     min={new Date().toISOString().split('T')[0]}
                   />
