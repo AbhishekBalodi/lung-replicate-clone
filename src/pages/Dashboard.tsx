@@ -150,11 +150,11 @@ export default function Dashboard() {
   return (
     <ConsoleShell todayCount={appointments.length}>
       {/* Main grid: left KPIs + table, right booking column */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">
         {/* Left column (spans 2) */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-4 md:space-y-6">
           {/* KPI cards */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-slate-600">
@@ -187,17 +187,16 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Appointments table */}
+          {/* Appointments table - responsive */}
           <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle>Your Appointments</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Your Appointments</CardTitle>
               <CardDescription>View and manage your scheduled appointments</CardDescription>
             </CardHeader>
 
             <CardContent className="p-0 overflow-hidden">
-              {/* horizontal scroll container */}
-              <div className="overflow-x-auto">
-                {/* min width so columns don’t squish */}
+              {/* Desktop table view */}
+              <div className="hidden lg:block overflow-x-auto">
                 <div className="min-w-[980px]">
                   {/* Header row */}
                   <div className="grid grid-cols-6 gap-3 font-medium text-slate-500 px-5 py-3 border-t border-slate-100">
@@ -225,26 +224,16 @@ export default function Dashboard() {
                             {a.appointment_time}
                           </div>
                         </div>
-
-                        {/* Patient */}
                         <div className="font-medium">{a.full_name}</div>
-
-                        {/* Doctor */}
                         <div>{a.selected_doctor}</div>
-
-                        {/* Room */}
                         <div>
                           <span className="text-xs rounded-md bg-emerald-100 text-emerald-800 px-2 py-0.5">
                             Room 1
                           </span>
                         </div>
-
-                        {/* Notes */}
                         <div className="text-sm text-slate-500 truncate">
                           {a.message ?? "-"}
                         </div>
-
-                        {/* Actions */}
                         <div className="flex flex-wrap gap-2 justify-end">
                           <Button
                             variant="outline"
@@ -256,7 +245,6 @@ export default function Dashboard() {
                             <Edit className="h-4 w-4 mr-1" />
                             Reschedule
                           </Button>
-
                           <Button
                             variant="destructive"
                             size="sm"
@@ -267,7 +255,6 @@ export default function Dashboard() {
                             <Trash2 className="h-4 w-4 mr-1" />
                             Cancel
                           </Button>
-
                           <Button
                             variant="default"
                             size="sm"
@@ -295,20 +282,91 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Mobile card view */}
+              <div className="lg:hidden divide-y max-h-[500px] overflow-y-auto">
+                {appointments.map((a) => (
+                  <div key={a.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="font-medium text-base">
+                          {new Date(a.appointment_date).toLocaleDateString()}
+                        </div>
+                        <div className="text-sm text-slate-500 mt-1">{a.appointment_time}</div>
+                      </div>
+                      <span className="text-xs rounded-md bg-emerald-100 text-emerald-800 px-2 py-1">
+                        Room 1
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-1 text-sm">
+                      <div><span className="text-slate-500">Patient:</span> <span className="font-medium">{a.full_name}</span></div>
+                      <div><span className="text-slate-500">Doctor:</span> {a.selected_doctor}</div>
+                      {a.message && (
+                        <div><span className="text-slate-500">Notes:</span> {a.message}</div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 min-w-[100px]"
+                        disabled={actionBusyId === a.id}
+                        onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Reschedule
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1 min-w-[100px]"
+                        disabled={actionBusyId === a.id}
+                        onClick={() => setDeleteId(a.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-emerald-600 text-white hover:bg-emerald-700 flex-1 min-w-[100px]"
+                        disabled={actionBusyId === a.id}
+                        onClick={() => markDone(a.id)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Done
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+
+                {!appointments.length && (
+                  <div className="text-center py-12 text-slate-500">
+                    No appointments
+                    <div className="mt-4">
+                      <Button onClick={() => navigate("/book-appointment")}>
+                        Book Your First Appointment
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Right column: Quick booking (UI only; routes to existing booking page) */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Book an Appointment</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Book an Appointment</CardTitle>
               <CardDescription>Live availability</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {/* Visit type & Doctor */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-500">Visit Type</label>
                   <select

@@ -215,17 +215,17 @@ export default function MedicinesManagement() {
 
   return (
     <ConsoleShell>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-semibold text-emerald-900">Medicines Management</h1>
+      <div className="space-y-4 md:space-y-6">
+        <h1 className="text-2xl md:text-3xl font-semibold text-emerald-900">Medicines Management</h1>
 
         {/* Add Medicine to Catalog */}
-        <Card className="p-6">
+        <Card className="p-4 md:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Plus className="h-5 w-5 text-emerald-700" />
-            <h3 className="text-xl font-semibold text-emerald-900">Add to Medicines Catalog</h3>
+            <h3 className="text-lg md:text-xl font-semibold text-emerald-900">Add to Medicines Catalog</h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <Input
               placeholder="Medicine Name *"
               value={newMedicine.name}
@@ -264,27 +264,28 @@ export default function MedicinesManagement() {
             />
           </div>
 
-          <Button onClick={handleAddMedicineToCatalog} className="bg-emerald-700 hover:bg-emerald-800">
+          <Button onClick={handleAddMedicineToCatalog} className="bg-emerald-700 hover:bg-emerald-800 w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add to Catalog
           </Button>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
           {/* Patient Search & Selection */}
-          <Card className="p-6">
-            <h3 className="text-xl font-semibold mb-4 text-emerald-900">Search Patient</h3>
+          <Card className="p-4 md:p-6">
+            <h3 className="text-lg md:text-xl font-semibold mb-4 text-emerald-900">Search Patient</h3>
 
-            <div className="flex gap-3 mb-4">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
               <Input
                 placeholder="Search patient by name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearchPatient()}
-                className="bg-white"
+                className="bg-white flex-1"
               />
-              <Button onClick={handleSearchPatient} className="bg-emerald-700 hover:bg-emerald-800">
-                <Search className="h-4 w-4" />
+              <Button onClick={handleSearchPatient} className="bg-emerald-700 hover:bg-emerald-800 w-full sm:w-auto">
+                <Search className="h-4 w-4 sm:mr-2" />
+                <span className="sm:inline">Search</span>
               </Button>
             </div>
 
@@ -321,10 +322,10 @@ export default function MedicinesManagement() {
           </Card>
 
           {/* Prescribe Medicine */}
-          <Card className="p-6">
+          <Card className="p-4 md:p-6">
             <div className="flex items-center gap-2 mb-4">
               <Pill className="h-5 w-5 text-emerald-700" />
-              <h3 className="text-xl font-semibold text-emerald-900">Prescribe Medicine</h3>
+              <h3 className="text-lg md:text-xl font-semibold text-emerald-900">Prescribe Medicine</h3>
             </div>
 
             {!selectedPatient ? (
@@ -357,7 +358,7 @@ export default function MedicinesManagement() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <Label>Dosage</Label>
                     <Input
@@ -408,37 +409,58 @@ export default function MedicinesManagement() {
         </div>
 
         {/* Medicines Catalog Display */}
-        <Card className="p-6">
-          <h3 className="text-xl font-semibold mb-4 text-emerald-900">Medicines Catalog</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-emerald-100">
-                  <th className="text-left py-2 px-3 text-emerald-900">Name</th>
-                  <th className="text-left py-2 px-3 text-emerald-900">Form</th>
-                  <th className="text-left py-2 px-3 text-emerald-900">Strength</th>
-                  <th className="text-left py-2 px-3 text-emerald-900">Frequency</th>
-                  <th className="text-left py-2 px-3 text-emerald-900">Duration</th>
-                  <th className="text-left py-2 px-3 text-emerald-900">Route</th>
-                </tr>
-              </thead>
-              <tbody>
+        <Card className="p-4 md:p-6">
+          <h3 className="text-lg md:text-xl font-semibold mb-4 text-emerald-900">Medicines Catalog</h3>
+          
+          {medicinesCatalog.length > 0 ? (
+            <>
+              {/* Desktop table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-emerald-100">
+                      <th className="text-left py-2 px-3 text-emerald-900 text-sm">Name</th>
+                      <th className="text-left py-2 px-3 text-emerald-900 text-sm">Form</th>
+                      <th className="text-left py-2 px-3 text-emerald-900 text-sm">Strength</th>
+                      <th className="text-left py-2 px-3 text-emerald-900 text-sm">Frequency</th>
+                      <th className="text-left py-2 px-3 text-emerald-900 text-sm">Duration</th>
+                      <th className="text-left py-2 px-3 text-emerald-900 text-sm">Route</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {medicinesCatalog.map((med) => (
+                      <tr key={med.id} className="border-b border-emerald-50">
+                        <td className="py-2 px-3 font-medium text-sm">{med.name}</td>
+                        <td className="py-2 px-3 text-sm">{med.form || "N/A"}</td>
+                        <td className="py-2 px-3 text-sm">{med.strength || "N/A"}</td>
+                        <td className="py-2 px-3 text-sm">{med.default_frequency || "N/A"}</td>
+                        <td className="py-2 px-3 text-sm">{med.duration || "N/A"}</td>
+                        <td className="py-2 px-3 text-sm">{med.route || "N/A"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile card view */}
+              <div className="md:hidden space-y-3">
                 {medicinesCatalog.map((med) => (
-                  <tr key={med.id} className="border-b border-emerald-50">
-                    <td className="py-2 px-3 font-medium">{med.name}</td>
-                    <td className="py-2 px-3">{med.form || "N/A"}</td>
-                    <td className="py-2 px-3">{med.strength || "N/A"}</td>
-                    <td className="py-2 px-3">{med.default_frequency || "N/A"}</td>
-                    <td className="py-2 px-3">{med.duration || "N/A"}</td>
-                    <td className="py-2 px-3">{med.route || "N/A"}</td>
-                  </tr>
+                  <div key={med.id} className="p-3 bg-emerald-50 rounded-lg">
+                    <div className="font-medium text-emerald-900 mb-2">{med.name}</div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><span className="text-emerald-700">Form:</span> {med.form || "N/A"}</div>
+                      <div><span className="text-emerald-700">Strength:</span> {med.strength || "N/A"}</div>
+                      <div><span className="text-emerald-700">Frequency:</span> {med.default_frequency || "N/A"}</div>
+                      <div><span className="text-emerald-700">Duration:</span> {med.duration || "N/A"}</div>
+                      <div className="col-span-2"><span className="text-emerald-700">Route:</span> {med.route || "N/A"}</div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-            {!medicinesCatalog.length && (
-              <p className="text-emerald-700 text-center py-4">No medicines in catalog</p>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-emerald-700 text-center py-4">No medicines in catalog</p>
+          )}
         </Card>
       </div>
     </ConsoleShell>

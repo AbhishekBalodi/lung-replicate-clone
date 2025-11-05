@@ -133,15 +133,15 @@ export default function PatientsPage() {
 
   return (
     <ConsoleShell>
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         {/* Header & Search */}
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-semibold text-emerald-900">Patient Management</h1>
+          <h1 className="text-2xl md:text-3xl font-semibold text-emerald-900">Patient Management</h1>
         </div>
 
         {/* Search Bar */}
-        <Card className="p-4">
-          <div className="flex gap-3">
+        <Card className="p-3 md:p-4">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1">
               <Input
                 placeholder="Search patient by name, email, or phone..."
@@ -154,18 +154,18 @@ export default function PatientsPage() {
             <Button
               onClick={handleSearch}
               disabled={loading}
-              className="bg-emerald-700 hover:bg-emerald-800"
+              className="bg-emerald-700 hover:bg-emerald-800 w-full sm:w-auto"
             >
-              <Search className="h-4 w-4 mr-2" />
-              Search
+              <Search className="h-4 w-4 sm:mr-2" />
+              <span className="sm:inline">Search</span>
             </Button>
           </div>
         </Card>
 
         {/* Patient List (when none selected) */}
         {!selectedPatient && patients.length > 0 && (
-          <Card className="p-4">
-            <h3 className="font-semibold mb-4 text-emerald-900">All Patients</h3>
+          <Card className="p-3 md:p-4">
+            <h3 className="font-semibold mb-4 text-emerald-900 text-lg md:text-xl">All Patients</h3>
             <div className="divide-y">
               {patients.map((p) => (
                 <button
@@ -173,18 +173,18 @@ export default function PatientsPage() {
                   onClick={() => selectPatient(p)}
                   className="w-full text-left py-3 px-2 hover:bg-emerald-50 rounded transition-colors"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center gap-3">
-                      <User className="h-5 w-5 text-emerald-700" />
+                      <User className="h-5 w-5 text-emerald-700 shrink-0" />
                       <div>
                         <div className="font-medium text-emerald-900">{p.full_name}</div>
-                        <div className="text-sm text-emerald-700">
+                        <div className="text-sm text-emerald-700 break-all">
                           {p.phone || "N/A"} • {p.email || "N/A"}
                         </div>
                       </div>
                     </div>
                     {!p.id && (
-                      <span className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+                      <span className="text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-800 self-start sm:self-center">
                         From Appointment
                       </span>
                     )}
@@ -199,11 +199,11 @@ export default function PatientsPage() {
         {selectedPatient && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Patient Info */}
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-emerald-900">Patient Information</h3>
+            <Card className="p-4 md:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+                <h3 className="text-lg md:text-xl font-semibold text-emerald-900">Patient Information</h3>
                 {!selectedPatient.id && (
-                  <span className="text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800">
+                  <span className="text-xs sm:text-sm px-3 py-1 rounded bg-yellow-100 text-yellow-800 self-start sm:self-center">
                     From Appointment
                   </span>
                 )}
@@ -212,16 +212,16 @@ export default function PatientsPage() {
               <div className="space-y-3">
                 <div>
                   <Label className="text-emerald-900">Full Name</Label>
-                  <p className="text-lg font-medium">{selectedPatient.full_name}</p>
+                  <p className="text-base md:text-lg font-medium break-words">{selectedPatient.full_name}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-emerald-900">Phone</Label>
-                    <p>{selectedPatient.phone || "N/A"}</p>
+                    <p className="break-all">{selectedPatient.phone || "N/A"}</p>
                   </div>
                   <div>
                     <Label className="text-emerald-900">Email</Label>
-                    <p className="text-sm">{selectedPatient.email || "N/A"}</p>
+                    <p className="text-sm break-all">{selectedPatient.email || "N/A"}</p>
                   </div>
                 </div>
               </div>
@@ -241,10 +241,10 @@ export default function PatientsPage() {
             </Card>
 
             {/* Appointments History */}
-            <Card className="p-6">
+            <Card className="p-4 md:p-6">
               <div className="flex items-center gap-2 mb-4">
                 <Calendar className="h-5 w-5 text-emerald-700" />
-                <h3 className="text-xl font-semibold text-emerald-900">Appointments</h3>
+                <h3 className="text-lg md:text-xl font-semibold text-emerald-900">Appointments</h3>
               </div>
 
               <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -274,48 +274,75 @@ export default function PatientsPage() {
             </Card>
 
             {/* Prescribed Medicines */}
-            <Card className="p-6 lg:col-span-2">
+            <Card className="p-4 md:p-6 lg:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <Pill className="h-5 w-5 text-emerald-700" />
-                <h3 className="text-xl font-semibold text-emerald-900">Prescribed Medicines</h3>
+                <h3 className="text-lg md:text-xl font-semibold text-emerald-900">Prescribed Medicines</h3>
               </div>
 
-              <div className="overflow-x-auto">
-                {medicines.length > 0 ? (
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-emerald-100">
-                        <th className="text-left py-2 px-3 text-emerald-900">Medicine</th>
-                        <th className="text-left py-2 px-3 text-emerald-900">Dosage</th>
-                        <th className="text-left py-2 px-3 text-emerald-900">Frequency</th>
-                        <th className="text-left py-2 px-3 text-emerald-900">Duration</th>
-                        <th className="text-left py-2 px-3 text-emerald-900">Date</th>
-                        <th className="text-left py-2 px-3 text-emerald-900">Instructions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {medicines.map((m) => (
-                        <tr key={m.id} className="border-b border-emerald-50">
-                          <td className="py-2 px-3 font-medium">{m.medicine_name}</td>
-                          <td className="py-2 px-3">{m.dosage || "N/A"}</td>
-                          <td className="py-2 px-3">{m.frequency || "N/A"}</td>
-                          <td className="py-2 px-3">{m.duration || "N/A"}</td>
-                          <td className="py-2 px-3">
-                            {m.prescribed_date
+              {medicines.length > 0 ? (
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-emerald-100">
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Medicine</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Dosage</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Frequency</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Duration</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Date</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Instructions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {medicines.map((m) => (
+                          <tr key={m.id} className="border-b border-emerald-50">
+                            <td className="py-2 px-3 font-medium text-sm">{m.medicine_name}</td>
+                            <td className="py-2 px-3 text-sm">{m.dosage || "N/A"}</td>
+                            <td className="py-2 px-3 text-sm">{m.frequency || "N/A"}</td>
+                            <td className="py-2 px-3 text-sm">{m.duration || "N/A"}</td>
+                            <td className="py-2 px-3 text-sm">
+                              {m.prescribed_date
+                                ? format(new Date(m.prescribed_date), "MMM dd, yyyy")
+                                : m.created_at
+                                ? format(new Date(m.created_at), "MMM dd, yyyy")
+                                : "-"}
+                            </td>
+                            <td className="py-2 px-3 text-sm">{m.instructions || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile card view */}
+                  <div className="md:hidden space-y-3">
+                    {medicines.map((m) => (
+                      <div key={m.id} className="p-3 bg-emerald-50 rounded-lg">
+                        <div className="font-medium text-emerald-900 mb-2">{m.medicine_name}</div>
+                        <div className="space-y-1 text-sm">
+                          <div><span className="text-emerald-700">Dosage:</span> {m.dosage || "N/A"}</div>
+                          <div><span className="text-emerald-700">Frequency:</span> {m.frequency || "N/A"}</div>
+                          <div><span className="text-emerald-700">Duration:</span> {m.duration || "N/A"}</div>
+                          <div><span className="text-emerald-700">Date:</span> {
+                            m.prescribed_date
                               ? format(new Date(m.prescribed_date), "MMM dd, yyyy")
                               : m.created_at
                               ? format(new Date(m.created_at), "MMM dd, yyyy")
-                              : "-"}
-                          </td>
-                          <td className="py-2 px-3">{m.instructions || "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="text-emerald-700 text-center py-4">No medicines prescribed yet</p>
-                )}
-              </div>
+                              : "-"
+                          }</div>
+                          {m.instructions && (
+                            <div><span className="text-emerald-700">Instructions:</span> {m.instructions}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-emerald-700 text-center py-4">No medicines prescribed yet</p>
+              )}
             </Card>
           </div>
         )}
