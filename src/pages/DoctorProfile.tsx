@@ -74,7 +74,7 @@ const DoctorProfile = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/book-appointment">
                   <Button className="bg-lung-green hover:bg-lung-green-light text-white px-8 py-3 rounded-lg w-full">
-                    Make Appointment
+                    Book Appointment
                   </Button>
                 </Link>
                 <a href="tel:+91-555-123-4567">
