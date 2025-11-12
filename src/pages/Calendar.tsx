@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { ConsoleShell } from "@/layouts/ConsoleShell";
+import ConsoleShell from "@/layouts/ConsoleShell";
 import { Calendar as CalendarIcon, Clock, Mail, Phone, User, Activity } from "lucide-react";
 
 interface CalendarEvent {

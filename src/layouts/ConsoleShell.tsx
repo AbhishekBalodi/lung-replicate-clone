@@ -82,6 +82,13 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               </button>
 
               <button
+                onClick={() => { navigate("/calendar"); setSidebarOpen(false); }}
+                className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/calendar")}`}
+              >
+                Calendar
+              </button>
+
+              <button
                 onClick={() => { navigate("/patients"); setSidebarOpen(false); }}
                 className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/patients")}`}
               >
