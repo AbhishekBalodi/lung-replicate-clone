@@ -7,6 +7,7 @@ import appointmentRouter from './routes/appointment.js';
 import patientsRouter from './routes/patients.js';
 import medicinesRouter from './routes/medicines.js';
 import prescriptionsRouter from './routes/prescriptions.js';
+import calendarRouter from './routes/calendar.js';
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/appointment', appointmentRouter);
 app.use('/api/patients', patientsRouter);
 app.use('/api/medicines', medicinesRouter);        // catalog
 app.use('/api/prescriptions', prescriptionsRouter); // patient prescriptions
+app.use('/api/calendar', calendarRouter);
 
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {
