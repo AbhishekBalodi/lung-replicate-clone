@@ -20,6 +20,7 @@ import AppointmentsPage from "@/pages/Appointments";
 import PatientsPage from "@/pages/Patients";
 import MedicinesPage from "@/pages/Medicines";
 import MedicinesManagement from "@/pages/admin/MedicinesManagement";
+import Calendar from "@/pages/Calendar";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/appointments" element={<AppointmentsPage />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/patients" element={<PatientsPage />} />
             <Route path="/medicines" element={<MedicinesManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
