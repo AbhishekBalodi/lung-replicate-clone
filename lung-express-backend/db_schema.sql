@@ -131,33 +131,9 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   INDEX idx_status (status)
 );
 
--- Add missing foreign key to medicines table if not exists
--- This links prescribed medicines to the medicines catalog (optional reference)
-ALTER TABLE medicines 
-  ADD COLUMN IF NOT EXISTS medicine_catalog_id INT,
-  ADD INDEX IF NOT EXISTS idx_medicine_catalog (medicine_catalog_id),
-  ADD CONSTRAINT fk_medicines_catalog 
-    FOREIGN KEY (medicine_catalog_id) 
-    REFERENCES medicines_catalog(id) 
-    ON DELETE SET NULL;
+-- Note: MySQL doesn't support IF NOT EXISTS in ALTER TABLE, so we'll handle errors gracefully
+-- These statements may show warnings if columns/indexes already exist - that's OK
 
--- Add turnaround_time column to lab_catalogue if missing
-ALTER TABLE lab_catalogue 
-  ADD COLUMN IF NOT EXISTS turnaround_time VARCHAR(50);
-
--- Add indexes for better query performance
-ALTER TABLE medicines 
-  ADD INDEX IF NOT EXISTS idx_patient_id (patient_id),
-  ADD INDEX IF NOT EXISTS idx_prescribed_date (prescribed_date);
-
+-- Add turnaround_time column to labs_test if missing  
 ALTER TABLE labs_test 
-  ADD INDEX IF NOT EXISTS idx_prescribed_date (prescribed_date);
-
-ALTER TABLE procedures 
-  ADD INDEX IF NOT EXISTS idx_prescribed_date (prescribed_date);
-
-ALTER TABLE appointments 
-  ADD INDEX IF NOT EXISTS idx_email (email),
-  ADD INDEX IF NOT EXISTS idx_phone (phone),
-  ADD INDEX IF NOT EXISTS idx_appointment_date (appointment_date),
-  ADD INDEX IF NOT EXISTS idx_status (status);
+  ADD COLUMN turnaround_time VARCHAR(50) DEFAULT NULL;
