@@ -174,21 +174,17 @@ const PatientDashboard = () => {
   };
 
   const downloadPrescription = (appointment: Appointment) => {
-    // Filter prescriptions for this specific appointment based on date
-    const appointmentDate = new Date(appointment.appointment_date).toDateString();
-    const appointmentPrescriptions = prescriptions.filter(p => {
-      const prescribedDate = new Date(p.prescribed_date).toDateString();
-      return prescribedDate === appointmentDate;
-    });
-
-    if (appointmentPrescriptions.length === 0) {
+    if (prescriptions.length === 0) {
       toast({
         title: "No Prescriptions",
-        description: "No prescriptions found for this appointment",
+        description: "No prescriptions found for this patient",
         variant: "destructive"
       });
       return;
     }
+
+    // Use all prescriptions for this patient
+    const appointmentPrescriptions = prescriptions;
 
     const doc = new jsPDF();
     
@@ -378,10 +374,7 @@ const PatientDashboard = () => {
                                 size="sm" 
                                 variant="outline" 
                                 onClick={() => downloadPrescription(appointment)}
-                                disabled={prescriptions.filter(p => 
-                                  new Date(p.prescribed_date).toDateString() === 
-                                  new Date(appointment.appointment_date).toDateString()
-                                ).length === 0}
+                                disabled={prescriptions.length === 0}
                               >
                                 <Download className="h-4 w-4 mr-2" />
                                 Prescription
