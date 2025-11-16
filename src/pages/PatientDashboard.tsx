@@ -31,10 +31,30 @@ interface Prescription {
   prescribed_date: string;
 }
 
+interface LabTest {
+  id: number;
+  test_name: string;
+  category: string;
+  sample_type: string;
+  turnaround_time: string;
+  prescribed_date: string;
+}
+
+interface Procedure {
+  id: number;
+  procedure_name: string;
+  category: string;
+  description: string;
+  preparation_instructions: string;
+  prescribed_date: string;
+}
+
 const PatientDashboard = () => {
   const { user, logout, loading: authLoading } = useCustomAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [labTests, setLabTests] = useState<LabTest[]>([]);
+  const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -64,15 +84,17 @@ const PatientDashboard = () => {
         setAppointments(appointmentsData);
       }
 
-      // Fetch prescriptions if patient ID exists
+      // Fetch patient details including prescriptions, lab tests, and procedures
       if (user.id) {
-        const prescriptionsRes = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/prescriptions?patient_id=${user.id}`
+        const patientRes = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/api/patients/${user.id}`
         );
         
-        if (prescriptionsRes.ok) {
-          const prescriptionsData = await prescriptionsRes.json();
-          setPrescriptions(prescriptionsData);
+        if (patientRes.ok) {
+          const patientData = await patientRes.json();
+          setPrescriptions(patientData.medicines || []);
+          setLabTests(patientData.lab_tests || []);
+          setProcedures(patientData.procedures || []);
         }
       }
     } catch (error) {
@@ -383,50 +405,147 @@ const PatientDashboard = () => {
         </Card>
 
         {/* Complete Medical History */}
-        {prescriptions.length > 0 && (
+        {(prescriptions.length > 0 || labTests.length > 0 || procedures.length > 0) && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle>Complete Medical History</CardTitle>
-              <CardDescription>All prescribed medications across all visits</CardDescription>
+              <CardDescription>All prescribed medications, lab tests, and procedures across all visits</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {prescriptions
-                  .sort((a, b) => new Date(b.prescribed_date).getTime() - new Date(a.prescribed_date).getTime())
-                  .map((prescription) => (
-                  <div key={prescription.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-semibold">{prescription.medicine_name}</h4>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(prescription.prescribed_date).toLocaleDateString()}
-                          </span>
+            <CardContent className="space-y-8">
+              {/* Prescribed Medicines */}
+              {prescriptions.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Pill className="h-5 w-5 text-primary" />
+                    Prescribed Medicines
+                  </h3>
+                  <div className="space-y-3">
+                    {prescriptions
+                      .sort((a, b) => new Date(b.prescribed_date).getTime() - new Date(a.prescribed_date).getTime())
+                      .map((prescription) => (
+                      <div key={prescription.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold">{prescription.medicine_name}</h4>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(prescription.prescribed_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Dosage:</span>{' '}
+                                {prescription.dosage || 'N/A'}
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Frequency:</span>{' '}
+                                {prescription.frequency || 'N/A'}
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Duration:</span>{' '}
+                                {prescription.duration || 'N/A'}
+                              </div>
+                            </div>
+                            {prescription.instructions && (
+                              <p className="text-sm text-muted-foreground mt-2">
+                                <span className="font-medium">Instructions:</span> {prescription.instructions}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Dosage:</span>{' '}
-                            {prescription.dosage || 'N/A'}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Frequency:</span>{' '}
-                            {prescription.frequency || 'N/A'}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Duration:</span>{' '}
-                            {prescription.duration || 'N/A'}
-                          </div>
-                        </div>
-                        {prescription.instructions && (
-                          <p className="text-sm text-muted-foreground mt-2">
-                            <span className="font-medium">Instructions:</span> {prescription.instructions}
-                          </p>
-                        )}
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {/* Lab Tests */}
+              {labTests.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Lab Tests
+                  </h3>
+                  <div className="space-y-3">
+                    {labTests
+                      .sort((a, b) => new Date(b.prescribed_date).getTime() - new Date(a.prescribed_date).getTime())
+                      .map((test) => (
+                      <div key={test.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold">{test.test_name}</h4>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(test.prescribed_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Category:</span>{' '}
+                                {test.category || 'N/A'}
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Sample Type:</span>{' '}
+                                {test.sample_type || 'N/A'}
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Turnaround Time:</span>{' '}
+                                {test.turnaround_time || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Procedures */}
+              {procedures.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Procedures
+                  </h3>
+                  <div className="space-y-3">
+                    {procedures
+                      .sort((a, b) => new Date(b.prescribed_date).getTime() - new Date(a.prescribed_date).getTime())
+                      .map((procedure) => (
+                      <div key={procedure.id} className="border rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold">{procedure.procedure_name}</h4>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(procedure.prescribed_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
+                              <div>
+                                <span className="text-muted-foreground">Category:</span>{' '}
+                                {procedure.category || 'N/A'}
+                              </div>
+                              {procedure.description && (
+                                <div className="col-span-2">
+                                  <span className="text-muted-foreground">Description:</span>{' '}
+                                  {procedure.description}
+                                </div>
+                              )}
+                              {procedure.preparation_instructions && (
+                                <div className="col-span-2">
+                                  <span className="text-muted-foreground">Preparation:</span>{' '}
+                                  {procedure.preparation_instructions}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
