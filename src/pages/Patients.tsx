@@ -149,6 +149,7 @@ export default function PatientsPage() {
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || "Failed to load patient details");
       setMedicines(js.medicines || []);
+      setLabTests(js.lab_tests || []);
     } catch (err: any) {
       toast.error("Error loading prescriptions: " + err.message);
       setMedicines([]);
