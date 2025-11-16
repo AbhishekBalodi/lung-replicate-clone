@@ -27,7 +27,9 @@ type Patient = {
   phone: string | null;
 };
 
-const API_ROOT = import.meta.env.VITE_API_BASE_URL || "/api";
+const API_ROOT = import.meta.env.VITE_API_BASE_URL 
+  ? `${import.meta.env.VITE_API_BASE_URL}/api` 
+  : "http://localhost:5050/api";
 
 export default function ProceduresPage() {
   // Catalog form states
