@@ -5,8 +5,26 @@ const router = express.Router();
 
 // Get SMTP settings
 router.get('/', async (req, res) => {
+  let conn;
   try {
-    const [rows] = await pool.query('SELECT * FROM smtp_settings LIMIT 1');
+    conn = await pool.getConnection();
+    
+    // Ensure smtp_settings table exists
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS smtp_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        smtp_host VARCHAR(255) NOT NULL,
+        smtp_port INT DEFAULT 587,
+        smtp_user VARCHAR(255) NOT NULL,
+        smtp_pass VARCHAR(255) NOT NULL,
+        smtp_secure BOOLEAN DEFAULT true,
+        smtp_from VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    
+    const [rows] = await conn.query('SELECT * FROM smtp_settings LIMIT 1');
     
     if (rows.length === 0) {
       return res.json({ settings: null });
@@ -22,6 +40,8 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching SMTP settings:', error);
     res.status(500).json({ message: 'Failed to fetch SMTP settings' });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
@@ -33,9 +53,27 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
+  let conn;
   try {
+    conn = await pool.getConnection();
+    
+    // Ensure smtp_settings table exists
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS smtp_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        smtp_host VARCHAR(255) NOT NULL,
+        smtp_port INT DEFAULT 587,
+        smtp_user VARCHAR(255) NOT NULL,
+        smtp_pass VARCHAR(255) NOT NULL,
+        smtp_secure BOOLEAN DEFAULT true,
+        smtp_from VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    
     // Check if settings exist
-    const [existing] = await pool.query('SELECT id FROM smtp_settings LIMIT 1');
+    const [existing] = await conn.query('SELECT id FROM smtp_settings LIMIT 1');
 
     if (existing.length > 0) {
       // Update existing settings
@@ -54,10 +92,10 @@ router.post('/', async (req, res) => {
       updateQuery += ' WHERE id = ?';
       params.push(existing[0].id);
 
-      await pool.query(updateQuery, params);
+      await conn.query(updateQuery, params);
     } else {
       // Insert new settings
-      await pool.query(
+      await conn.query(
         `INSERT INTO smtp_settings (smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure, smtp_from) 
          VALUES (?, ?, ?, ?, ?, ?)`,
         [smtp_host, smtp_port, smtp_user, smtp_pass, smtp_secure, smtp_from]
@@ -68,6 +106,8 @@ router.post('/', async (req, res) => {
   } catch (error) {
     console.error('Error saving SMTP settings:', error);
     res.status(500).json({ message: 'Failed to save SMTP settings' });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
@@ -79,9 +119,27 @@ router.post('/test', async (req, res) => {
     return res.status(400).json({ message: 'Test email address is required' });
   }
 
+  let conn;
   try {
+    conn = await pool.getConnection();
+    
+    // Ensure smtp_settings table exists
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS smtp_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        smtp_host VARCHAR(255) NOT NULL,
+        smtp_port INT DEFAULT 587,
+        smtp_user VARCHAR(255) NOT NULL,
+        smtp_pass VARCHAR(255) NOT NULL,
+        smtp_secure BOOLEAN DEFAULT true,
+        smtp_from VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    
     // Get SMTP settings
-    const [rows] = await pool.query('SELECT * FROM smtp_settings LIMIT 1');
+    const [rows] = await conn.query('SELECT * FROM smtp_settings LIMIT 1');
     
     if (rows.length === 0) {
       return res.status(400).json({ message: 'SMTP settings not configured' });
@@ -104,6 +162,8 @@ router.post('/test', async (req, res) => {
   } catch (error) {
     console.error('Error sending test email:', error);
     res.status(500).json({ message: `Failed to send test email: ${error.message}` });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
