@@ -6,9 +6,9 @@ import doctorMain from "@/assets/dr-mann-passport.jpg";
 const Hero = () => {
   return (
     <section className="bg-hero-gradient min-h-[400px] sm:min-h-[450px] lg:min-h-[500px] flex items-center py-6 sm:py-8 lg:py-10 px-4" id="home">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-12 items-center w-full">
-        {/* Text content - shows on top on mobile, right side on desktop */}
-        <div className="text-foreground space-y-3 lg:space-y-4 text-center lg:text-left order-1 lg:order-2">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-6 items-center w-full">
+        {/* Text content - shows on top on mobile, left side on desktop */}
+        <div className="text-foreground space-y-3 lg:space-y-4 text-center lg:text-left order-1">
           <div className="space-y-2 lg:space-y-3">
             <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight">
               Best Chest Physician in <span className="text-lung-light-blue">Delhi</span> - Expert Pulmonology Care
@@ -41,8 +41,8 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Image section - shows second on mobile (between text and button), left side on desktop */}
-        <div className="relative order-2 lg:order-1">
+        {/* Image section - shows second on mobile (between text and button), right side on desktop */}
+        <div className="relative order-2">
           <div className="relative z-10">
             <img 
               src={doctorMain} 
@@ -67,7 +67,7 @@ const Hero = () => {
             </Card>
             
             {/* Opening Hours Card - positioned on right side with gap from image */}
-            <Card className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-0 lg:-right-8 lg:bottom-4 bg-lung-blue text-white p-3 sm:p-4 shadow-medium rounded-lg w-64 sm:w-72 lg:w-80">
+            <Card className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-0 lg:-right-12 lg:bottom-8 bg-lung-blue text-white p-3 sm:p-4 shadow-medium rounded-lg w-64 sm:w-72 lg:w-80">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-full flex-shrink-0">
                   <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
