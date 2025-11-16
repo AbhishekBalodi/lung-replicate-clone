@@ -99,13 +99,20 @@ export default function ConsoleShell({ children, todayCount = 0, onNewAppointmen
                 Medicines
               </button>
 
-              <button
-                onClick={() => { navigate("/completed-appointments"); setSidebarOpen(false); }}
-                className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/completed-appointments")}`}
-              >
-                Completed
-              </button>
-            </nav>
+            <button
+              onClick={() => { navigate("/completed-appointments"); setSidebarOpen(false); }}
+              className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/completed-appointments")}`}
+            >
+              Completed
+            </button>
+
+            <button
+              onClick={() => { navigate("/settings"); setSidebarOpen(false); }}
+              className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/settings")}`}
+            >
+              Settings
+            </button>
+          </nav>
 
             <div className="mt-8 space-y-2">
               <div className="text-xs font-semibold text-emerald-900 px-2">Today</div>
