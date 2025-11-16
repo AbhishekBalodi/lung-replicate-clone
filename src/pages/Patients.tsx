@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Search, User, Calendar, Pill, FlaskConical } from "lucide-react";
+import { Search, User, Calendar, Pill, FlaskConical, Activity } from "lucide-react";
 
 type Patient = {
   id: number | null;
@@ -44,6 +44,16 @@ type LabTest = {
   created_at?: string | null;
 };
 
+type Procedure = {
+  id: number;
+  procedure_name: string;
+  category: string | null;
+  description: string | null;
+  preparation_instructions: string | null;
+  prescribed_date?: string | null;
+  created_at?: string | null;
+};
+
 const API_ROOT =
   (import.meta as any)?.env?.VITE_API_URL
     ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, "")}/api`
@@ -56,6 +66,7 @@ export default function PatientsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [medicines, setMedicines] = useState<BackendMedicine[]>([]);
   const [labTests, setLabTests] = useState<LabTest[]>([]);
+  const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [loading, setLoading] = useState(false);
 
   /** Load all patients (server merges patients + appointments and upserts) */
@@ -91,6 +102,7 @@ export default function PatientsPage() {
         setAppointments([]);
         setMedicines([]);
         setLabTests([]);
+        setProcedures([]);
         return;
       }
       await selectPatient(data[0]);
@@ -100,6 +112,7 @@ export default function PatientsPage() {
       setAppointments([]);
       setMedicines([]);
       setLabTests([]);
+      setProcedures([]);
     } finally {
       setLoading(false);
     }
@@ -150,9 +163,12 @@ export default function PatientsPage() {
       if (!res.ok) throw new Error(js?.error || "Failed to load patient details");
       setMedicines(js.medicines || []);
       setLabTests(js.lab_tests || []);
+      setProcedures(js.procedures || []);
     } catch (err: any) {
       toast.error("Error loading prescriptions: " + err.message);
       setMedicines([]);
+      setLabTests([]);
+      setProcedures([]);
     }
   };
 
@@ -437,6 +453,75 @@ export default function PatientsPage() {
                 </>
               ) : (
                 <p className="text-emerald-700 text-center py-4">No lab tests prescribed yet</p>
+              )}
+            </Card>
+
+            {/* Prescribed Procedures */}
+            <Card className="p-4 md:p-6 lg:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <Activity className="h-5 w-5 text-emerald-700" />
+                <h3 className="text-lg md:text-xl font-semibold text-emerald-900">Prescribed Procedures</h3>
+              </div>
+
+              {procedures.length > 0 ? (
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-emerald-100">
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Procedure Name</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Category</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Description</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Date</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Instructions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {procedures.map((proc) => (
+                          <tr key={proc.id} className="border-b border-emerald-50">
+                            <td className="py-2 px-3 font-medium text-sm">{proc.procedure_name}</td>
+                            <td className="py-2 px-3 text-sm">{proc.category || "N/A"}</td>
+                            <td className="py-2 px-3 text-sm">{proc.description || "N/A"}</td>
+                            <td className="py-2 px-3 text-sm">
+                              {proc.prescribed_date
+                                ? format(new Date(proc.prescribed_date), "MMM dd, yyyy")
+                                : proc.created_at
+                                ? format(new Date(proc.created_at), "MMM dd, yyyy")
+                                : "-"}
+                            </td>
+                            <td className="py-2 px-3 text-sm">{proc.preparation_instructions || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile card view */}
+                  <div className="md:hidden space-y-3">
+                    {procedures.map((proc) => (
+                      <div key={proc.id} className="p-3 bg-emerald-50 rounded-lg">
+                        <div className="font-medium text-emerald-900 mb-2">{proc.procedure_name}</div>
+                        <div className="space-y-1 text-sm">
+                          <div><span className="text-emerald-700">Category:</span> {proc.category || "N/A"}</div>
+                          <div><span className="text-emerald-700">Description:</span> {proc.description || "N/A"}</div>
+                          <div><span className="text-emerald-700">Date:</span> {
+                            proc.prescribed_date
+                              ? format(new Date(proc.prescribed_date), "MMM dd, yyyy")
+                              : proc.created_at
+                              ? format(new Date(proc.created_at), "MMM dd, yyyy")
+                              : "-"
+                          }</div>
+                          {proc.preparation_instructions && (
+                            <div><span className="text-emerald-700">Instructions:</span> {proc.preparation_instructions}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-emerald-700 text-center py-4">No procedures prescribed yet</p>
               )}
             </Card>
           </div>
