@@ -293,6 +293,46 @@ router.patch('/:id/done', async (req, res) => {
 });
 
 /** -----------------------------
+ * PATCH /api/appointment/:id - Update appointment (reschedule)
+ * ----------------------------- */
+router.patch('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { appointment_date, appointment_time, status } = req.body;
+  
+  try {
+    const updates = [];
+    const values = [];
+    
+    if (appointment_date) {
+      updates.push(`\`${COL.appointment_date}\` = ?`);
+      values.push(appointment_date);
+    }
+    if (appointment_time) {
+      updates.push(`\`${COL.appointment_time}\` = ?`);
+      values.push(appointment_time);
+    }
+    if (status) {
+      updates.push(`\`${COL.status}\` = ?`);
+      values.push(status);
+    }
+    
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+    
+    values.push(id);
+    const query = `UPDATE \`${TBL}\` SET ${updates.join(', ')} WHERE \`${COL.id}\` = ?`;
+    
+    await pool.execute(query, values);
+    
+    res.json({ success: true, message: 'Appointment updated successfully' });
+  } catch (e) {
+    console.error('PATCH /api/appointment/:id failed:', e);
+    res.status(500).json({ error: e.message || 'Failed to update appointment' });
+  }
+});
+
+/** -----------------------------
  * DELETE /api/appointment/:id
  * ----------------------------- */
 router.delete('/:id', async (req, res) => {

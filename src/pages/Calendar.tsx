@@ -9,7 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import ConsoleShell from "@/layouts/ConsoleShell";
-import { Calendar as CalendarIcon, Clock, Mail, Phone, User, Activity } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Mail, Phone, User, Activity, X, Check, RotateCw } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 interface CalendarEvent {
   id: string;
@@ -49,6 +54,10 @@ export default function Calendar() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDialog, setShowDialog] = useState(false);
+  const [isRescheduling, setIsRescheduling] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newTime, setNewTime] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -104,6 +113,87 @@ export default function Calendar() {
     const event = events.find(e => e.id === info.event.id);
     if (event) {
       setSelectedEvent(event);
+      setShowDialog(true);
+      setIsRescheduling(false);
+      // Pre-fill with current date/time for rescheduling
+      const dateStr = event.start.split('T')[0];
+      setNewDate(dateStr);
+      setNewTime(event.extendedProps.time);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!selectedEvent) return;
+    
+    try {
+      const response = await fetch(`/api/appointment/${selectedEvent.id}`, {
+        method: 'DELETE'
+      });
+      
+      if (response.ok) {
+        toast.success("Appointment cancelled successfully");
+        setShowDialog(false);
+        fetchCalendarData();
+        fetchStats();
+      } else {
+        toast.error("Failed to cancel appointment");
+      }
+    } catch (error) {
+      toast.error("Error cancelling appointment");
+    }
+  };
+
+  const handleMarkDone = async () => {
+    if (!selectedEvent) return;
+    
+    try {
+      const response = await fetch(`/api/appointment/${selectedEvent.id}/done`, {
+        method: 'PATCH'
+      });
+      
+      if (response.ok) {
+        toast.success("Appointment marked as done");
+        setShowDialog(false);
+        fetchCalendarData();
+        fetchStats();
+      } else {
+        toast.error("Failed to update appointment");
+      }
+    } catch (error) {
+      toast.error("Error updating appointment");
+    }
+  };
+
+  const handleReschedule = async () => {
+    if (!selectedEvent || !newDate || !newTime) {
+      toast.error("Please select both date and time");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/appointment/${selectedEvent.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          appointment_date: newDate,
+          appointment_time: newTime,
+          status: 'rescheduled'
+        })
+      });
+      
+      if (response.ok) {
+        toast.success("Appointment rescheduled successfully");
+        setShowDialog(false);
+        setIsRescheduling(false);
+        fetchCalendarData();
+        fetchStats();
+      } else {
+        toast.error("Failed to reschedule appointment");
+      }
+    } catch (error) {
+      toast.error("Error rescheduling appointment");
     }
   };
 
@@ -240,73 +330,12 @@ export default function Calendar() {
 
           {/* Right Sidebar */}
           <div className="space-y-6">
-            {/* Selected Event Details */}
-            {selectedEvent ? (
-              <Card className="p-6">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Appointment Details
-                </h3>
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Patient Name</p>
-                    <p className="font-medium">{selectedEvent.title}</p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">Status</p>
-                    {getStatusBadge(selectedEvent.extendedProps.status)}
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Time
-                    </p>
-                    <p className="font-medium">{selectedEvent.extendedProps.time}</p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Doctor
-                    </p>
-                    <p className="font-medium">{selectedEvent.extendedProps.doctor}</p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </p>
-                    <p className="font-medium text-sm break-all">{selectedEvent.extendedProps.email}</p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className="text-sm text-muted-foreground flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Phone
-                    </p>
-                    <p className="font-medium">{selectedEvent.extendedProps.phone}</p>
-                  </div>
-                  {selectedEvent.extendedProps.message && (
-                    <>
-                      <Separator />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Message</p>
-                        <p className="text-sm mt-1">{selectedEvent.extendedProps.message}</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </Card>
-            ) : (
-              <Card className="p-6">
-                <p className="text-sm text-muted-foreground text-center">
-                  Click on an appointment to view details
-                </p>
-              </Card>
-            )}
+            {/* Click instruction */}
+            <Card className="p-6">
+              <p className="text-sm text-muted-foreground text-center">
+                Click on an appointment to view details
+              </p>
+            </Card>
 
             {/* Doctors List */}
             <Card className="p-6">
@@ -353,6 +382,154 @@ export default function Calendar() {
             </Card>
           </div>
         </div>
+
+        {/* Appointment Dialog */}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Appointment Details
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedEvent && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Patient Name</p>
+                  <p className="font-medium">{selectedEvent.title}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Status</p>
+                  {getStatusBadge(selectedEvent.extendedProps.status)}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <CalendarIcon className="h-3 w-3" />
+                      Date
+                    </p>
+                    <p className="font-medium text-sm">{selectedEvent.start.split('T')[0]}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Time
+                    </p>
+                    <p className="font-medium text-sm">{selectedEvent.extendedProps.time}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    Doctor
+                  </p>
+                  <p className="font-medium text-sm">{selectedEvent.extendedProps.doctor}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    Email
+                  </p>
+                  <p className="font-medium text-sm break-all">{selectedEvent.extendedProps.email}</p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Phone className="h-3 w-3" />
+                    Phone
+                  </p>
+                  <p className="font-medium text-sm">{selectedEvent.extendedProps.phone}</p>
+                </div>
+                
+                {selectedEvent.extendedProps.message && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Message</p>
+                    <p className="text-sm mt-1">{selectedEvent.extendedProps.message}</p>
+                  </div>
+                )}
+
+                {isRescheduling && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="new-date">New Date</Label>
+                        <Input
+                          id="new-date"
+                          type="date"
+                          value={newDate}
+                          onChange={(e) => setNewDate(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="new-time">New Time</Label>
+                        <Input
+                          id="new-time"
+                          type="time"
+                          value={newTime}
+                          onChange={(e) => setNewTime(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              {!isRescheduling ? (
+                <>
+                  <Button
+                    variant="destructive"
+                    onClick={handleCancel}
+                    className="flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={() => setIsRescheduling(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCw className="h-4 w-4" />
+                    Reschedule
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={handleMarkDone}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                  >
+                    <Check className="h-4 w-4" />
+                    Done
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsRescheduling(false)}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant="default"
+                    onClick={handleReschedule}
+                    className="flex items-center gap-2"
+                  >
+                    <Check className="h-4 w-4" />
+                    Confirm Reschedule
+                  </Button>
+                </>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </ConsoleShell>
   );
