@@ -166,7 +166,7 @@ export default function Dashboard() {
         {/* Left column (spans 2) */}
         <div className="xl:col-span-2 space-y-4 md:space-y-6">
           {/* KPI cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-slate-600">
@@ -185,6 +185,20 @@ export default function Dashboard() {
               <CardContent>
                 <div className="text-4xl font-semibold">
                   {appointments.filter((a) => new Date(a.appointment_date) >= new Date()).length}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-slate-600">Today</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-4xl font-semibold">
+                  {appointments.filter((a) => {
+                    const today = new Date().toISOString().split('T')[0];
+                    return a.appointment_date === today;
+                  }).length}
                 </div>
               </CardContent>
             </Card>
