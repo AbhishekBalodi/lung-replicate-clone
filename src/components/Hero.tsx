@@ -18,27 +18,17 @@ const Hero = () => {
             </p>
           </div>
           
-          <div className="flex justify-center lg:justify-start lg:hidden">
-            <a href="/book-appointment" className="w-full sm:w-auto">
+          <div className="flex justify-center lg:justify-start">
+            <a href="/book-appointment" className="w-full sm:w-auto lg:w-auto">
               <Button 
                 size="lg" 
-                className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white font-semibold px-5 lg:px-6 py-3 lg:py-4 text-sm lg:text-base rounded-lg"
+                className="w-full sm:w-auto lg:w-auto bg-lung-green hover:bg-lung-green-light text-white font-semibold px-5 lg:px-6 py-3 lg:py-4 text-sm lg:text-base rounded-lg"
               >
                 Book Appointment
               </Button>
             </a>
           </div>
 
-          <div className="hidden lg:flex justify-start">
-            <a href="/book-appointment">
-              <Button 
-                size="lg" 
-                className="bg-lung-green hover:bg-lung-green-light text-white font-semibold px-6 py-4 text-base rounded-lg"
-              >
-                Book Appointment
-              </Button>
-            </a>
-          </div>
         </div>
 
         {/* Image section - shows second on mobile (between text and button), right side on desktop */}
@@ -67,7 +57,7 @@ const Hero = () => {
             </Card>
             
             {/* Opening Hours Card - positioned on right side with gap from image */}
-            <Card className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-0 lg:left-full lg:ml-2 lg:bottom-12 bg-lung-blue text-white p-3 sm:p-4 shadow-medium rounded-lg w-64 sm:w-72 lg:w-80">
+            <Card className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-0 lg:left-full lg:ml-1 lg:bottom-12 bg-lung-blue text-white p-3 sm:p-4 shadow-medium rounded-lg w-64 sm:w-72 lg:w-80">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-full flex-shrink-0">
                   <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
@@ -86,17 +76,6 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Book Appointment button - shows at bottom on mobile only */}
-        <div className="flex justify-center lg:hidden order-3 -mt-2">
-          <a href="/book-appointment" className="w-full sm:w-auto">
-            <Button 
-              size="lg" 
-              className="w-full sm:w-auto bg-lung-green hover:bg-lung-green-light text-white font-semibold px-5 py-3 text-sm rounded-lg"
-            >
-              Book Appointment
-            </Button>
-          </a>
-        </div>
       </div>
     </section>
   );
