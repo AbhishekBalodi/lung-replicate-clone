@@ -5,7 +5,32 @@ const router = express.Router();
 
 // GET /api/calendar - Fetch all appointments for calendar view
 router.get('/', async (req, res) => {
+  let conn;
   try {
+    conn = await pool.getConnection();
+    
+    // Ensure appointments table has status column
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS appointments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        full_name VARCHAR(100) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        appointment_date DATE NOT NULL,
+        appointment_time VARCHAR(10) NOT NULL,
+        selected_doctor VARCHAR(100) NOT NULL,
+        message TEXT,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Add status column if it doesn't exist
+    await conn.execute(`
+      ALTER TABLE appointments 
+      ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'
+    `).catch(() => {}); // Ignore error if column exists
+    
     const { start, end } = req.query;
     
     let query = `
@@ -18,10 +43,10 @@ router.get('/', async (req, res) => {
         appointment_time,
         selected_doctor,
         message,
-        status,
+        COALESCE(status, 'pending') as status,
         created_at
       FROM appointments
-      WHERE status != 'cancelled'
+      WHERE COALESCE(status, 'pending') != 'cancelled'
     `;
     
     const params = [];
@@ -34,7 +59,7 @@ router.get('/', async (req, res) => {
     
     query += ' ORDER BY appointment_date, appointment_time';
     
-    const [rows] = await pool.query(query, params);
+    const [rows] = await conn.query(query, params);
     
     // Transform data for FullCalendar format
     const events = rows.map(appointment => {
@@ -78,42 +103,50 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Calendar fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch calendar appointments' });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
 // GET /api/calendar/stats - Get appointment statistics
 router.get('/stats', async (req, res) => {
+  let conn;
   try {
+    conn = await pool.getConnection();
     const today = new Date().toISOString().split('T')[0];
     
-    const [stats] = await pool.query(`
+    const [stats] = await conn.query(`
       SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
-        SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as done,
-        SUM(CASE WHEN status = 'rescheduled' THEN 1 ELSE 0 END) as rescheduled,
+        SUM(CASE WHEN COALESCE(status, 'pending') = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN COALESCE(status, 'pending') = 'done' THEN 1 ELSE 0 END) as done,
+        SUM(CASE WHEN COALESCE(status, 'pending') = 'rescheduled' THEN 1 ELSE 0 END) as rescheduled,
         SUM(CASE WHEN appointment_date = ? THEN 1 ELSE 0 END) as today
       FROM appointments
-      WHERE status != 'cancelled'
+      WHERE COALESCE(status, 'pending') != 'cancelled'
     `, [today]);
     
     res.json(stats[0]);
   } catch (error) {
     console.error('Stats fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch statistics' });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
 // GET /api/calendar/doctors - Get list of doctors with appointment counts
 router.get('/doctors', async (req, res) => {
+  let conn;
   try {
-    const [doctors] = await pool.query(`
+    conn = await pool.getConnection();
+    const [doctors] = await conn.query(`
       SELECT 
         selected_doctor as name,
         COUNT(*) as appointment_count,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count
+        SUM(CASE WHEN COALESCE(status, 'pending') = 'pending' THEN 1 ELSE 0 END) as pending_count
       FROM appointments
-      WHERE status != 'cancelled'
+      WHERE COALESCE(status, 'pending') != 'cancelled'
       GROUP BY selected_doctor
       ORDER BY appointment_count DESC
     `);
@@ -122,6 +155,8 @@ router.get('/doctors', async (req, res) => {
   } catch (error) {
     console.error('Doctors fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch doctors' });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
