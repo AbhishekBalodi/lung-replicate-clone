@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Search, User, Calendar, Pill } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 type Patient = {
   id: number | null;
@@ -98,16 +97,28 @@ export default function PatientsPage() {
     setSelectedPatient(patient);
     setSearchTerm(patient.full_name);
 
-    // 1) Appointments (Supabase)
+    // 1) Appointments (from MySQL backend)
     try {
-      const { data: apptData, error: apptError } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("full_name", patient.full_name)
-        .order("appointment_date", { ascending: false });
+      let appointmentsUrl = `${API_ROOT}/appointment?`;
+      
+      // Try email first if available
+      if (patient.email) {
+        appointmentsUrl += `email=${encodeURIComponent(patient.email)}`;
+      } 
+      // Fallback to phone if no email
+      else if (patient.phone) {
+        appointmentsUrl += `phone=${encodeURIComponent(patient.phone)}`;
+      }
+      // Last resort: search by name
+      else {
+        appointmentsUrl += `q=${encodeURIComponent(patient.full_name)}`;
+      }
 
-      if (apptError) throw apptError;
-      setAppointments((apptData as Appointment[]) || []);
+      const apptRes = await fetch(appointmentsUrl);
+      if (!apptRes.ok) throw new Error("Failed to fetch appointments");
+      
+      const apptData = await apptRes.json();
+      setAppointments(Array.isArray(apptData) ? apptData : []);
     } catch (err: any) {
       toast.error("Error loading appointments: " + err.message);
       setAppointments([]);
