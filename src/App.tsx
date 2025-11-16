@@ -4,9 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { CustomAuthProvider } from "./contexts/CustomAuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import CustomAuth from "./pages/CustomAuth";
 import Dashboard from "./pages/Dashboard";
+import PatientDashboard from "./pages/PatientDashboard";
 import Qualifications from "./pages/Qualifications";
 import DoctorProfile from "./pages/DoctorProfile";
 import Services from "./pages/Services";
@@ -28,11 +31,12 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
+      <CustomAuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/qualifications" element={<Qualifications />} />
             <Route path="/about" element={<DoctorProfile />} />
@@ -44,7 +48,9 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<CustomAuth />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/patient-dashboard" element={<PatientDashboard />} />
             <Route path="/appointments" element={<AppointmentsPage />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/patients" element={<PatientsPage />} />
@@ -55,6 +61,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+    </CustomAuthProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

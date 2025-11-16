@@ -8,6 +8,7 @@ import patientsRouter from './routes/patients.js';
 import medicinesRouter from './routes/medicines.js';
 import prescriptionsRouter from './routes/prescriptions.js';
 import calendarRouter from './routes/calendar.js';
+import authRouter from './routes/auth.js';
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+app.use('/api/auth', authRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/appointment', appointmentRouter);
 app.use('/api/patients', patientsRouter);
