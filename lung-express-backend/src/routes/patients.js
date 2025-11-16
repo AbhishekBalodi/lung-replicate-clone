@@ -46,8 +46,26 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+  let conn;
   try {
-    const [patients] = await pool.execute(
+    conn = await pool.getConnection();
+    
+    // Ensure procedures table exists
+    await conn.execute(`
+      CREATE TABLE IF NOT EXISTS procedures (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT NOT NULL,
+        procedure_catalogue_id INT,
+        procedure_name VARCHAR(150) NOT NULL,
+        category VARCHAR(100),
+        description TEXT,
+        preparation_instructions TEXT,
+        prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+      )
+    `);
+    
+    const [patients] = await conn.execute(
       'SELECT * FROM patients WHERE id = ?',
       [id]
     );
@@ -55,17 +73,17 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Patient not found' });
     }
 
-    const [medicines] = await pool.execute(
+    const [medicines] = await conn.execute(
       'SELECT * FROM medicines WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
       [id]
     );
 
-    const [lab_tests] = await pool.execute(
+    const [lab_tests] = await conn.execute(
       'SELECT * FROM labs_test WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
       [id]
     );
 
-    const [procedures] = await pool.execute(
+    const [procedures] = await conn.execute(
       'SELECT * FROM procedures WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
       [id]
     );
@@ -74,6 +92,8 @@ router.get('/:id', async (req, res) => {
   } catch (e) {
     console.error('GET /api/patients/:id failed:', e);
     res.status(500).json({ error: e.message || 'Failed to load patient' });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
