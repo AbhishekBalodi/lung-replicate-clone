@@ -176,11 +176,13 @@ router.post('/', async (req, res) => {
  *   Optional filters:
  *     ?email=user@x.com
  *     ?phone=9999999999
+ *     ?status=done (or scheduled, cancelled, rescheduled)
  *     ?q=free text (matches name/email/phone/doctor/message)
  * --------------------------------------------------- */
 router.get('/', async (req, res) => {
   const email = (req.query.email || '').toString().trim();
   const phone = (req.query.phone || '').toString().trim();
+  const status = (req.query.status || '').toString().trim();
   const q = (req.query.q || '').toString().trim();
 
   try {
@@ -194,6 +196,10 @@ router.get('/', async (req, res) => {
     if (phone) {
       where.push(`\`${COL.phone}\` = ?`);
       params.push(phone);
+    }
+    if (status) {
+      where.push(`\`${COL.status}\` = ?`);
+      params.push(status);
     }
     if (q) {
       where.push(`(
