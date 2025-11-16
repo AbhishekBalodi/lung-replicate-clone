@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { Search, User, Calendar, Pill } from "lucide-react";
+import { Search, User, Calendar, Pill, FlaskConical } from "lucide-react";
 
 type Patient = {
   id: number | null;
@@ -34,6 +34,16 @@ type BackendMedicine = {
   created_at?: string | null;      // fallback if you add it later
 };
 
+type LabTest = {
+  id: number;
+  test_name: string;
+  category: string | null;
+  sample_type: string | null;
+  preparation_instructions: string | null;
+  prescribed_date?: string | null;
+  created_at?: string | null;
+};
+
 const API_ROOT =
   (import.meta as any)?.env?.VITE_API_URL
     ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, "")}/api`
@@ -45,6 +55,7 @@ export default function PatientsPage() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [medicines, setMedicines] = useState<BackendMedicine[]>([]);
+  const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [loading, setLoading] = useState(false);
 
   /** Load all patients (server merges patients + appointments and upserts) */
@@ -79,6 +90,7 @@ export default function PatientsPage() {
         setSelectedPatient(null);
         setAppointments([]);
         setMedicines([]);
+        setLabTests([]);
         return;
       }
       await selectPatient(data[0]);
@@ -87,6 +99,7 @@ export default function PatientsPage() {
       setSelectedPatient(null);
       setAppointments([]);
       setMedicines([]);
+      setLabTests([]);
     } finally {
       setLoading(false);
     }
@@ -243,6 +256,7 @@ export default function PatientsPage() {
                   setSearchTerm("");
                   setAppointments([]);
                   setMedicines([]);
+                  setLabTests([]);
                 }}
                 variant="outline"
                 className="w-full mt-4"
@@ -353,6 +367,75 @@ export default function PatientsPage() {
                 </>
               ) : (
                 <p className="text-emerald-700 text-center py-4">No medicines prescribed yet</p>
+              )}
+            </Card>
+
+            {/* Prescribed Lab Tests */}
+            <Card className="p-4 md:p-6 lg:col-span-2">
+              <div className="flex items-center gap-2 mb-4">
+                <FlaskConical className="h-5 w-5 text-emerald-700" />
+                <h3 className="text-lg md:text-xl font-semibold text-emerald-900">Prescribed Lab Tests</h3>
+              </div>
+
+              {labTests.length > 0 ? (
+                <>
+                  {/* Desktop table */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <table className="w-full min-w-[600px]">
+                      <thead>
+                        <tr className="border-b border-emerald-100">
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Test Name</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Category</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Sample Type</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Date</th>
+                          <th className="text-left py-2 px-3 text-emerald-900 text-sm">Instructions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {labTests.map((test) => (
+                          <tr key={test.id} className="border-b border-emerald-50">
+                            <td className="py-2 px-3 font-medium text-sm">{test.test_name}</td>
+                            <td className="py-2 px-3 text-sm">{test.category || "N/A"}</td>
+                            <td className="py-2 px-3 text-sm">{test.sample_type || "N/A"}</td>
+                            <td className="py-2 px-3 text-sm">
+                              {test.prescribed_date
+                                ? format(new Date(test.prescribed_date), "MMM dd, yyyy")
+                                : test.created_at
+                                ? format(new Date(test.created_at), "MMM dd, yyyy")
+                                : "-"}
+                            </td>
+                            <td className="py-2 px-3 text-sm">{test.preparation_instructions || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile card view */}
+                  <div className="md:hidden space-y-3">
+                    {labTests.map((test) => (
+                      <div key={test.id} className="p-3 bg-emerald-50 rounded-lg">
+                        <div className="font-medium text-emerald-900 mb-2">{test.test_name}</div>
+                        <div className="space-y-1 text-sm">
+                          <div><span className="text-emerald-700">Category:</span> {test.category || "N/A"}</div>
+                          <div><span className="text-emerald-700">Sample:</span> {test.sample_type || "N/A"}</div>
+                          <div><span className="text-emerald-700">Date:</span> {
+                            test.prescribed_date
+                              ? format(new Date(test.prescribed_date), "MMM dd, yyyy")
+                              : test.created_at
+                              ? format(new Date(test.created_at), "MMM dd, yyyy")
+                              : "-"
+                          }</div>
+                          {test.preparation_instructions && (
+                            <div><span className="text-emerald-700">Instructions:</span> {test.preparation_instructions}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <p className="text-emerald-700 text-center py-4">No lab tests prescribed yet</p>
               )}
             </Card>
           </div>
