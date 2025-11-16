@@ -65,7 +65,12 @@ router.get('/:id', async (req, res) => {
       [id]
     );
 
-    res.json({ ...patients[0], medicines, lab_tests });
+    const [procedures] = await pool.execute(
+      'SELECT * FROM procedures WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
+      [id]
+    );
+
+    res.json({ ...patients[0], medicines, lab_tests, procedures });
   } catch (e) {
     console.error('GET /api/patients/:id failed:', e);
     res.status(500).json({ error: e.message || 'Failed to load patient' });

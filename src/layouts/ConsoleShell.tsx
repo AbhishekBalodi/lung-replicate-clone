@@ -106,6 +106,13 @@ export default function ConsoleShell({ children, todayCount = 0, onNewAppointmen
                 Lab Tests
               </button>
 
+              <button
+                onClick={() => { navigate("/procedures"); setSidebarOpen(false); }}
+                className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/procedures")}`}
+              >
+                Procedures
+              </button>
+
             <button
               onClick={() => { navigate("/completed-appointments"); setSidebarOpen(false); }}
               className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/completed-appointments")}`}

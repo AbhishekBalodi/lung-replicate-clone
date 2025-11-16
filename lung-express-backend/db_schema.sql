@@ -78,3 +78,28 @@ CREATE TABLE IF NOT EXISTS labs_test (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
   FOREIGN KEY (lab_catalogue_id) REFERENCES lab_catalogue(id) ON DELETE SET NULL
 );
+
+-- 7. Procedure Catalogue Table
+CREATE TABLE IF NOT EXISTS procedure_catalogue (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  category VARCHAR(100),
+  description TEXT,
+  duration VARCHAR(50),
+  preparation_instructions TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 8. Procedures Table (Prescribed Procedures)
+CREATE TABLE IF NOT EXISTS procedures (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  procedure_catalogue_id INT,
+  procedure_name VARCHAR(150) NOT NULL,
+  category VARCHAR(100),
+  description TEXT,
+  preparation_instructions TEXT,
+  prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (procedure_catalogue_id) REFERENCES procedure_catalogue(id) ON DELETE SET NULL
+);

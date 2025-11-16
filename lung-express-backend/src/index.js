@@ -8,6 +8,7 @@ import patientsRouter from './routes/patients.js';
 import medicinesRouter from './routes/medicines.js';
 import prescriptionsRouter from './routes/prescriptions.js';
 import labTestsRouter from './routes/lab-tests.js';
+import proceduresRouter from './routes/procedures.js';
 import calendarRouter from './routes/calendar.js';
 import authRouter from './routes/auth.js';
 import smtpSettingsRouter from './routes/smtp-settings.js';
@@ -38,6 +39,7 @@ app.use('/api/patients', patientsRouter);
 app.use('/api/medicines', medicinesRouter);        // catalog
 app.use('/api/prescriptions', prescriptionsRouter); // patient prescriptions
 app.use('/api/lab-tests', labTestsRouter);          // lab tests
+app.use('/api/procedures', proceduresRouter);       // procedures
 app.use('/api/calendar', calendarRouter);
 app.use('/api/smtp-settings', smtpSettingsRouter);
 
