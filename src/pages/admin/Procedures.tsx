@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
+import { Search, ChevronDown, Plus } from "lucide-react";
 
 type Procedure = {
   id: number;
@@ -17,17 +20,37 @@ type Procedure = {
   created_at?: string;
 };
 
+type Patient = {
+  id: number;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+};
+
 const API_ROOT = import.meta.env.VITE_API_BASE_URL || "http://localhost:5050/api";
 
 export default function ProceduresPage() {
+  // Catalog form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("");
   const [preparationInstructions, setPreparationInstructions] = useState("");
   const [items, setItems] = useState<Procedure[]>([]);
+  
+  // Patient search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  
+  // Prescribe procedure states
+  const [selectedProcedureId, setSelectedProcedureId] = useState("");
+  const [procedureName, setProcedureName] = useState("");
+  const [procedureCategory, setProcedureCategory] = useState("");
+  const [procedureDescription, setProcedureDescription] = useState("");
+  const [procedurePreparation, setProcedurePreparation] = useState("");
 
-  const load = async () => {
+  const loadCatalog = async () => {
     try {
       const res = await fetch(`${API_ROOT}/procedures/catalog`);
       if (!res.ok) throw new Error("Failed to load procedures");
@@ -39,10 +62,10 @@ export default function ProceduresPage() {
   };
 
   useEffect(() => {
-    load();
+    loadCatalog();
   }, []);
 
-  const add = async () => {
+  const addToCatalog = async () => {
     if (!name.trim()) {
       toast.error("Procedure name is required");
       return;
@@ -64,121 +87,296 @@ export default function ProceduresPage() {
         const js = await res.json();
         throw new Error(js?.error || "Failed to add procedure");
       }
-      toast.success("Procedure added successfully");
+      toast.success("Procedure added to catalog");
       setName("");
       setCategory("");
       setDescription("");
       setDuration("");
       setPreparationInstructions("");
-      await load();
+      await loadCatalog();
     } catch (err: any) {
       toast.error("Error adding procedure: " + err.message);
+    }
+  };
+
+  const searchPatients = async () => {
+    if (!searchQuery.trim()) {
+      toast.error("Please enter a search query");
+      return;
+    }
+    try {
+      const res = await fetch(`${API_ROOT}/patients?search=${encodeURIComponent(searchQuery)}`);
+      if (!res.ok) throw new Error("Failed to search patients");
+      const data = await res.json();
+      setPatients(Array.isArray(data) ? data : []);
+      if (data.length === 0) {
+        toast.info("No patients found");
+      }
+    } catch (err: any) {
+      toast.error("Error searching patients: " + err.message);
+    }
+  };
+
+  const handleProcedureSelect = (proc: Procedure) => {
+    setSelectedProcedureId(String(proc.id));
+    setProcedureName(proc.name);
+    setProcedureCategory(proc.category || "");
+    setProcedureDescription(proc.description || "");
+    setProcedurePreparation(proc.preparation_instructions || "");
+  };
+
+  const prescribeProcedure = async () => {
+    if (!selectedPatient) {
+      toast.error("Please select a patient first");
+      return;
+    }
+    if (!procedureName.trim()) {
+      toast.error("Procedure name is required");
+      return;
+    }
+    try {
+      const payload = {
+        patient_id: selectedPatient.id,
+        procedure_catalogue_id: selectedProcedureId ? parseInt(selectedProcedureId) : null,
+        procedure_name: procedureName.trim(),
+        category: procedureCategory.trim() || null,
+        description: procedureDescription.trim() || null,
+        preparation_instructions: procedurePreparation.trim() || null,
+      };
+      const res = await fetch(`${API_ROOT}/procedures`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const js = await res.json();
+        throw new Error(js?.error || "Failed to prescribe procedure");
+      }
+      toast.success("Procedure prescribed successfully");
+      // Reset prescription form
+      setSelectedProcedureId("");
+      setProcedureName("");
+      setProcedureCategory("");
+      setProcedureDescription("");
+      setProcedurePreparation("");
+    } catch (err: any) {
+      toast.error("Error prescribing procedure: " + err.message);
     }
   };
 
   return (
     <ConsoleShell>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-semibold text-emerald-900">Procedures Catalogue</h1>
-          <Button onClick={add} className="bg-emerald-700 hover:bg-emerald-800">
-            Add Procedure
-          </Button>
-        </div>
+        <h1 className="text-3xl font-semibold text-emerald-900">Procedures Management</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Add Form */}
+        {/* Add to Catalog Section */}
+        <Collapsible>
           <Card className="p-6">
-            <h3 className="font-semibold text-lg mb-4 text-emerald-900">Add New Procedure</h3>
-            <div className="space-y-4">
-              <div>
-                <Label className="text-emerald-900">Procedure Name*</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Bronchoscopy"
-                  className="bg-white"
-                />
+            <CollapsibleTrigger className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-2">
+                <Plus className="h-5 w-5 text-emerald-700" />
+                <h3 className="font-semibold text-lg text-emerald-900">Add to Procedures Catalog</h3>
               </div>
-
-              <div>
-                <Label className="text-emerald-900">Category</Label>
-                <Input
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  placeholder="e.g., Diagnostic"
-                  className="bg-white"
-                />
+              <ChevronDown className="h-5 w-5 text-emerald-700" />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-emerald-900">Procedure Name *</Label>
+                  <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g., Bronchoscopy"
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Category</Label>
+                  <Input
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="e.g., Diagnostic"
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Duration</Label>
+                  <Input
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                    placeholder="e.g., 30-45 minutes"
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Description</Label>
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief description"
+                    className="bg-white"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <Label className="text-emerald-900">Preparation Instructions</Label>
+                  <Textarea
+                    value={preparationInstructions}
+                    onChange={(e) => setPreparationInstructions(e.target.value)}
+                    placeholder="Patient preparation instructions"
+                    className="bg-white"
+                  />
+                </div>
               </div>
+              <Button onClick={addToCatalog} className="mt-4 bg-emerald-700 hover:bg-emerald-800">
+                <Plus className="h-4 w-4 mr-2" />
+                Add to Catalog
+              </Button>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
 
-              <div>
-                <Label className="text-emerald-900">Description</Label>
-                <Textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description of the procedure"
-                  className="bg-white min-h-[80px]"
-                />
-              </div>
-
-              <div>
-                <Label className="text-emerald-900">Duration</Label>
-                <Input
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  placeholder="e.g., 30-45 minutes"
-                  className="bg-white"
-                />
-              </div>
-
-              <div>
-                <Label className="text-emerald-900">Preparation Instructions</Label>
-                <Textarea
-                  value={preparationInstructions}
-                  onChange={(e) => setPreparationInstructions(e.target.value)}
-                  placeholder="Instructions for patient preparation"
-                  className="bg-white min-h-[80px]"
-                />
-              </div>
-
-              <Button onClick={add} className="w-full bg-emerald-700 hover:bg-emerald-800">
-                Add Procedure
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Search Patient Section */}
+          <Card className="p-6">
+            <h3 className="font-semibold text-lg mb-4 text-emerald-900">Search Patient</h3>
+            <div className="flex gap-2 mb-4">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search patient by name..."
+                className="bg-white"
+                onKeyDown={(e) => e.key === "Enter" && searchPatients()}
+              />
+              <Button onClick={searchPatients} className="bg-emerald-700 hover:bg-emerald-800">
+                <Search className="h-4 w-4" />
               </Button>
             </div>
-          </Card>
-
-          {/* List */}
-          <Card className="p-6">
-            <h3 className="font-semibold text-lg mb-4 text-emerald-900">
-              Procedures Catalog ({items.length})
-            </h3>
-            {items.length === 0 ? (
-              <p className="text-emerald-700 text-center py-8">No procedures in catalog yet</p>
-            ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                {items.map((proc) => (
-                  <div key={proc.id} className="p-4 bg-emerald-50 rounded-lg">
-                    <div className="font-medium text-emerald-900 text-lg">{proc.name}</div>
-                    {proc.category && (
-                      <div className="text-sm text-emerald-700 mt-1">Category: {proc.category}</div>
-                    )}
-                    {proc.description && (
-                      <div className="text-sm text-emerald-700 mt-1">{proc.description}</div>
-                    )}
-                    {proc.duration && (
-                      <div className="text-sm text-emerald-700 mt-1">Duration: {proc.duration}</div>
-                    )}
-                    {proc.preparation_instructions && (
-                      <div className="text-sm text-emerald-700 mt-2">
-                        <span className="font-medium">Preparation:</span> {proc.preparation_instructions}
-                      </div>
-                    )}
+            {patients.length > 0 && (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {patients.map((patient) => (
+                  <div
+                    key={patient.id}
+                    onClick={() => setSelectedPatient(patient)}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      selectedPatient?.id === patient.id
+                        ? "bg-emerald-100 border-2 border-emerald-500"
+                        : "bg-emerald-50 hover:bg-emerald-100"
+                    }`}
+                  >
+                    <div className="font-medium text-emerald-900">{patient.full_name}</div>
+                    <div className="text-sm text-emerald-700">
+                      {patient.email || "No email"} • {patient.phone || "No phone"}
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </Card>
+
+          {/* Prescribe Procedure Section */}
+          <Card className="p-6">
+            <h3 className="font-semibold text-lg mb-4 text-emerald-900">📋 Prescribe Procedure</h3>
+            {selectedPatient ? (
+              <div className="space-y-4">
+                <div className="p-3 bg-emerald-50 rounded-lg">
+                  <div className="font-medium text-emerald-900">Selected: {selectedPatient.full_name}</div>
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Select from Catalog (optional)</Label>
+                  <select
+                    value={selectedProcedureId}
+                    onChange={(e) => {
+                      const proc = items.find((p) => p.id === parseInt(e.target.value));
+                      if (proc) handleProcedureSelect(proc);
+                    }}
+                    className="w-full p-2 border rounded-md bg-white"
+                  >
+                    <option value="">-- Select Procedure --</option>
+                    {items.map((proc) => (
+                      <option key={proc.id} value={proc.id}>
+                        {proc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Procedure Name *</Label>
+                  <Input
+                    value={procedureName}
+                    onChange={(e) => setProcedureName(e.target.value)}
+                    placeholder="Procedure name"
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Category</Label>
+                  <Input
+                    value={procedureCategory}
+                    onChange={(e) => setProcedureCategory(e.target.value)}
+                    placeholder="Category"
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Description</Label>
+                  <Textarea
+                    value={procedureDescription}
+                    onChange={(e) => setProcedureDescription(e.target.value)}
+                    placeholder="Description"
+                    className="bg-white"
+                  />
+                </div>
+                <div>
+                  <Label className="text-emerald-900">Preparation Instructions</Label>
+                  <Textarea
+                    value={procedurePreparation}
+                    onChange={(e) => setProcedurePreparation(e.target.value)}
+                    placeholder="Preparation instructions"
+                    className="bg-white"
+                  />
+                </div>
+                <Button onClick={prescribeProcedure} className="w-full bg-emerald-700 hover:bg-emerald-800">
+                  Prescribe Procedure
+                </Button>
+              </div>
+            ) : (
+              <p className="text-center text-emerald-700 py-8">Please search and select a patient first</p>
+            )}
+          </Card>
         </div>
+
+        {/* Procedures Catalog Table */}
+        <Card className="p-6">
+          <h3 className="font-semibold text-lg mb-4 text-emerald-900">
+            Procedures Catalog ({items.length})
+          </h3>
+          {items.length === 0 ? (
+            <p className="text-center text-emerald-700 py-8">No procedures in catalog yet</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Preparation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((proc) => (
+                  <TableRow key={proc.id}>
+                    <TableCell className="font-medium">{proc.name}</TableCell>
+                    <TableCell>{proc.category || "N/A"}</TableCell>
+                    <TableCell>{proc.description || "N/A"}</TableCell>
+                    <TableCell>{proc.duration || "N/A"}</TableCell>
+                    <TableCell>{proc.preparation_instructions || "N/A"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Card>
       </div>
     </ConsoleShell>
   );
