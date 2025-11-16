@@ -67,7 +67,7 @@ const Hero = () => {
             </Card>
             
             {/* Opening Hours Card - positioned on right side with gap from image */}
-            <Card className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-0 lg:left-full lg:ml-6 lg:bottom-12 bg-lung-blue text-white p-3 sm:p-4 shadow-medium rounded-lg w-64 sm:w-72 lg:w-80">
+            <Card className="absolute -bottom-2 right-0 sm:-bottom-3 sm:right-0 lg:left-full lg:ml-2 lg:bottom-12 bg-lung-blue text-white p-3 sm:p-4 shadow-medium rounded-lg w-64 sm:w-72 lg:w-80">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-full flex-shrink-0">
                   <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
