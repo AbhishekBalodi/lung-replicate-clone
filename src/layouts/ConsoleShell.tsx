@@ -9,7 +9,7 @@ type Props = {
   todayCount?: number; // badge for “Appointments” widget
 };
 
-export default function ConsoleShell({ children, todayCount = 0 }: Props) {
+export default function ConsoleShell({ children, todayCount = 0, onNewAppointment }: Props) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { signOut } = useAuth();
@@ -195,14 +195,14 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </Button>
 
                 <Button
-                  onClick={() => navigate("/book-appointment")}
+                  onClick={() => onNewAppointment ? onNewAppointment() : navigate("/book-appointment")}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white shrink-0 hidden md:flex"
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   New Appointment
                 </Button>
                 <Button
-                  onClick={() => navigate("/book-appointment")}
+                  onClick={() => onNewAppointment ? onNewAppointment() : navigate("/book-appointment")}
                   size="sm"
                   className="bg-emerald-700 hover:bg-emerald-800 text-white shrink-0 md:hidden p-2"
                 >
