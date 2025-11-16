@@ -103,3 +103,61 @@ CREATE TABLE IF NOT EXISTS procedures (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
   FOREIGN KEY (procedure_catalogue_id) REFERENCES procedure_catalogue(id) ON DELETE SET NULL
 );
+
+-- 9. Medicines Catalog Table
+CREATE TABLE IF NOT EXISTS medicines_catalog (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  form VARCHAR(100),
+  strength VARCHAR(100),
+  default_frequency VARCHAR(100),
+  duration VARCHAR(100),
+  route VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_name (name)
+);
+
+-- 10. Contact Messages Table
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NOT NULL,
+  phone VARCHAR(50),
+  subject VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  status ENUM('new', 'read', 'replied', 'archived') DEFAULT 'new',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_email (email),
+  INDEX idx_status (status)
+);
+
+-- Add missing foreign key to medicines table if not exists
+-- This links prescribed medicines to the medicines catalog (optional reference)
+ALTER TABLE medicines 
+  ADD COLUMN IF NOT EXISTS medicine_catalog_id INT,
+  ADD INDEX IF NOT EXISTS idx_medicine_catalog (medicine_catalog_id),
+  ADD CONSTRAINT fk_medicines_catalog 
+    FOREIGN KEY (medicine_catalog_id) 
+    REFERENCES medicines_catalog(id) 
+    ON DELETE SET NULL;
+
+-- Add turnaround_time column to lab_catalogue if missing
+ALTER TABLE lab_catalogue 
+  ADD COLUMN IF NOT EXISTS turnaround_time VARCHAR(50);
+
+-- Add indexes for better query performance
+ALTER TABLE medicines 
+  ADD INDEX IF NOT EXISTS idx_patient_id (patient_id),
+  ADD INDEX IF NOT EXISTS idx_prescribed_date (prescribed_date);
+
+ALTER TABLE labs_test 
+  ADD INDEX IF NOT EXISTS idx_prescribed_date (prescribed_date);
+
+ALTER TABLE procedures 
+  ADD INDEX IF NOT EXISTS idx_prescribed_date (prescribed_date);
+
+ALTER TABLE appointments 
+  ADD INDEX IF NOT EXISTS idx_email (email),
+  ADD INDEX IF NOT EXISTS idx_phone (phone),
+  ADD INDEX IF NOT EXISTS idx_appointment_date (appointment_date),
+  ADD INDEX IF NOT EXISTS idx_status (status);
