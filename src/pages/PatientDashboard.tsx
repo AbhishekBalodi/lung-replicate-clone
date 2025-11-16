@@ -151,11 +151,18 @@ const PatientDashboard = () => {
     });
   };
 
-  const downloadPrescription = () => {
-    if (prescriptions.length === 0) {
+  const downloadPrescription = (appointment: Appointment) => {
+    // Filter prescriptions for this specific appointment based on date
+    const appointmentDate = new Date(appointment.appointment_date).toDateString();
+    const appointmentPrescriptions = prescriptions.filter(p => {
+      const prescribedDate = new Date(p.prescribed_date).toDateString();
+      return prescribedDate === appointmentDate;
+    });
+
+    if (appointmentPrescriptions.length === 0) {
       toast({
         title: "No Prescriptions",
-        description: "You don't have any prescriptions yet",
+        description: "No prescriptions found for this appointment",
         variant: "destructive"
       });
       return;
@@ -176,24 +183,25 @@ const PatientDashboard = () => {
     
     // Date
     doc.setFontSize(11);
-    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 60);
+    doc.text(`Date: ${new Date(appointment.appointment_date).toLocaleDateString()}`, 20, 60);
+    doc.text(`Appointment ID: ${appointment.id}`, 20, 68);
     
     // Patient Info
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text('Patient Information:', 20, 75);
+    doc.text('Patient Information:', 20, 85);
     doc.setFont(undefined, 'normal');
     doc.setFontSize(11);
-    doc.text(`Name: ${user?.name}`, 20, 83);
-    doc.text(`Email: ${user?.email}`, 20, 91);
-    doc.text(`Phone: ${user?.phone}`, 20, 99);
+    doc.text(`Name: ${appointment.full_name}`, 20, 93);
+    doc.text(`Email: ${appointment.email}`, 20, 101);
+    doc.text(`Phone: ${appointment.phone}`, 20, 109);
     
     // Prescriptions Table
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
-    doc.text('Prescribed Medications:', 20, 115);
+    doc.text('Prescribed Medications:', 20, 125);
     
-    const prescriptionData = prescriptions.map((p) => [
+    const prescriptionData = appointmentPrescriptions.map((p) => [
       p.medicine_name,
       p.dosage || '-',
       p.frequency || '-',
@@ -202,7 +210,7 @@ const PatientDashboard = () => {
     ]);
     
     autoTable(doc, {
-      startY: 120,
+      startY: 130,
       head: [['Medicine', 'Dosage', 'Frequency', 'Duration', 'Instructions']],
       body: prescriptionData,
       theme: 'grid',
@@ -216,7 +224,7 @@ const PatientDashboard = () => {
     doc.text('Please follow the prescribed medication schedule.', 105, finalY + 15, { align: 'center' });
     doc.text('Contact us if you have any questions or concerns.', 105, finalY + 22, { align: 'center' });
     
-    doc.save(`prescription_${user?.name?.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`prescription_${appointment.id}.pdf`);
     
     toast({
       title: "Prescription Downloaded",
@@ -297,13 +305,6 @@ const PatientDashboard = () => {
           </Card>
         </div>
 
-        {/* Download Buttons */}
-        <div className="flex gap-4 mb-8">
-          <Button onClick={downloadPrescription} disabled={prescriptions.length === 0}>
-            <Download className="h-4 w-4 mr-2" />
-            Download Prescription
-          </Button>
-        </div>
 
         {/* Appointments List */}
         <Card>
@@ -340,16 +341,30 @@ const PatientDashboard = () => {
                             {appointment.status}
                           </span>
                         </div>
-                        <div className="flex items-end justify-end">
+                        <div className="col-span-2 flex gap-2 justify-end">
                           {appointment.status === 'done' && (
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={() => downloadInvoice(appointment)}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download Invoice
-                            </Button>
+                            <>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => downloadInvoice(appointment)}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Invoice
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={() => downloadPrescription(appointment)}
+                                disabled={prescriptions.filter(p => 
+                                  new Date(p.prescribed_date).toDateString() === 
+                                  new Date(appointment.appointment_date).toDateString()
+                                ).length === 0}
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Prescription
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -367,20 +382,27 @@ const PatientDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Prescriptions List */}
+        {/* Complete Medical History */}
         {prescriptions.length > 0 && (
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Your Prescriptions</CardTitle>
-              <CardDescription>Medications prescribed by your doctor</CardDescription>
+              <CardTitle>Complete Medical History</CardTitle>
+              <CardDescription>All prescribed medications across all visits</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {prescriptions.map((prescription) => (
+                {prescriptions
+                  .sort((a, b) => new Date(b.prescribed_date).getTime() - new Date(a.prescribed_date).getTime())
+                  .map((prescription) => (
                   <div key={prescription.id} className="border rounded-lg p-4">
                     <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{prescription.medicine_name}</h4>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-semibold">{prescription.medicine_name}</h4>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(prescription.prescribed_date).toLocaleDateString()}
+                          </span>
+                        </div>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
                           <div>
                             <span className="text-muted-foreground">Dosage:</span>{' '}
@@ -393,10 +415,6 @@ const PatientDashboard = () => {
                           <div>
                             <span className="text-muted-foreground">Duration:</span>{' '}
                             {prescription.duration || 'N/A'}
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Prescribed:</span>{' '}
-                            {new Date(prescription.prescribed_date).toLocaleDateString()}
                           </div>
                         </div>
                         {prescription.instructions && (
