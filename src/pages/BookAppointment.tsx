@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import drMannImage from "@/assets/dr-mann-passport.png";
+import drMannImage from "@/assets/dr-mann-passport.jpg";
 
 // If your backend is on a different origin, replace with full URL or env var.
 const APPOINTMENTS_API = "/api/appointment";

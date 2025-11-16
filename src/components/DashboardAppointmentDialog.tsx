@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import drMannImage from "@/assets/dr-mann-passport.png";
+import drMannImage from "@/assets/dr-mann-passport.jpg";
 
 interface DashboardAppointmentDialogProps {
   open: boolean;

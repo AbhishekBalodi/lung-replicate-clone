@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import drMannImage from "@/assets/dr-mann-passport.png";
+import drMannImage from "@/assets/dr-mann-passport.jpg";
 
 const AppointmentBooking = () => {
   const [currentStep, setCurrentStep] = useState(1);

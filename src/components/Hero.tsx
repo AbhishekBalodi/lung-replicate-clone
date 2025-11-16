@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Award, Clock } from "lucide-react";
-import doctorMain from "@/assets/dr-mann-passport.png";
+import doctorMain from "@/assets/dr-mann-passport.jpg";
 
 const Hero = () => {
   return (
