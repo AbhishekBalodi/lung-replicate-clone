@@ -149,7 +149,7 @@ router.post('/', async (req, res) => {
         console.error('Doctor email failed:', e.message);
       }
       try {
-        const userMsg = appointmentUserTemplate(v);
+        const userMsg = appointmentUserTemplate({ ...v, status: 'scheduled' });
         await sendMail({
           to: userMsg.to,
           subject: userMsg.subject,
@@ -285,6 +285,21 @@ router.patch('/:id/done', async (req, res) => {
       a.selected_doctor,
     ]);
 
+    // Send email notification
+    (async () => {
+      try {
+        const userMsg = appointmentUserTemplate({ ...a, status: 'done' });
+        await sendMail({
+          to: userMsg.to,
+          subject: userMsg.subject,
+          html: userMsg.html,
+          text: userMsg.text,
+        });
+      } catch (e) {
+        console.error('User email notification failed:', e.message);
+      }
+    })();
+
     res.json({ success: true, message: 'Appointment marked as done and patient synced.' });
   } catch (e) {
     console.error('PATCH /api/appointment/:id/done failed:', e);
@@ -325,6 +340,30 @@ router.patch('/:id', async (req, res) => {
     
     await pool.execute(query, values);
     
+    // Get updated appointment for email notification
+    const [rows] = await pool.execute(
+      `SELECT * FROM \`${TBL}\` WHERE \`${COL.id}\` = ?`,
+      [id]
+    );
+    
+    if (rows.length > 0) {
+      // Send email notification
+      (async () => {
+        try {
+          const appointment = rows[0];
+          const userMsg = appointmentUserTemplate(appointment);
+          await sendMail({
+            to: userMsg.to,
+            subject: userMsg.subject,
+            html: userMsg.html,
+            text: userMsg.text,
+          });
+        } catch (e) {
+          console.error('User email notification failed:', e.message);
+        }
+      })();
+    }
+    
     res.json({ success: true, message: 'Appointment updated successfully' });
   } catch (e) {
     console.error('PATCH /api/appointment/:id failed:', e);
@@ -338,10 +377,35 @@ router.patch('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
+    // Get appointment details before deletion for email notification
+    const [rows] = await pool.execute(
+      `SELECT * FROM \`${TBL}\` WHERE \`${COL.id}\` = ?`,
+      [id]
+    );
+    
     const [r] = await pool.execute(
       `DELETE FROM \`${TBL}\` WHERE \`${COL.id}\` = ?`,
       [id]
     );
+    
+    // Send cancellation email if appointment was found
+    if (rows.length > 0) {
+      (async () => {
+        try {
+          const appointment = rows[0];
+          const userMsg = appointmentUserTemplate({ ...appointment, status: 'cancelled' });
+          await sendMail({
+            to: userMsg.to,
+            subject: userMsg.subject,
+            html: userMsg.html,
+            text: userMsg.text,
+          });
+        } catch (e) {
+          console.error('Cancellation email failed:', e.message);
+        }
+      })();
+    }
+    
     res.json({ success: true, deleted: r.affectedRows || 0 });
   } catch (e) {
     console.error('DELETE /api/appointment/:id failed:', e);

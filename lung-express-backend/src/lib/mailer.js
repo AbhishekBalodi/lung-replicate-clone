@@ -1,33 +1,82 @@
 import nodemailer from 'nodemailer';
+import { pool } from './db.js';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: String(process.env.SMTP_SECURE || 'false') === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
+// Function to get transporter with dynamic SMTP settings
+async function getTransporter() {
+  try {
+    const [rows] = await pool.query('SELECT * FROM smtp_settings LIMIT 1');
+    
+    if (rows.length === 0) {
+      console.warn('No SMTP settings configured');
+      return null;
+    }
+
+    const settings = rows[0];
+    
+    return nodemailer.createTransport({
+      host: settings.smtp_host,
+      port: Number(settings.smtp_port || 587),
+      secure: String(settings.smtp_secure || 'false') === 'true',
+      auth: {
+        user: settings.smtp_user,
+        pass: settings.smtp_pass
+      }
+    });
+  } catch (error) {
+    console.error('Error creating transporter:', error);
+    return null;
   }
-});
+}
 
 export async function sendMail({ to, subject, html, text }) {
-  const from = process.env.MAIL_FROM || 'no-reply@example.com';
-  return transporter.sendMail({ from, to, subject, html, text });
+  const transporter = await getTransporter();
+  
+  if (!transporter) {
+    console.warn('SMTP not configured, skipping email');
+    return null;
+  }
+
+  try {
+    const [rows] = await pool.query('SELECT smtp_from FROM smtp_settings LIMIT 1');
+    const from = (rows.length > 0 && rows[0].smtp_from) || 'no-reply@example.com';
+    
+    return await transporter.sendMail({ from, to, subject, html, text });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    throw error;
+  }
 }
 
 export function appointmentUserTemplate(data) {
-  const { full_name, appointment_date, appointment_time, selected_doctor } = data;
+  const { full_name, email, appointment_date, appointment_time, selected_doctor, status } = data;
+  
+  let statusText = 'scheduled';
+  let statusMessage = 'Your appointment request has been received.';
+  
+  if (status === 'rescheduled') {
+    statusText = 'rescheduled';
+    statusMessage = 'Your appointment has been rescheduled.';
+  } else if (status === 'done') {
+    statusText = 'completed';
+    statusMessage = 'Your appointment has been completed. Thank you for visiting!';
+  } else if (status === 'cancelled') {
+    statusText = 'cancelled';
+    statusMessage = 'Your appointment has been cancelled.';
+  }
+  
   return {
-    subject: `Your appointment is received - ${appointment_date} ${appointment_time}`,
+    to: email,
+    subject: `Your appointment is ${statusText} - ${appointment_date} ${appointment_time}`,
     html: `<p>Hi ${full_name},</p>
-           <p>Your appointment request has been received.</p>
+           <p>${statusMessage}</p>
            <ul>
              <li><b>Date:</b> ${appointment_date}</li>
              <li><b>Time:</b> ${appointment_time}</li>
              <li><b>Doctor:</b> ${selected_doctor}</li>
+             <li><b>Status:</b> ${statusText}</li>
            </ul>
-           <p>We will confirm shortly.</p>`,
-    text: `Hi ${full_name},\nYour appointment request has been received for ${appointment_date} ${appointment_time} with ${selected_doctor}. We will confirm shortly.`
+           ${status === 'done' ? '<p>We hope to see you again soon!</p>' : status === 'cancelled' ? '<p>If you need to reschedule, please book a new appointment.</p>' : '<p>We will confirm shortly.</p>'}`,
+    text: `Hi ${full_name},\n${statusMessage}\nDate: ${appointment_date}\nTime: ${appointment_time}\nDoctor: ${selected_doctor}\nStatus: ${statusText}`
   };
 }
 
