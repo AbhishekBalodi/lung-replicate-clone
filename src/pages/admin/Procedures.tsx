@@ -70,6 +70,7 @@ export default function ProceduresPage() {
       toast.error("Procedure name is required");
       return;
     }
+    console.log("Adding procedure to catalog...", { name, category, description, duration, preparationInstructions });
     try {
       const payload = {
         name: name.trim(),
@@ -78,15 +79,26 @@ export default function ProceduresPage() {
         duration: duration.trim() || null,
         preparation_instructions: preparationInstructions.trim() || null,
       };
+      console.log("API URL:", `${API_ROOT}/procedures/catalog`);
+      console.log("Payload:", payload);
+      
       const res = await fetch(`${API_ROOT}/procedures/catalog`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      
+      console.log("Response status:", res.status);
+      
       if (!res.ok) {
         const js = await res.json();
+        console.error("Error response:", js);
         throw new Error(js?.error || "Failed to add procedure");
       }
+      
+      const result = await res.json();
+      console.log("Success response:", result);
+      
       toast.success("Procedure added to catalog");
       setName("");
       setCategory("");
@@ -95,6 +107,7 @@ export default function ProceduresPage() {
       setPreparationInstructions("");
       await loadCatalog();
     } catch (err: any) {
+      console.error("Error in addToCatalog:", err);
       toast.error("Error adding procedure: " + err.message);
     }
   };
