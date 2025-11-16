@@ -53,3 +53,28 @@ CREATE TABLE IF NOT EXISTS smtp_settings (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- 5. Lab Catalogue Table
+CREATE TABLE IF NOT EXISTS lab_catalogue (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  category VARCHAR(100),
+  sample_type VARCHAR(100),
+  preparation_instructions TEXT,
+  turnaround_time VARCHAR(50),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Labs Test Table (Prescribed Lab Tests)
+CREATE TABLE IF NOT EXISTS labs_test (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  lab_catalogue_id INT,
+  test_name VARCHAR(150) NOT NULL,
+  category VARCHAR(100),
+  sample_type VARCHAR(100),
+  preparation_instructions TEXT,
+  prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (lab_catalogue_id) REFERENCES lab_catalogue(id) ON DELETE SET NULL
+);
