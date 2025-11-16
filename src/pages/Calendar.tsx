@@ -110,7 +110,17 @@ export default function Calendar() {
   };
 
   const handleEventClick = (info: any) => {
-    const event = events.find(e => e.id === info.event.id);
+    console.log('Event clicked:', info.event);
+    console.log('Event ID:', info.event.id);
+    console.log('Available events:', events);
+    
+    const event = events.find(e => {
+      console.log('Comparing:', e.id, '===', info.event.id);
+      return e.id === info.event.id;
+    });
+    
+    console.log('Found event:', event);
+    
     if (event) {
       setSelectedEvent(event);
       setShowDialog(true);
@@ -119,6 +129,9 @@ export default function Calendar() {
       const dateStr = event.start.split('T')[0];
       setNewDate(dateStr);
       setNewTime(event.extendedProps.time);
+    } else {
+      console.error('Event not found in events array');
+      toast.error('Unable to load appointment details');
     }
   };
 
