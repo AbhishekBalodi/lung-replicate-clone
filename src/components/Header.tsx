@@ -3,11 +3,11 @@ import { Phone, MapPin, Clock, Facebook, Twitter, Instagram, User, Menu, X } fro
 import logoImage from "@/assets/delhi-chest-physician-logo.png";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { user } = useAuth();
+  const { user } = useCustomAuth();
 
   return (
     <header className="w-full fixed top-0 left-0 z-50 bg-white shadow-md">
