@@ -18,7 +18,7 @@ router.post('/login', async (req, res) => {
     if (loginType === 'admin') {
       // Admin login - hardcoded credentials
       const ADMIN_EMAIL = 'abhishekbalodi729@gmail.com';
-      const ADMIN_PASSWORD = 'Nsit@360';
+      const ADMIN_PASSWORD = '9560720890';
 
       if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
         return res.json({
