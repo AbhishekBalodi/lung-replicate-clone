@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,13 +41,23 @@ const API_ROOT =
     : "/api";
 
 export default function CompletedAppointments() {
+  const { user, loading: authLoading } = useCustomAuth();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchCompletedAppointments();
-  }, []);
+    if (!authLoading && (!user || user.role !== "admin")) {
+      navigate("/login");
+    }
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (user && user.role === "admin") {
+      fetchCompletedAppointments();
+    }
+  }, [user]);
 
   const fetchCompletedAppointments = async () => {
     setLoading(true);

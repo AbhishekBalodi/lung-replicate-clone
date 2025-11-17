@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -60,6 +62,8 @@ const API_ROOT =
     : "/api";
 
 export default function PatientsPage() {
+  const { user, loading: authLoading } = useCustomAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -68,6 +72,12 @@ export default function PatientsPage() {
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== "admin")) {
+      navigate("/login");
+    }
+  }, [authLoading, user, navigate]);
 
   /** Load all patients (server merges patients + appointments and upserts) */
   const loadPatients = async () => {

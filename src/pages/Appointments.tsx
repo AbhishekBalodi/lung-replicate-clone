@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import ConsoleShell from "../layouts/ConsoleShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,7 +23,7 @@ interface Appointment {
 const API_BASE = "/api/appointment";
 
 export default function AppointmentsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useCustomAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -31,7 +31,9 @@ export default function AppointmentsPage() {
   const [actionBusyId, setActionBusyId] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) navigate("/auth");
+    if (!authLoading && (!user || user.role !== "admin")) {
+      navigate("/login");
+    }
   }, [authLoading, user, navigate]);
 
   useEffect(() => {

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import ConsoleShell from "../../layouts/ConsoleShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +35,8 @@ interface PrescribedLabTest {
 }
 
 export default function LabTests() {
+  const { user, loading: authLoading } = useCustomAuth();
+  const navigate = useNavigate();
   const [labCatalog, setLabCatalog] = useState<LabCatalog[]>([]);
   const [newLabTest, setNewLabTest] = useState({
     name: "",
@@ -56,9 +60,17 @@ export default function LabTests() {
   });
 
   useEffect(() => {
-    loadLabCatalog();
-    loadPatients();
-  }, []);
+    if (!authLoading && (!user || user.role !== "admin")) {
+      navigate("/login");
+    }
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (user && user.role === "admin") {
+      loadLabCatalog();
+      loadPatients();
+    }
+  }, [user]);
 
   const loadLabCatalog = async () => {
     try {

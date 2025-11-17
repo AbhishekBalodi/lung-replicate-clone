@@ -1,8 +1,8 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 
 type Props = {
   children: ReactNode;
@@ -13,19 +13,33 @@ type Props = {
 export default function ConsoleShell({ children, todayCount = 0, onNewAppointment }: Props) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { signOut } = useAuth();
+  const { user, logout, loading } = useCustomAuth();
 
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    if (!loading && (!user || user.role !== "admin")) {
+      navigate("/login");
+    }
+  }, [loading, user, navigate]);
 
   const isActive = (path: string) =>
     pathname === path
       ? "bg-emerald-100 text-emerald-900 font-medium"
       : "hover:bg-emerald-100 text-emerald-800";
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleLogout = () => {
+    logout();
     navigate("/");
   };
+
+  if (loading) {
+    return <div className="min-h-screen bg-emerald-50/30 flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!user || user.role !== "admin") {
+    return null;
+  }
 
   const handleSearch = () => {
     const base = pathname.startsWith("/appointments") ? pathname : "/appointments";
