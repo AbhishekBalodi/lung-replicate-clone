@@ -15,7 +15,7 @@ const API_ROOT = import.meta.env.VITE_API_ROOT || "http://localhost:5050";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { user } = useCustomAuth();
+  const { user, loading: authLoading } = useCustomAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,12 +28,15 @@ export default function Settings() {
   });
 
   useEffect(() => {
+    // Wait for auth to load before checking user
+    if (authLoading) return;
+    
     if (!user || user.role !== "admin") {
       navigate("/");
       return;
     }
     fetchSettings();
-  }, [user, navigate]);
+  }, [user, authLoading, navigate]);
 
   const fetchSettings = async () => {
     setLoading(true);
@@ -114,7 +117,7 @@ export default function Settings() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <ConsoleShell>
         <div className="flex items-center justify-center min-h-[400px]">
