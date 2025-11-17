@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -30,6 +32,8 @@ type Patient = {
 const API_ROOT = "/api";
 
 export default function ProceduresPage() {
+  const { user, loading: authLoading } = useCustomAuth();
+  const navigate = useNavigate();
   // Catalog form states
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
@@ -49,6 +53,12 @@ export default function ProceduresPage() {
   const [procedureCategory, setProcedureCategory] = useState("");
   const [procedureDescription, setProcedureDescription] = useState("");
   const [procedurePreparation, setProcedurePreparation] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && (!user || user.role !== "admin")) {
+      navigate("/login");
+    }
+  }, [authLoading, user, navigate]);
 
   const loadCatalog = async () => {
     try {

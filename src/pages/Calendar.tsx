@@ -7,7 +7,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Calendar as CalendarIcon, Clock, Mail, Phone, User, Activity, X, Check, RotateCw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -47,7 +47,7 @@ interface Doctor {
 }
 
 export default function Calendar() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useCustomAuth();
   const navigate = useNavigate();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -60,10 +60,10 @@ export default function Calendar() {
   const [newTime, setNewTime] = useState("");
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
+    if (!authLoading && (!user || user.role !== "admin")) {
+      navigate("/login");
     }
-  }, [user, navigate]);
+  }, [authLoading, user, navigate]);
 
   useEffect(() => {
     fetchCalendarData();

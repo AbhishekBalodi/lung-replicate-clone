@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +35,7 @@ interface Appointment {
 const API_BASE = "/api/appointment";
 
 export default function Dashboard() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useCustomAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,9 +55,11 @@ export default function Dashboard() {
   });
   const [time, setTime] = useState<string>("");
 
-  // redirect if not logged in
+  // redirect if not logged in or not admin
   useEffect(() => {
-    if (!authLoading && !user) navigate("/auth");
+    if (!authLoading && (!user || user.role !== "admin")) {
+      navigate("/login");
+    }
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
