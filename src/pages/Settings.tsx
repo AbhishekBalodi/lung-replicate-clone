@@ -28,13 +28,27 @@ export default function Settings() {
   });
 
   useEffect(() => {
-    // Wait for auth to load before checking user
-    if (authLoading) return;
+    console.log("Settings - Auth state:", { user, authLoading });
     
-    if (!user || user.role !== "admin") {
+    // Wait for auth to load before checking user
+    if (authLoading) {
+      console.log("Settings - Still loading auth...");
+      return;
+    }
+    
+    if (!user) {
+      console.log("Settings - No user, redirecting to home");
       navigate("/");
       return;
     }
+    
+    if (user.role !== "admin") {
+      console.log("Settings - User role is not admin:", user.role);
+      navigate("/");
+      return;
+    }
+    
+    console.log("Settings - Admin user confirmed, fetching settings");
     fetchSettings();
   }, [user, authLoading, navigate]);
 
