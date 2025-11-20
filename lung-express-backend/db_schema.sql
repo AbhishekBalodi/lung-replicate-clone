@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS appointments (
   message TEXT,
   reports_uploaded BOOLEAN DEFAULT 0,
   status ENUM('pending', 'rescheduled', 'cancelled', 'done') DEFAULT 'pending',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 2. Patients Table
@@ -137,3 +138,7 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 -- Add turnaround_time column to labs_test if missing  
 ALTER TABLE labs_test 
   ADD COLUMN turnaround_time VARCHAR(50) DEFAULT NULL;
+
+-- Add updated_at column to appointments if missing
+ALTER TABLE appointments 
+  ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
