@@ -315,6 +315,14 @@ router.patch('/:id', async (req, res) => {
   const { appointment_date, appointment_time, status } = req.body;
   
   try {
+    // Validate status if provided
+    const validStatuses = ['pending', 'rescheduled', 'cancelled', 'done'];
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` 
+      });
+    }
+
     const updates = [];
     const values = [];
     
