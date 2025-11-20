@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Edit, Trash2, Check } from "lucide-react";
 import ConsoleShell from "@/layouts/ConsoleShell";
-import DashboardAppointmentDialog from "@/components/DashboardAppointmentDialog";
 
 import {
   AlertDialog,
@@ -43,7 +42,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [actionBusyId, setActionBusyId] = useState<number | null>(null);
-  const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
 
   // Local state for quick booking widget
   const [visitType, setVisitType] = useState<"In-clinic" | "Video">("In-clinic");
@@ -153,15 +151,9 @@ export default function Dashboard() {
 
   return (
     <>
-      <DashboardAppointmentDialog 
-        open={showAppointmentDialog}
-        onOpenChange={setShowAppointmentDialog}
-        onSuccess={fetchAppointments}
-      />
-      
       <ConsoleShell 
         todayCount={appointments.length}
-        onNewAppointment={() => setShowAppointmentDialog(true)}
+        onSuccess={fetchAppointments}
       >
       {/* Main grid: left KPIs + table, right booking column */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6">

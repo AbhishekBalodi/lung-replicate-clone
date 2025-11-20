@@ -3,19 +3,21 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
+import DashboardAppointmentDialog from "@/components/DashboardAppointmentDialog";
 
 type Props = {
   children: ReactNode;
   todayCount?: number;
-  onNewAppointment?: () => void;
+  onSuccess?: () => void;
 };
 
-export default function ConsoleShell({ children, todayCount = 0, onNewAppointment }: Props) {
+export default function ConsoleShell({ children, todayCount = 0, onSuccess }: Props) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { user, logout, loading } = useCustomAuth();
 
   const [search, setSearch] = useState("");
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
@@ -48,8 +50,19 @@ export default function ConsoleShell({ children, todayCount = 0, onNewAppointmen
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const handleNewAppointment = () => {
+    setAppointmentDialogOpen(true);
+  };
+
   return (
-    <div className="min-h-screen bg-emerald-50/30">
+    <>
+      <DashboardAppointmentDialog 
+        open={appointmentDialogOpen}
+        onOpenChange={setAppointmentDialogOpen}
+        onSuccess={onSuccess}
+      />
+      
+      <div className="min-h-screen bg-emerald-50/30">
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -228,14 +241,14 @@ export default function ConsoleShell({ children, todayCount = 0, onNewAppointmen
                 </Button>
 
                 <Button
-                  onClick={() => onNewAppointment ? onNewAppointment() : navigate("/book-appointment")}
+                  onClick={handleNewAppointment}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white shrink-0 hidden md:flex"
                 >
                   <Plus className="h-4 w-4 mr-1" />
                   New Appointment
                 </Button>
                 <Button
-                  onClick={() => onNewAppointment ? onNewAppointment() : navigate("/book-appointment")}
+                  onClick={handleNewAppointment}
                   size="sm"
                   className="bg-emerald-700 hover:bg-emerald-800 text-white shrink-0 md:hidden p-2"
                 >
@@ -256,6 +269,7 @@ export default function ConsoleShell({ children, todayCount = 0, onNewAppointmen
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
