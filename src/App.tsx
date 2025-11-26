@@ -25,6 +25,7 @@ import MedicinesPage from "@/pages/Medicines";
 import MedicinesManagement from "@/pages/admin/MedicinesManagement";
 import LabTests from "@/pages/admin/LabTests";
 import Procedures from "@/pages/admin/Procedures";
+import Consultation from "@/pages/admin/Consultation";
 import Calendar from "@/pages/Calendar";
 import CompletedAppointments from "@/pages/CompletedAppointments";
 import Settings from "@/pages/Settings";
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/medicines" element={<MedicinesManagement />} />
             <Route path="/lab-tests" element={<LabTests />} />
             <Route path="/procedures" element={<Procedures />} />
+            <Route path="/consultation" element={<Consultation />} />
             <Route path="/completed-appointments" element={<CompletedAppointments />} />
             <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
