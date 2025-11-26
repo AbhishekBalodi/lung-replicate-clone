@@ -63,26 +63,15 @@ const Header = () => {
                 </Button>
               </Link>
             ) : (
-              <div className="flex gap-2">
-                <Link to="/login">
-                  <Button 
-                    variant="outline" 
-                    className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white text-xs lg:text-sm px-2 lg:px-3 py-2"
-                  >
-                    <User className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
-                    Patient Login
-                  </Button>
-                </Link>
-                <Link to="/auth">
-                  <Button 
-                    variant="outline" 
-                    className="border-lung-blue text-lung-blue hover:bg-lung-blue hover:text-white text-xs lg:text-sm px-2 lg:px-3 py-2"
-                  >
-                    <User className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
-                    Admin
-                  </Button>
-                </Link>
-              </div>
+              <Link to="/login">
+                <Button 
+                  variant="outline" 
+                  className="border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white text-xs lg:text-sm px-3 lg:px-4 py-2"
+                >
+                  <User className="h-3 w-3 lg:h-4 lg:w-4 mr-1 lg:mr-2" />
+                  Login
+                </Button>
+              </Link>
             )}
           </div>
 
@@ -159,26 +148,15 @@ const Header = () => {
                     </Button>
                   </Link>
                 ) : (
-                  <div className="space-y-2">
-                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button 
-                        variant="outline" 
-                        className="w-full border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        Patient Login
-                      </Button>
-                    </Link>
-                    <Link to="/auth" onClick={() => setIsMobileMenuOpen(false)}>
-                      <Button 
-                        variant="outline" 
-                        className="w-full border-lung-blue text-lung-blue hover:bg-lung-blue hover:text-white"
-                      >
-                        <User className="h-4 w-4 mr-2" />
-                        Admin Login
-                      </Button>
-                    </Link>
-                  </div>
+                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-lung-purple text-lung-purple hover:bg-lung-purple hover:text-white"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Login
+                    </Button>
+                  </Link>
                 )}
               </div>
             </div>
