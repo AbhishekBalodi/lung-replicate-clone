@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CustomAuthProvider } from "./contexts/CustomAuthContext";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
+
 import CustomAuth from "./pages/CustomAuth";
 import Dashboard from "./pages/Dashboard";
 import PatientDashboard from "./pages/PatientDashboard";
@@ -50,7 +50,7 @@ const App = () => (
             <Route path="/conditions/:slug" element={<ConditionDetail />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/book-appointment" element={<BookAppointment />} />
-            <Route path="/auth" element={<Auth />} />
+            
             <Route path="/login" element={<CustomAuth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/patient-dashboard" element={<PatientDashboard />} />
