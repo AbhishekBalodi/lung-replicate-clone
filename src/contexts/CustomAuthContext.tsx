@@ -35,9 +35,14 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
+  const getApiBaseUrl = () => {
+    // Use environment variable if set, otherwise use relative path for production
+    return import.meta.env.VITE_API_BASE_URL || '';
+  };
+
   const loginAsAdmin = async (email: string, password: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, loginType: 'admin' })
@@ -60,7 +65,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginAsPatient = async (email: string, phone: string) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: phone, loginType: 'patient' })
