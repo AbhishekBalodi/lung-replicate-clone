@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
-import DashboardAppointmentDialog from "@/components/DashboardAppointmentDialog";
 
 type Props = {
   children: ReactNode;
@@ -11,13 +10,12 @@ type Props = {
   onSuccess?: () => void;
 };
 
-export default function ConsoleShell({ children, todayCount = 0, onSuccess }: Props) {
+export default function ConsoleShell({ children, todayCount = 0 }: Props) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { user, logout, loading } = useCustomAuth();
 
   const [search, setSearch] = useState("");
-  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || user.role !== "admin")) {
@@ -51,18 +49,11 @@ export default function ConsoleShell({ children, todayCount = 0, onSuccess }: Pr
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleNewAppointment = () => {
-    setAppointmentDialogOpen(true);
+    navigate("/new-appointment");
   };
 
   return (
-    <>
-      <DashboardAppointmentDialog 
-        open={appointmentDialogOpen}
-        onOpenChange={setAppointmentDialogOpen}
-        onSuccess={onSuccess}
-      />
-      
-      <div className="min-h-screen bg-emerald-50/30">
+    <div className="min-h-screen bg-emerald-50/30">
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -276,7 +267,6 @@ export default function ConsoleShell({ children, todayCount = 0, onSuccess }: Pr
           </div>
         </div>
       </div>
-      </div>
-    </>
+    </div>
   );
 }
