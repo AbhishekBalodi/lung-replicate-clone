@@ -4,8 +4,9 @@ import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Check, User, Pill, FlaskConical, Stethoscope, ClipboardList, FileText,Download   } from "lucide-react";
+import { Edit, Trash2, Check, User, Pill, FlaskConical, Stethoscope, ClipboardList, FileText, Download } from "lucide-react";
 import ConsoleShell from "@/layouts/ConsoleShell";
+import RescheduleModal from "@/components/RescheduleModal";
 
 import {
   AlertDialog,
@@ -42,6 +43,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [actionBusyId, setActionBusyId] = useState<number | null>(null);
+  
+  // Reschedule modal state
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
 
   // Local state for quick booking widget
   const [visitType, setVisitType] = useState<"In-clinic" | "Video">("In-clinic");
@@ -369,7 +373,7 @@ export default function Dashboard() {
                                     size="sm"
                                     className="px-3 shrink-0"
                                     disabled={actionBusyId === a.id}
-                                    onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
+                                    onClick={() => setRescheduleAppointment(a)}
                                   >
                                     <Edit className="h-4 w-4 mr-1" />
                                     Reschedule
@@ -624,7 +628,7 @@ export default function Dashboard() {
                               size="sm"
                               className="flex-1 min-w-[100px]"
                               disabled={actionBusyId === a.id}
-                              onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
+                              onClick={() => setRescheduleAppointment(a)}
                             >
                               <Edit className="h-4 w-4 mr-1" />
                               Reschedule
@@ -945,6 +949,19 @@ export default function Dashboard() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Reschedule Modal */}
+        {rescheduleAppointment && (
+          <RescheduleModal
+            isOpen={!!rescheduleAppointment}
+            onClose={() => setRescheduleAppointment(null)}
+            appointmentId={rescheduleAppointment.id}
+            patientName={rescheduleAppointment.full_name}
+            currentDate={rescheduleAppointment.appointment_date}
+            currentTime={rescheduleAppointment.appointment_time}
+            onSuccess={fetchAppointments}
+          />
+        )}
       </ConsoleShell>
     </>
   );
