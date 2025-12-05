@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card } from "@/components/ui/card";
@@ -64,6 +64,7 @@ const API_ROOT =
 export default function PatientsPage() {
   const { user, loading: authLoading } = useCustomAuth();
   const navigate = useNavigate();
+  const { id: patientIdParam } = useParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -86,14 +87,26 @@ export default function PatientsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to load patients");
       setPatients(Array.isArray(data) ? data : data.items || []);
+      return Array.isArray(data) ? data : data.items || [];
     } catch (err: any) {
       toast.error("Failed to load patients: " + err.message);
+      return [];
     }
   };
 
   useEffect(() => {
-    loadPatients();
-  }, []);
+    const init = async () => {
+      const allPatients = await loadPatients();
+      // If URL has patient ID, load that patient directly
+      if (patientIdParam) {
+        const patient = allPatients.find((p: Patient) => String(p.id) === patientIdParam);
+        if (patient) {
+          selectPatient(patient);
+        }
+      }
+    };
+    init();
+  }, [patientIdParam]);
 
   /** Search using ?q= so matches from appointments are included */
   const handleSearch = async () => {

@@ -8,7 +8,6 @@ import LabTests from "@/pages/admin/LabTests";
 import Procedures from "@/pages/admin/Procedures";
 import PatientsListSidebar from "@/pages/admin/PatientsListSidebar";
 import Settings from "@/pages/Settings";
-import PatientDashboard from "@/pages/PatientDashboard";
 import ConsultationSidebar from "@/pages/admin/ConsultationSidebar";
 
 
@@ -27,7 +26,6 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSidebarPage, setActiveSidebarPage] = useState<SidebarPage>(null);
-  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
 
 
   useEffect(() => {
@@ -197,7 +195,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   {activeSidebarPage === "patients" && (
                     <PatientsListSidebar
                       onSelect={(patient) => {
-                        setSelectedPatientId(patient.id);
+                        navigate(`/patients/${patient.id}`);
                         setActiveSidebarPage(null);
                         setSidebarOpen(false);
                       }}
@@ -246,12 +244,8 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
             </header>
 
             <main className="p-3 sm:p-4 md:p-6 xl:p-8">
-  {selectedPatientId ? (
-    <PatientDashboard adminPatientId={selectedPatientId} />
-  ) : (
-    children
-  )}
-</main>
+              {children}
+            </main>
 
           </div>
 
