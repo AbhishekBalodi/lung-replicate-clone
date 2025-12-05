@@ -63,6 +63,32 @@ const DateTimeStep = ({ formData, updateFormData }: {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     formData.date ? new Date(formData.date) : undefined
   );
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Fetch booked slots when date changes
+  useEffect(() => {
+    const fetchBookedSlots = async (date: Date) => {
+      setLoadingSlots(true);
+      try {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const response = await fetch(`/api/appointment?date=${dateStr}`);
+        if (response.ok) {
+          const data = await response.json();
+          const times = data.appointments?.map((apt: any) => apt.appointment_time) || [];
+          setBookedSlots(times);
+        }
+      } catch (error) {
+        console.error('Error fetching booked slots:', error);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    if (selectedDate) {
+      fetchBookedSlots(selectedDate);
+    }
+  }, [selectedDate]);
 
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
@@ -72,6 +98,7 @@ const DateTimeStep = ({ formData, updateFormData }: {
     }
   };
 
+  const isSlotBooked = (time: string) => bookedSlots.includes(time);
   const selectedIsSunday = selectedDate ? selectedDate.getDay() === 0 : false;
 
   return (
@@ -117,22 +144,32 @@ const DateTimeStep = ({ formData, updateFormData }: {
             <div className="text-center py-10 text-red-600 bg-red-50 rounded-xl border border-red-100">
               <strong>Clinic Closed:</strong> Appointments cannot be booked on Sundays.
             </div>
+          ) : loadingSlots ? (
+            <div className="text-center py-10 text-gray-500 bg-gray-100 rounded-xl">
+              Loading available slots...
+            </div>
           ) : (
             <div className="max-h-[350px] overflow-y-auto pr-2 grid gap-3">
-              {ALL_TIME_SLOTS.map((time) => (
-                <button
-                  key={time}
-                  type="button"
-                  onClick={() => updateFormData("time", time)}
-                  className={`w-full py-3 px-4 rounded-lg border text-sm font-medium transition-all ${
-                    formData.time === time
-                      ? "bg-lung-green text-white border-lung-green"
-                      : "bg-white text-lung-green border-lung-green/30 hover:border-lung-green hover:bg-lung-green/5"
-                  }`}
-                >
-                  {formatTimeDisplay(time)}
-                </button>
-              ))}
+              {ALL_TIME_SLOTS.map((time) => {
+                const booked = isSlotBooked(time);
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => !booked && updateFormData("time", time)}
+                    disabled={booked}
+                    className={`w-full py-3 px-4 rounded-lg border text-sm font-medium transition-all ${
+                      booked
+                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
+                        : formData.time === time
+                        ? "bg-lung-green text-white border-lung-green"
+                        : "bg-white text-lung-green border-lung-green/30 hover:border-lung-green hover:bg-lung-green/5"
+                    }`}
+                  >
+                    {formatTimeDisplay(time)} {booked && "(Booked)"}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
