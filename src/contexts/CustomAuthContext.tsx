@@ -10,8 +10,8 @@ interface CustomUser {
 
 interface CustomAuthContextType {
   user: CustomUser | null;
-  loginAsAdmin: (email: string, password: string) => Promise<{ error: any }>;
-  loginAsPatient: (email: string, phone: string) => Promise<{ error: any }>;
+  loginAsAdmin: (email: string, password: string) => Promise<{ user?: CustomUser; error: any }>;
+  loginAsPatient: (email: string, phone: string) => Promise<{ user?: CustomUser; error: any }>;
   logout: () => void;
   loading: boolean;
 }
@@ -57,7 +57,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       const userData = data.user;
       setUser(userData);
       localStorage.setItem('customUser', JSON.stringify(userData));
-      return { error: null };
+      return { user: userData, error: null };
     } catch (error: any) {
       return { error: { message: error.message || 'Network error' } };
     }
@@ -80,7 +80,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       const userData = data.user;
       setUser(userData);
       localStorage.setItem('customUser', JSON.stringify(userData));
-      return { error: null };
+      return { user: userData, error: null };
     } catch (error: any) {
       return { error: { message: error.message || 'Network error' } };
     }

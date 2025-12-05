@@ -253,7 +253,6 @@ export default function Dashboard() {
     <>
       <ConsoleShell
         todayCount={appointments.length}
-        onSuccess={fetchAppointments}
       >
         {/* Main grid: left KPIs + table, right booking column */}
         <div className="grid grid-cols-1 xl:grid-cols-1 gap-4 md:gap-6">
