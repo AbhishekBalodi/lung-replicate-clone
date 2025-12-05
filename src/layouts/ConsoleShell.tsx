@@ -1,7 +1,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus } from "lucide-react";
+import { LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import Medicines from "@/pages/admin/Medicines";
 import LabTests from "@/pages/admin/LabTests";
@@ -9,9 +9,10 @@ import Procedures from "@/pages/admin/Procedures";
 import PatientsListSidebar from "@/pages/admin/PatientsListSidebar";
 import Settings from "@/pages/Settings";
 import PatientDashboard from "@/pages/PatientDashboard";
+import ConsultationSidebar from "@/pages/admin/ConsultationSidebar";
 
 
-type SidebarPage = "patients" | "medicines" | "lab-tests" | "procedures" | "settings" | null;
+type SidebarPage = "patients" | "medicines" | "lab-tests" | "procedures" | "consultation" | "settings" | null;
 
 type Props = {
   children: ReactNode;
@@ -54,6 +55,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
     navigate("/");
   };
 
+  const handleCloseSidebarPage = () => {
+    setActiveSidebarPage(null);
+  };
+
   if (loading || !user) return null;
 
   return (
@@ -75,7 +80,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
           >
 
             {/* SIDEBAR HEADER */}
-            <div className="flex items-center justify-between mb-6 px-2">
+            <div className="flex items-center justify-between mb-6 px-2 shrink-0">
               <div className="text-emerald-900 font-semibold text-lg">CareConsole</div>
               <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-emerald-100 rounded-md">
                 <X className="h-5 w-5 text-emerald-900" />
@@ -84,7 +89,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
             {/* MENU (ONLY WHEN NOT INSIDE SUB-PAGE) */}
             {!activeSidebarPage && (
-              <>
+              <div className="flex-1 overflow-y-auto">
                 <nav className="space-y-1">
                   <button onClick={() => { navigate("/dashboard"); setSidebarOpen(false); }} className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/dashboard")}`}>
                     Dashboard
@@ -118,7 +123,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                     Procedures
                   </button>
 
-                  <button onClick={() => navigate("/consultation")} className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/consultation")}`}>
+                  <button onClick={() => setActiveSidebarPage("consultation")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800">
                     Consultation
                   </button>
 
@@ -166,27 +171,47 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                     </ul>
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {/* ========================
-                SIDEBAR PAGE CONTENT
+                SIDEBAR PAGE CONTENT WITH CLOSE BUTTON AND SCROLLBAR
             ========================= */}
-            {activeSidebarPage === "patients" && (
-              <PatientsListSidebar
-                onSelect={(patient) => {
-                  setSelectedPatientId(patient.id); // render dashboard in main
-                  setActiveSidebarPage(null);
-                  setSidebarOpen(false);
-                }}
-              />
+            {activeSidebarPage && (
+              <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Close/Back Button */}
+                <div className="shrink-0 mb-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCloseSidebarPage}
+                    className="flex items-center gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Menu
+                  </Button>
+                </div>
 
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto">
+                  {activeSidebarPage === "patients" && (
+                    <PatientsListSidebar
+                      onSelect={(patient) => {
+                        setSelectedPatientId(patient.id);
+                        setActiveSidebarPage(null);
+                        setSidebarOpen(false);
+                      }}
+                    />
+                  )}
+
+                  {activeSidebarPage === "medicines" && <Medicines />}
+                  {activeSidebarPage === "lab-tests" && <LabTests />}
+                  {activeSidebarPage === "procedures" && <Procedures />}
+                  {activeSidebarPage === "consultation" && <ConsultationSidebar />}
+                  {activeSidebarPage === "settings" && <Settings />}
+                </div>
+              </div>
             )}
-
-            {activeSidebarPage === "medicines" && <Medicines />}
-            {activeSidebarPage === "lab-tests" && <LabTests />}
-            {activeSidebarPage === "procedures" && <Procedures />}
-            {activeSidebarPage === "settings" && <Settings />}
 
           </aside>
 
