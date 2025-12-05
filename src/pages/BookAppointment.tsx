@@ -10,7 +10,7 @@ import {
   User, Calendar as CalendarIcon, Stethoscope, CheckCircle,
   Upload, ChevronLeft, ChevronRight
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -59,6 +59,135 @@ const formatTimeDisplay = (time: string) => {
 };
 
 const ALL_TIME_SLOTS = generateTimeSlots();
+
+// DateTimeStepContent component with booked slots logic
+const DateTimeStepContent = ({ 
+  formData, 
+  setFormData 
+}: { 
+  formData: { preferredDate: string; preferredTime: string }; 
+  setFormData: React.Dispatch<React.SetStateAction<any>>;
+}) => {
+  const selectedDate = formData.preferredDate ? new Date(formData.preferredDate) : undefined;
+  const selectedIsSunday = selectedDate ? selectedDate.getDay() === 0 : false;
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
+  // Fetch booked slots when date changes
+  useEffect(() => {
+    const fetchBookedSlots = async (date: Date) => {
+      setLoadingSlots(true);
+      try {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const response = await fetch(`/api/appointment?date=${dateStr}`);
+        if (response.ok) {
+          const data = await response.json();
+          const times = data.appointments?.map((apt: any) => apt.appointment_time) || [];
+          setBookedSlots(times);
+        }
+      } catch (error) {
+        console.error('Error fetching booked slots:', error);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    if (selectedDate) {
+      fetchBookedSlots(selectedDate);
+    }
+  }, [formData.preferredDate]);
+
+  const isSlotBooked = (time: string) => bookedSlots.includes(time);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 mb-8">
+        <CalendarIcon className="h-6 w-6 text-lung-blue" />
+        <h2 className="text-2xl font-bold text-foreground font-lexend">Select Date & Time</h2>
+      </div>
+      <p className="text-muted-foreground mb-8 font-livvic">
+        Choose your preferred appointment date and time
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Calendar */}
+        <div>
+          <Label className="font-semibold mb-4 block text-lung-green">Select Date</Label>
+          <div className="border rounded-lg p-4 flex justify-center bg-white shadow-sm">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(date) => {
+                if (date) {
+                  setFormData((prev: any) => ({ 
+                    ...prev, 
+                    preferredDate: format(date, 'yyyy-MM-dd'),
+                    preferredTime: ""
+                  }));
+                }
+              }}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (date < today) return true;
+                if (date.getDay() === 0) return true;
+                return false;
+              }}
+              className="pointer-events-auto"
+            />
+          </div>
+          <p className="mt-3 text-sm text-gray-600">
+            <span className="font-medium">Note:</span> Sundays are closed — you cannot book appointments on Sundays.
+          </p>
+        </div>
+
+        {/* Time Slots */}
+        <div>
+          <Label className="font-semibold mb-4 block text-lung-green">
+            Select Time {selectedDate && `• ${format(selectedDate, "MMM d, yyyy")}`}
+          </Label>
+          
+          {!selectedDate ? (
+            <div className="text-center py-10 text-gray-500 bg-gray-100 rounded-xl">
+              Please select a date first
+            </div>
+          ) : selectedIsSunday ? (
+            <div className="text-center py-10 text-red-600 bg-red-50 rounded-xl border border-red-100">
+              <strong>Clinic Closed:</strong> Appointments cannot be booked on Sundays.
+            </div>
+          ) : loadingSlots ? (
+            <div className="text-center py-10 text-gray-500 bg-gray-100 rounded-xl">
+              Loading available slots...
+            </div>
+          ) : (
+            <div className="max-h-[350px] overflow-y-auto pr-2 grid gap-3">
+              {ALL_TIME_SLOTS.map((time) => {
+                const booked = isSlotBooked(time);
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    onClick={() => !booked && setFormData((prev: any) => ({ ...prev, preferredTime: time }))}
+                    disabled={booked}
+                    className={`w-full py-3 px-4 rounded-lg border text-sm font-medium transition-all ${
+                      booked
+                        ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-50"
+                        : formData.preferredTime === time
+                        ? "bg-lung-green text-white border-lung-green"
+                        : "bg-white text-lung-green border-lung-green/30 hover:border-lung-green hover:bg-lung-green/5"
+                    }`}
+                  >
+                    {formatTimeDisplay(time)} {booked && "(Booked)"}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // If your backend is on a different origin, replace with full URL or env var.
 const APPOINTMENTS_API = "/api/appointment";
@@ -414,87 +543,7 @@ const BookAppointment = () => {
         );
 
       case 2:
-        const selectedDate = formData.preferredDate ? new Date(formData.preferredDate) : undefined;
-        const selectedIsSunday = selectedDate ? selectedDate.getDay() === 0 : false;
-        
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-8">
-              <CalendarIcon className="h-6 w-6 text-lung-blue" />
-              <h2 className="text-2xl font-bold text-foreground font-lexend">Select Date & Time</h2>
-            </div>
-            <p className="text-muted-foreground mb-8 font-livvic">
-              Choose your preferred appointment date and time
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Calendar */}
-              <div>
-                <Label className="font-semibold mb-4 block text-lung-green">Select Date</Label>
-                <div className="border rounded-lg p-4 flex justify-center bg-white shadow-sm">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setFormData({ 
-                          ...formData, 
-                          preferredDate: format(date, 'yyyy-MM-dd'),
-                          preferredTime: ""
-                        });
-                      }
-                    }}
-                    disabled={(date) => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      if (date < today) return true;
-                      if (date.getDay() === 0) return true;
-                      return false;
-                    }}
-                    className="pointer-events-auto"
-                  />
-                </div>
-                <p className="mt-3 text-sm text-gray-600">
-                  <span className="font-medium">Note:</span> Sundays are closed — you cannot book appointments on Sundays.
-                </p>
-              </div>
-
-              {/* Time Slots */}
-              <div>
-                <Label className="font-semibold mb-4 block text-lung-green">
-                  Select Time {selectedDate && `• ${format(selectedDate, "MMM d, yyyy")}`}
-                </Label>
-                
-                {!selectedDate ? (
-                  <div className="text-center py-10 text-gray-500 bg-gray-100 rounded-xl">
-                    Please select a date first
-                  </div>
-                ) : selectedIsSunday ? (
-                  <div className="text-center py-10 text-red-600 bg-red-50 rounded-xl border border-red-100">
-                    <strong>Clinic Closed:</strong> Appointments cannot be booked on Sundays.
-                  </div>
-                ) : (
-                  <div className="max-h-[350px] overflow-y-auto pr-2 grid gap-3">
-                    {ALL_TIME_SLOTS.map((time) => (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, preferredTime: time })}
-                        className={`w-full py-3 px-4 rounded-lg border text-sm font-medium transition-all ${
-                          formData.preferredTime === time
-                            ? "bg-lung-green text-white border-lung-green"
-                            : "bg-white text-lung-green border-lung-green/30 hover:border-lung-green hover:bg-lung-green/5"
-                        }`}
-                      >
-                        {formatTimeDisplay(time)}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
+        return <DateTimeStepContent formData={formData} setFormData={setFormData} />;
 
       case 3:
         return (
