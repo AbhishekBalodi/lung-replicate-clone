@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Calendar, UserCheck, CheckCircle, Upload } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { User, Calendar as CalendarIcon, UserCheck, CheckCircle, Upload } from "lucide-react";
+import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -15,6 +17,129 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
+
+// Generate time slots for the allowed periods (15-min intervals)
+const generateTimeSlots = () => {
+  const slots: string[] = [];
+  // Morning slots: 10:00 AM - 3:00 PM
+  for (let hour = 10; hour < 15; hour++) {
+    for (let min = 0; min < 60; min += 15) {
+      const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+      slots.push(time);
+    }
+  }
+  // Evening slots: 5:00 PM - 8:00 PM
+  for (let hour = 17; hour < 20; hour++) {
+    for (let min = 0; min < 60; min += 15) {
+      const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+      slots.push(time);
+    }
+  }
+  return slots;
+};
+
+const formatTimeDisplay = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+  let endHours = hours;
+  let endMinutes = minutes + 15;
+  if (endMinutes >= 60) {
+    endMinutes = 0;
+    endHours += 1;
+  }
+  const endPeriod = endHours >= 12 ? 'PM' : 'AM';
+  const endDisplayHours = endHours > 12 ? endHours - 12 : endHours === 0 ? 12 : endHours;
+  return `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period} - ${endDisplayHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')} ${endPeriod}`;
+};
+
+const ALL_TIME_SLOTS = generateTimeSlots();
+
+// DateTimeStep component
+const DateTimeStep = ({ formData, updateFormData }: { 
+  formData: { date: string; time: string }; 
+  updateFormData: (field: string, value: string) => void;
+}) => {
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    formData.date ? new Date(formData.date) : undefined
+  );
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      updateFormData("date", format(date, 'yyyy-MM-dd'));
+      updateFormData("time", "");
+    }
+  };
+
+  const selectedIsSunday = selectedDate ? selectedDate.getDay() === 0 : false;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold mb-3 text-medical-blue">Select Date & Time</h3>
+      <p className="text-muted-foreground mb-4 text-sm">Choose your preferred appointment date and time</p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Calendar */}
+        <div>
+          <Label className="font-semibold mb-4 block text-lung-green">Select Date</Label>
+          <div className="border rounded-lg p-4 flex justify-center bg-white shadow-sm">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              disabled={(date) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (date < today) return true;
+                if (date.getDay() === 0) return true;
+                return false;
+              }}
+              className="pointer-events-auto"
+            />
+          </div>
+          <p className="mt-3 text-sm text-gray-600">
+            <span className="font-medium">Note:</span> Sundays are closed — you cannot book appointments on Sundays.
+          </p>
+        </div>
+
+        {/* Time Slots */}
+        <div>
+          <Label className="font-semibold mb-4 block text-lung-green">
+            Select Time {selectedDate && `• ${format(selectedDate, "MMM d, yyyy")}`}
+          </Label>
+          
+          {!selectedDate ? (
+            <div className="text-center py-10 text-gray-500 bg-gray-100 rounded-xl">
+              Please select a date first
+            </div>
+          ) : selectedIsSunday ? (
+            <div className="text-center py-10 text-red-600 bg-red-50 rounded-xl border border-red-100">
+              <strong>Clinic Closed:</strong> Appointments cannot be booked on Sundays.
+            </div>
+          ) : (
+            <div className="max-h-[350px] overflow-y-auto pr-2 grid gap-3">
+              {ALL_TIME_SLOTS.map((time) => (
+                <button
+                  key={time}
+                  type="button"
+                  onClick={() => updateFormData("time", time)}
+                  className={`w-full py-3 px-4 rounded-lg border text-sm font-medium transition-all ${
+                    formData.time === time
+                      ? "bg-lung-green text-white border-lung-green"
+                      : "bg-white text-lung-green border-lung-green/30 hover:border-lung-green hover:bg-lung-green/5"
+                  }`}
+                >
+                  {formatTimeDisplay(time)}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const AppointmentBooking = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -33,7 +158,7 @@ const AppointmentBooking = () => {
 
   const steps = [
     { id: 1, title: "Patient Details", subtitle: "Enter your info", icon: User },
-    { id: 2, title: "Date & Time", subtitle: "Pick appointment time", icon: Calendar },
+    { id: 2, title: "Date & Time", subtitle: "Pick appointment time", icon: CalendarIcon },
     { id: 3, title: "Doctor", subtitle: "Choose your doctor", icon: UserCheck },
     { id: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle },
   ];
@@ -362,44 +487,10 @@ const AppointmentBooking = () => {
           )}
 
           {currentStep === 2 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-3 text-medical-blue">Select Date & Time</h3>
-              <p className="text-muted-foreground mb-4 text-sm">Choose your preferred appointment date and time</p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="date" className="mb-5">Preferred Date *</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => updateFormData("date", e.target.value)}
-                    className="mt-2"
-                    required
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="time">Preferred Time *</Label>
-                  <p className="text-xs text-muted-foreground mb-1">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
-                  <Input
-                    id="time"
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const [hours] = value.split(':').map(Number);
-                      // Allow setting even if out of range, but validate on submit
-                      updateFormData("time", value);
-                    }}
-                    className="mt-1"
-                    required
-                    min="10:00"
-                    max="20:00"
-                  />
-                </div>
-              </div>
-            </div>
+            <DateTimeStep 
+              formData={formData} 
+              updateFormData={updateFormData}
+            />
           )}
 
           {currentStep === 3 && (
