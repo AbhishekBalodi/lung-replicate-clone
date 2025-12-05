@@ -43,21 +43,21 @@ router.post('/', async (req, res) => {
   }
   const v = parsed.data;
 
-  // Validate time is within allowed hours: 10 AM - 3 PM and 5 PM - 8 PM
+  // Validate time
   const timeRegex = /^(\d{2}):(\d{2})$/;
   const timeMatch = v.appointment_time.match(timeRegex);
   if (!timeMatch) {
     return res.status(400).json({ error: 'Invalid time format. Use HH:mm' });
   }
-  
-  const [hours, minutes] = timeMatch.slice(1).map(Number);
-  const isValidTimeSlot = 
-    (hours >= 10 && hours < 15) || // 10 AM to 3 PM (before 3 PM)
-    (hours >= 17 && hours < 20);   // 5 PM to 8 PM (before 8 PM)
-  
+
+  const [hours] = timeMatch.slice(1).map(Number);
+  const isValidTimeSlot =
+    (hours >= 10 && hours < 15) || // 10 AM - 3 PM
+    (hours >= 17 && hours < 20);   // 5 PM - 8 PM
+
   if (!isValidTimeSlot) {
-    return res.status(400).json({ 
-      error: 'Appointments are only available between 10 AM - 3 PM and 5 PM - 8 PM' 
+    return res.status(400).json({
+      error: 'Appointments are only available between 10 AM - 3 PM and 5 PM - 8 PM',
     });
   }
 
@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // Check for conflicting appointments (same date/time or within 5 minutes)
+    // Check conflicting appointments
     const appointmentDateTime = `${v.appointment_date} ${v.appointment_time}`;
     const checkConflictSql = `
       SELECT id, appointment_time 
@@ -78,28 +78,28 @@ router.post('/', async (req, res) => {
         )) < 5
       LIMIT 1
     `;
-    
+
     const [conflicts] = await conn.execute(checkConflictSql, [
       v.appointment_date,
-      appointmentDateTime
+      appointmentDateTime,
     ]);
 
     if (conflicts.length > 0) {
       await conn.rollback();
       conn.release();
-      return res.status(409).json({ 
-        error: 'This time slot is already booked or too close to another appointment. Please choose a different time.' 
+      return res.status(409).json({
+        error: 'This time slot is already booked or too close to another appointment.',
       });
     }
 
-    // 1) Insert appointment (default 'scheduled')
+    // 1) Insert appointment (DEFAULT = pending)
     const sql =
       `INSERT INTO \`${TBL}\`
        (\`${COL.full_name}\`, \`${COL.email}\`, \`${COL.phone}\`,
         \`${COL.appointment_date}\`, \`${COL.appointment_time}\`,
         \`${COL.selected_doctor}\`, \`${COL.message}\`,
         \`${COL.reports_uploaded}\`, \`${COL.status}\`, \`${COL.created_at}\`)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'scheduled', NOW())`;
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`;
 
     const [ins] = await conn.execute(sql, [
       v.full_name,
@@ -112,7 +112,7 @@ router.post('/', async (req, res) => {
       v.reports_uploaded ? 1 : 0,
     ]);
 
-    // 2) Upsert into patients by unique email/phone
+    // 2) Upsert patient
     const upsertPatient =
       `INSERT INTO patients
          (full_name, email, phone,
@@ -135,7 +135,7 @@ router.post('/', async (req, res) => {
 
     await conn.commit();
 
-    // 3) Fire-and-forget emails (optional)
+    // 3) Emails (fire & forget)
     (async () => {
       try {
         const doctorMsg = appointmentDoctorTemplate(v);
@@ -145,20 +145,17 @@ router.post('/', async (req, res) => {
           html: doctorMsg.html,
           text: doctorMsg.text,
         });
-      } catch (e) {
-        console.error('Doctor email failed:', e.message);
-      }
+      } catch {}
+
       try {
-        const userMsg = appointmentUserTemplate({ ...v, status: 'scheduled' });
+        const userMsg = appointmentUserTemplate({ ...v, status: 'pending' });
         await sendMail({
           to: userMsg.to,
           subject: userMsg.subject,
           html: userMsg.html,
           text: userMsg.text,
         });
-      } catch (e) {
-        console.error('User email failed:', e.message);
-      }
+      } catch {}
     })();
 
     res.status(201).json({ success: true, id: ins.insertId, ...v });
@@ -173,11 +170,11 @@ router.post('/', async (req, res) => {
 
 /** ---------------------------------------------------
  * GET /api/appointment
- *   Optional filters:
- *     ?email=user@x.com
- *     ?phone=9999999999
- *     ?status=done (or scheduled, cancelled, rescheduled)
- *     ?q=free text (matches name/email/phone/doctor/message)
+ * Filters:
+ *     ?email=
+ *     ?phone=
+ *     ?status=pending/rescheduled/cancelled/done
+ *     ?q=free text
  * --------------------------------------------------- */
 router.get('/', async (req, res) => {
   const email = (req.query.email || '').toString().trim();
@@ -250,7 +247,7 @@ router.get('/:id', async (req, res) => {
 });
 
 /** ----------------------------------------------------
- * PATCH /api/appointment/:id/done  (mark as done + sync)
+ * PATCH /api/appointment/:id/done
  * ---------------------------------------------------- */
 router.patch('/:id/done', async (req, res) => {
   const { id } = req.params;
@@ -285,7 +282,6 @@ router.patch('/:id/done', async (req, res) => {
       a.selected_doctor,
     ]);
 
-    // Send email notification
     (async () => {
       try {
         const userMsg = appointmentUserTemplate({ ...a, status: 'done' });
@@ -295,9 +291,7 @@ router.patch('/:id/done', async (req, res) => {
           html: userMsg.html,
           text: userMsg.text,
         });
-      } catch (e) {
-        console.error('User email notification failed:', e.message);
-      }
+      } catch {}
     })();
 
     res.json({ success: true, message: 'Appointment marked as done and patient synced.' });
@@ -308,24 +302,23 @@ router.patch('/:id/done', async (req, res) => {
 });
 
 /** -----------------------------
- * PATCH /api/appointment/:id - Update appointment (reschedule)
+ * PATCH /api/appointment/:id
  * ----------------------------- */
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const { appointment_date, appointment_time, status } = req.body;
-  
+
   try {
-    // Validate status if provided
     const validStatuses = ['pending', 'rescheduled', 'cancelled', 'done'];
     if (status && !validStatuses.includes(status)) {
-      return res.status(400).json({ 
-        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` 
+      return res.status(400).json({
+        error: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
       });
     }
 
     const updates = [];
     const values = [];
-    
+
     if (appointment_date) {
       updates.push(`\`${COL.appointment_date}\` = ?`);
       values.push(appointment_date);
@@ -338,24 +331,22 @@ router.patch('/:id', async (req, res) => {
       updates.push(`\`${COL.status}\` = ?`);
       values.push(status);
     }
-    
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No fields to update' });
     }
-    
+
     values.push(id);
     const query = `UPDATE \`${TBL}\` SET ${updates.join(', ')} WHERE \`${COL.id}\` = ?`;
-    
+
     await pool.execute(query, values);
-    
-    // Get updated appointment for email notification
+
     const [rows] = await pool.execute(
       `SELECT * FROM \`${TBL}\` WHERE \`${COL.id}\` = ?`,
       [id]
     );
-    
+
     if (rows.length > 0) {
-      // Send email notification
       (async () => {
         try {
           const appointment = rows[0];
@@ -366,12 +357,10 @@ router.patch('/:id', async (req, res) => {
             html: userMsg.html,
             text: userMsg.text,
           });
-        } catch (e) {
-          console.error('User email notification failed:', e.message);
-        }
+        } catch {}
       })();
     }
-    
+
     res.json({ success: true, message: 'Appointment updated successfully' });
   } catch (e) {
     console.error('PATCH /api/appointment/:id failed:', e);
@@ -385,18 +374,16 @@ router.patch('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    // Get appointment details before deletion for email notification
     const [rows] = await pool.execute(
       `SELECT * FROM \`${TBL}\` WHERE \`${COL.id}\` = ?`,
       [id]
     );
-    
+
     const [r] = await pool.execute(
       `DELETE FROM \`${TBL}\` WHERE \`${COL.id}\` = ?`,
       [id]
     );
-    
-    // Send cancellation email if appointment was found
+
     if (rows.length > 0) {
       (async () => {
         try {
@@ -408,12 +395,10 @@ router.delete('/:id', async (req, res) => {
             html: userMsg.html,
             text: userMsg.text,
           });
-        } catch (e) {
-          console.error('Cancellation email failed:', e.message);
-        }
+        } catch {}
       })();
     }
-    
+
     res.json({ success: true, deleted: r.affectedRows || 0 });
   } catch (e) {
     console.error('DELETE /api/appointment/:id failed:', e);
