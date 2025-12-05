@@ -3,11 +3,11 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
-import Medicines from "@/pages/admin/Medicines";
-import LabTests from "@/pages/admin/LabTests";
-import Procedures from "@/pages/admin/Procedures";
+import MedicinesContent from "@/pages/admin/MedicinesContent";
+import LabTestsContent from "@/pages/admin/LabTestsContent";
+import ProceduresContent from "@/pages/admin/ProceduresContent";
 import PatientsListSidebar from "@/pages/admin/PatientsListSidebar";
-import Settings from "@/pages/Settings";
+import SettingsContent from "@/pages/SettingsContent";
 import ConsultationSidebar from "@/pages/admin/ConsultationSidebar";
 
 
@@ -201,11 +201,11 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 />
               )}
 
-              {activeSidebarPage === "medicines" && <Medicines />}
-              {activeSidebarPage === "lab-tests" && <LabTests />}
-              {activeSidebarPage === "procedures" && <Procedures />}
+              {activeSidebarPage === "medicines" && <MedicinesContent />}
+              {activeSidebarPage === "lab-tests" && <LabTestsContent />}
+              {activeSidebarPage === "procedures" && <ProceduresContent />}
               {activeSidebarPage === "consultation" && <ConsultationSidebar />}
-              {activeSidebarPage === "settings" && <Settings />}
+              {activeSidebarPage === "settings" && <SettingsContent />}
             </div>
           </div>
         )}
