@@ -53,7 +53,7 @@ interface Procedure {
 }
 
 const PatientDashboard = ({ adminPatientId }: PatientDashboardProps) => {
-  const { id: emailFromURL } = useParams();
+  const { email: emailFromURL } = useParams();
   const { user, logout, loading: authLoading } = useCustomAuth();
 
   // ❗ Decide which ID/email to load
