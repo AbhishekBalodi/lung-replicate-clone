@@ -330,11 +330,8 @@ export default function Dashboard() {
                     {/* Rows */}
                     <div className="h-[75vh] overflow-y-auto divide-y">
                       {appointments.map((a) => (
-                        <>
-                          <div
-                            key={a.id}
-                            className="grid grid-cols-6 gap-3 items-center px-5 py-4"
-                          >
+                        <div key={a.id}>
+                          <div className="grid grid-cols-6 gap-3 items-center px-5 py-4">
                             {/* When */}
                             <div>
                               <div className="font-medium">
@@ -359,6 +356,14 @@ export default function Dashboard() {
                               {/* When appointment is NOT done → show normal buttons */}
                               {a.status !== "done" && (
                                 <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => toggleExpand(a)}
+                                  >
+                                    {expandedRow === a.id ? "Hide" : "Details"}
+                                  </Button>
+
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -424,241 +429,143 @@ export default function Dashboard() {
                                   >
                                     {expandedRow === a.id ? "Hide" : "Details"}
                                   </Button>
-
-                                  
                                 </>
                               )}
-
                             </div>
-
                           </div>
-                          
-                            <div key={a.id}>
 
-                              {/* ======== ROW ======== */}
-                              <div className="grid grid-cols-6 gap-3 items-center px-5 py-4">
-
-                                {/* When */}
-                                <div>
-                                  <div className="font-medium">
-                                    {new Date(a.appointment_date).toLocaleDateString()}
-                                  </div>
-                                  <div className="text-xs rounded-md bg-slate-100 inline-block px-2 py-0.5 mt-1">
-                                    {a.appointment_time}
-                                  </div>
+                          {/* ======== DROPDOWN ======== */}
+                          {expandedRow === a.id && (
+                            <div className="col-span-6 bg-slate-50 border border-emerald-200 rounded-lg p-4 mx-5 mb-4 transition-all duration-300 ease-in-out animate-slideDown">
+                              {loadingPatient ? (
+                                <div className="flex items-center gap-2 text-emerald-700">
+                                  <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-emerald-700 rounded-full"></span>
+                                  Loading patient details…
                                 </div>
+                              ) : patientDetails ? (
+                                <div className="space-y-6">
+                                  <Card className="border border-emerald-300">
+                                    <CardHeader>
+                                      <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
+                                        <User className="h-5 w-5 text-emerald-700" />
+                                        Patient Information
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-1">
+                                      <p><strong>Name:</strong> {patientDetails.full_name}</p>
+                                      <p><strong>Email:</strong> {patientDetails.email}</p>
+                                      <p><strong>Phone:</strong> {patientDetails.phone}</p>
+                                    </CardContent>
+                                  </Card>
 
-                                {/* Patient */}
-                                <div className="font-medium">{a.full_name}</div>
+                                  <Card className="border border-emerald-300">
+                                    <CardHeader>
+                                      <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
+                                        <ClipboardList className="h-5 w-5 text-emerald-700" />
+                                        Appointments
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      {patientDetails.appointments?.length ? (
+                                        patientDetails.appointments.map((appt: any) => (
+                                          <div key={appt.id} className="border border-emerald-100 rounded p-2 mb-2 bg-white">
+                                            <p className="font-medium text-emerald-900">
+                                              {new Date(appt.appointment_date).toLocaleDateString()} — {appt.appointment_time}
+                                            </p>
+                                            {appt.message && (
+                                              <p className="text-sm text-slate-600 mt-1">{appt.message}</p>
+                                            )}
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <p className="text-slate-600">No past appointments.</p>
+                                      )}
+                                    </CardContent>
+                                  </Card>
 
-                                {/* Doctor */}
-                                <div>{a.selected_doctor}</div>
+                                  <Card className="border border-emerald-300">
+                                    <CardHeader>
+                                      <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
+                                        <Pill className="h-5 w-5 text-emerald-700" />
+                                        Prescribed Medicines
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      {patientDetails.medicines?.length ? (
+                                        <table className="w-full text-sm">
+                                          <thead>
+                                            <tr className="border-b bg-emerald-50">
+                                              <th className="p-2 text-left">Medicine</th>
+                                              <th className="p-2 text-left">Dosage</th>
+                                              <th className="p-2 text-left">Frequency</th>
+                                              <th className="p-2 text-left">Duration</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody>
+                                            {patientDetails.medicines.map((m: any) => (
+                                              <tr key={m.id} className="border-b">
+                                                <td className="p-2">{m.medicine_name}</td>
+                                                <td className="p-2">{m.dosage}</td>
+                                                <td className="p-2">{m.frequency}</td>
+                                                <td className="p-2">{m.duration}</td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      ) : (
+                                        <p className="text-slate-600">No medicines prescribed.</p>
+                                      )}
+                                    </CardContent>
+                                  </Card>
 
-                                {/* Room */}
-                                <div>
-                                  <span className="text-xs rounded-md bg-emerald-100 text-emerald-800 px-2 py-0.5">
-                                    Room 1
-                                  </span>
+                                  <Card className="border border-emerald-300">
+                                    <CardHeader>
+                                      <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
+                                        <FlaskConical className="h-5 w-5 text-emerald-700" />
+                                        Prescribed Lab Tests
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      {patientDetails.lab_tests?.length ? (
+                                        patientDetails.lab_tests.map((lab: any) => (
+                                          <div key={lab.id} className="border rounded p-2 mb-2 bg-white">
+                                            <p className="font-medium">{lab.test_name}</p>
+                                            <p className="text-sm text-slate-600">Category: {lab.category}</p>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <p className="text-slate-600">No lab tests prescribed.</p>
+                                      )}
+                                    </CardContent>
+                                  </Card>
+
+                                  <Card className="border border-emerald-300">
+                                    <CardHeader>
+                                      <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
+                                        <Stethoscope className="h-5 w-5 text-emerald-700" />
+                                        Prescribed Procedures
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      {patientDetails.procedures?.length ? (
+                                        patientDetails.procedures.map((proc: any) => (
+                                          <div key={proc.id} className="border rounded p-2 mb-2 bg-white">
+                                            <p className="font-medium">{proc.procedure_name}</p>
+                                            <p className="text-sm text-slate-600">{proc.description}</p>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <p className="text-slate-600">No procedures prescribed.</p>
+                                      )}
+                                    </CardContent>
+                                  </Card>
                                 </div>
-
-                                {/* Notes */}
-                                <div className="text-sm text-slate-500 truncate">
-                                  {a.message ?? "-"}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex flex-wrap gap-2 justify-end">
-
-                                  {/* Expand button */}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => toggleExpand(a)}
-                                  >
-                                    {expandedRow === a.id ? "Hide" : "Details"}
-                                  </Button>
-
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
-                                  >
-                                    <Edit className="h-4 w-4 mr-1" />
-                                    Reschedule
-                                  </Button>
-
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => setDeleteId(a.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Cancel
-                                  </Button>
-
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    className="bg-emerald-600 text-white hover:bg-emerald-700"
-                                    onClick={() => markDone(a.id)}
-                                  >
-                                    <Check className="h-4 w-4 mr-1" />
-                                    Done
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {/* ======== DROPDOWN ======== */}
-                              {expandedRow === a.id && (
-                                <div className="col-span-6 bg-slate-50 border border-emerald-200 rounded-lg p-4 transition-all duration-300 ease-in-out animate-slideDown">
-
-                                  {/* LOADING SPINNER */}
-                                  {loadingPatient ? (
-                                    <div className="flex items-center gap-2 text-emerald-700">
-                                      <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-emerald-700 rounded-full"></span>
-                                      Loading patient details…
-                                    </div>
-                                  ) : patientDetails ? (
-                                    <div className="space-y-6">
-
-                                      {/* ---------------------- PATIENT INFO ---------------------- */}
-                                      <Card className="border border-emerald-300">
-                                        <CardHeader>
-                                          <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
-                                            <User className="h-5 w-5 text-emerald-700" />
-                                            Patient Information
-                                          </CardTitle>
-                                        </CardHeader>
-                                        <CardContent className="space-y-1">
-                                          <p><strong>Name:</strong> {patientDetails.full_name}</p>
-                                          <p><strong>Email:</strong> {patientDetails.email}</p>
-                                          <p><strong>Phone:</strong> {patientDetails.phone}</p>
-                                        </CardContent>
-                                      </Card>
-
-                                      {/* ---------------------- APPOINTMENT HISTORY ---------------------- */}
-                                      <Card className="border border-emerald-300">
-                                        <CardHeader>
-                                          <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
-                                            <ClipboardList className="h-5 w-5 text-emerald-700" />
-                                            Appointments
-                                          </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                          {patientDetails.appointments?.length ? (
-                                            patientDetails.appointments.map((appt: any) => (
-                                              <div key={appt.id} className="border border-emerald-100 rounded p-2 mb-2 bg-white">
-                                                <p className="font-medium text-emerald-900">
-                                                  {new Date(appt.appointment_date).toLocaleDateString()} — {appt.appointment_time}
-                                                </p>
-                                                {appt.message && (
-                                                  <p className="text-sm text-slate-600 mt-1">{appt.message}</p>
-                                                )}
-                                              </div>
-                                            ))
-                                          ) : (
-                                            <p className="text-slate-600">No past appointments.</p>
-                                          )}
-                                        </CardContent>
-                                      </Card>
-
-                                      {/* ---------------------- MEDICINES ---------------------- */}
-                                      <Card className="border border-emerald-300">
-                                        <CardHeader>
-                                          <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
-                                            <Pill className="h-5 w-5 text-emerald-700" />
-                                            Prescribed Medicines
-                                          </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                          {patientDetails.medicines?.length ? (
-                                            <table className="w-full text-sm">
-                                              <thead>
-                                                <tr className="border-b bg-emerald-50">
-                                                  <th className="p-2 text-left">Medicine</th>
-                                                  <th className="p-2 text-left">Dosage</th>
-                                                  <th className="p-2 text-left">Frequency</th>
-                                                  <th className="p-2 text-left">Duration</th>
-                                                </tr>
-                                              </thead>
-                                              <tbody>
-                                                {patientDetails.medicines.map((m: any) => (
-                                                  <tr key={m.id} className="border-b">
-                                                    <td className="p-2">{m.medicine_name}</td>
-                                                    <td className="p-2">{m.dosage}</td>
-                                                    <td className="p-2">{m.frequency}</td>
-                                                    <td className="p-2">{m.duration}</td>
-                                                  </tr>
-                                                ))}
-                                              </tbody>
-                                            </table>
-                                          ) : (
-                                            <p className="text-slate-600">No medicines prescribed.</p>
-                                          )}
-                                        </CardContent>
-                                      </Card>
-
-                                      {/* ---------------------- LAB TESTS ---------------------- */}
-                                      <Card className="border border-emerald-300">
-                                        <CardHeader>
-                                          <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
-                                            <FlaskConical className="h-5 w-5 text-emerald-700" />
-                                            Prescribed Lab Tests
-                                          </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                          {patientDetails.lab_tests?.length ? (
-                                            patientDetails.lab_tests.map((lab: any) => (
-                                              <div key={lab.id} className="border rounded p-2 mb-2 bg-white">
-                                                <p className="font-medium">{lab.test_name}</p>
-                                                <p className="text-sm text-slate-600">Category: {lab.category}</p>
-                                              </div>
-                                            ))
-                                          ) : (
-                                            <p className="text-slate-600">No lab tests prescribed.</p>
-                                          )}
-                                        </CardContent>
-                                      </Card>
-
-                                      {/* ---------------------- PROCEDURES ---------------------- */}
-                                      <Card className="border border-emerald-300">
-                                        <CardHeader>
-                                          <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
-                                            <Stethoscope className="h-5 w-5 text-emerald-700" />
-                                            Prescribed Procedures
-                                          </CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                          {patientDetails.procedures?.length ? (
-                                            patientDetails.procedures.map((proc: any) => (
-                                              <div key={proc.id} className="border rounded p-2 mb-2 bg-white">
-                                                <p className="font-medium">{proc.procedure_name}</p>
-                                                <p className="text-sm text-slate-600">{proc.description}</p>
-                                              </div>
-                                            ))
-                                          ) : (
-                                            <p className="text-slate-600">No procedures prescribed.</p>
-                                          )}
-                                        </CardContent>
-                                      </Card>
-
-                                    </div>
-                                  ) : (
-                                    <p className="text-slate-600">No patient details available.</p>
-                                  )}
-                                </div>
+                              ) : (
+                                <p className="text-slate-600">No patient details available.</p>
                               )}
-
-
                             </div>
-                          
-
-
-                        </>
-
-
-
-
+                          )}
+                        </div>
                       ))}
 
                       {!appointments.length && (
@@ -700,45 +607,82 @@ export default function Dashboard() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 pt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 min-w-[100px]"
-                          onClick={() => toggleExpand(a)}
-                        >
-                          {expandedRow === a.id ? "Hide" : "Details"}
-                        </Button>
+                        {/* When appointment is NOT done */}
+                        {a.status !== "done" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              onClick={() => toggleExpand(a)}
+                            >
+                              {expandedRow === a.id ? "Hide" : "Details"}
+                            </Button>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1 min-w-[100px]"
-                          disabled={actionBusyId === a.id}
-                          onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Reschedule
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          className="flex-1 min-w-[100px]"
-                          disabled={actionBusyId === a.id}
-                          onClick={() => setDeleteId(a.id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="bg-emerald-600 text-white hover:bg-emerald-700 flex-1 min-w-[100px]"
-                          disabled={actionBusyId === a.id}
-                          onClick={() => markDone(a.id)}
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Done
-                        </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              disabled={actionBusyId === a.id}
+                              onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Reschedule
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              disabled={actionBusyId === a.id}
+                              onClick={() => setDeleteId(a.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Cancel
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="bg-emerald-600 text-white hover:bg-emerald-700 flex-1 min-w-[100px]"
+                              disabled={actionBusyId === a.id}
+                              onClick={() => markDone(a.id)}
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Done
+                            </Button>
+                          </>
+                        )}
+
+                        {/* When appointment is DONE */}
+                        {a.status === "done" && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              onClick={() => generateInvoicePDF(a)}
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Invoice
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              onClick={() => generatePrescriptionPDF(a)}
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              Prescription
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 min-w-[100px]"
+                              onClick={() => toggleExpand(a)}
+                            >
+                              {expandedRow === a.id ? "Hide" : "Details"}
+                            </Button>
+                          </>
+                        )}
                       </div>
                       {expandedRow === a.id && (
                         <div className="mt-3 p-3 rounded-lg border border-emerald-300 bg-slate-50 transition-all duration-300 ease-in-out animate-slideDown">
