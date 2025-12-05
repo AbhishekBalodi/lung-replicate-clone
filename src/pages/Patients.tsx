@@ -136,11 +136,11 @@ export default function PatientsPage() {
     // 1) Appointments (from MySQL backend)
     try {
       let appointmentsUrl = `${API_ROOT}/appointment?`;
-      
+
       // Try email first if available
       if (patient.email) {
         appointmentsUrl += `email=${encodeURIComponent(patient.email)}`;
-      } 
+      }
       // Fallback to phone if no email
       else if (patient.phone) {
         appointmentsUrl += `phone=${encodeURIComponent(patient.phone)}`;
@@ -152,7 +152,7 @@ export default function PatientsPage() {
 
       const apptRes = await fetch(appointmentsUrl);
       if (!apptRes.ok) throw new Error("Failed to fetch appointments");
-      
+
       const apptData = await apptRes.json();
       setAppointments(Array.isArray(apptData) ? apptData : []);
     } catch (err: any) {
@@ -220,10 +220,11 @@ export default function PatientsPage() {
             <div className="divide-y">
               {patients.map((p) => (
                 <button
-                  key={(p.id ?? 0) + (p.email || "") + (p.phone || "")}
-                  onClick={() => selectPatient(p)}
+                  key={p.id}
+                  onClick={() => navigate(`/patients/${p.id}`)}
                   className="w-full text-left py-3 px-2 hover:bg-emerald-50 rounded transition-colors"
                 >
+
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div className="flex items-center gap-3">
                       <User className="h-5 w-5 text-emerald-700 shrink-0" />
@@ -358,8 +359,8 @@ export default function PatientsPage() {
                               {m.prescribed_date
                                 ? format(new Date(m.prescribed_date), "MMM dd, yyyy")
                                 : m.created_at
-                                ? format(new Date(m.created_at), "MMM dd, yyyy")
-                                : "-"}
+                                  ? format(new Date(m.created_at), "MMM dd, yyyy")
+                                  : "-"}
                             </td>
                             <td className="py-2 px-3 text-sm">{m.instructions || "-"}</td>
                           </tr>
@@ -381,8 +382,8 @@ export default function PatientsPage() {
                             m.prescribed_date
                               ? format(new Date(m.prescribed_date), "MMM dd, yyyy")
                               : m.created_at
-                              ? format(new Date(m.created_at), "MMM dd, yyyy")
-                              : "-"
+                                ? format(new Date(m.created_at), "MMM dd, yyyy")
+                                : "-"
                           }</div>
                           {m.instructions && (
                             <div><span className="text-emerald-700">Instructions:</span> {m.instructions}</div>
@@ -428,8 +429,8 @@ export default function PatientsPage() {
                               {test.prescribed_date
                                 ? format(new Date(test.prescribed_date), "MMM dd, yyyy")
                                 : test.created_at
-                                ? format(new Date(test.created_at), "MMM dd, yyyy")
-                                : "-"}
+                                  ? format(new Date(test.created_at), "MMM dd, yyyy")
+                                  : "-"}
                             </td>
                             <td className="py-2 px-3 text-sm">{test.preparation_instructions || "-"}</td>
                           </tr>
@@ -450,8 +451,8 @@ export default function PatientsPage() {
                             test.prescribed_date
                               ? format(new Date(test.prescribed_date), "MMM dd, yyyy")
                               : test.created_at
-                              ? format(new Date(test.created_at), "MMM dd, yyyy")
-                              : "-"
+                                ? format(new Date(test.created_at), "MMM dd, yyyy")
+                                : "-"
                           }</div>
                           {test.preparation_instructions && (
                             <div><span className="text-emerald-700">Instructions:</span> {test.preparation_instructions}</div>
@@ -497,8 +498,8 @@ export default function PatientsPage() {
                               {proc.prescribed_date
                                 ? format(new Date(proc.prescribed_date), "MMM dd, yyyy")
                                 : proc.created_at
-                                ? format(new Date(proc.created_at), "MMM dd, yyyy")
-                                : "-"}
+                                  ? format(new Date(proc.created_at), "MMM dd, yyyy")
+                                  : "-"}
                             </td>
                             <td className="py-2 px-3 text-sm">{proc.preparation_instructions || "-"}</td>
                           </tr>
@@ -519,8 +520,8 @@ export default function PatientsPage() {
                             proc.prescribed_date
                               ? format(new Date(proc.prescribed_date), "MMM dd, yyyy")
                               : proc.created_at
-                              ? format(new Date(proc.created_at), "MMM dd, yyyy")
-                              : "-"
+                                ? format(new Date(proc.created_at), "MMM dd, yyyy")
+                                : "-"
                           }</div>
                           {proc.preparation_instructions && (
                             <div><span className="text-emerald-700">Instructions:</span> {proc.preparation_instructions}</div>

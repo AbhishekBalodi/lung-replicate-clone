@@ -21,7 +21,7 @@ const CustomAuth = () => {
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -43,11 +43,17 @@ const CustomAuth = () => {
     }
 
     setLoading(true);
-    
-    const { error } = loginType === 'admin' 
-      ? await loginAsAdmin(email, password)
-      : await loginAsPatient(email, password);
-    
+
+    let result;
+
+    if (loginType === 'admin') {
+      result = await loginAsAdmin(email, password);
+    } else {
+      result = await loginAsPatient(email, password);
+    }
+
+    const { user: loggedInUser, error } = result;
+
     setLoading(false);
 
     if (error) {
@@ -56,12 +62,21 @@ const CustomAuth = () => {
         description: error.message,
         variant: "destructive"
       });
+      return;
+    }
+
+    // Success
+    toast({
+      title: "Login Successful",
+      description: loginType === 'admin' ? "Welcome Admin!" : "Welcome back!"
+    });
+
+    // Redirect based on login type
+    if (loginType === 'admin') {
+      navigate('/dashboard');
     } else {
-      toast({
-        title: "Login Successful",
-        description: `Welcome ${loginType === 'admin' ? 'Admin' : 'back'}!`
-      });
-      navigate(loginType === 'admin' ? '/dashboard' : '/patient-dashboard');
+      // patient login → redirect to patient dashboard with their email
+      navigate(`/patient-dashboard/${encodeURIComponent(loggedInUser.email)}`);
     }
   };
 
@@ -73,7 +88,7 @@ const CustomAuth = () => {
           <CardDescription className="text-center">
             Select login type and enter your credentials
           </CardDescription>
-          
+
           {/* Login Type Toggle */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
             <button
@@ -88,6 +103,7 @@ const CustomAuth = () => {
               <User className="h-4 w-4" />
               Patient
             </button>
+
             <button
               type="button"
               onClick={() => setLoginType('admin')}
@@ -130,6 +146,7 @@ const CustomAuth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
+
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -138,6 +155,7 @@ const CustomAuth = () => {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+
               {loginType === 'patient' && (
                 <p className="text-xs text-muted-foreground">
                   Use the phone number you provided when booking your appointment
