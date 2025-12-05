@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Calendar } from "@/components/ui/calendar";
 import {
-  User, Calendar, Stethoscope, CheckCircle,
+  User, Calendar as CalendarIcon, Stethoscope, CheckCircle,
   Upload, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +22,43 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
+
+// Generate time slots for the allowed periods (15-min intervals)
+const generateTimeSlots = () => {
+  const slots: string[] = [];
+  // Morning slots: 10:00 AM - 3:00 PM
+  for (let hour = 10; hour < 15; hour++) {
+    for (let min = 0; min < 60; min += 15) {
+      const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+      slots.push(time);
+    }
+  }
+  // Evening slots: 5:00 PM - 8:00 PM
+  for (let hour = 17; hour < 20; hour++) {
+    for (let min = 0; min < 60; min += 15) {
+      const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+      slots.push(time);
+    }
+  }
+  return slots;
+};
+
+const formatTimeDisplay = (time: string) => {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+  let endHours = hours;
+  let endMinutes = minutes + 15;
+  if (endMinutes >= 60) {
+    endMinutes = 0;
+    endHours += 1;
+  }
+  const endPeriod = endHours >= 12 ? 'PM' : 'AM';
+  const endDisplayHours = endHours > 12 ? endHours - 12 : endHours === 0 ? 12 : endHours;
+  return `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${period} - ${endDisplayHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')} ${endPeriod}`;
+};
+
+const ALL_TIME_SLOTS = generateTimeSlots();
 
 // If your backend is on a different origin, replace with full URL or env var.
 const APPOINTMENTS_API = "/api/appointment";
@@ -52,7 +91,7 @@ const BookAppointment = () => {
 
   const steps = [
     { number: 1, title: "Patient Details", subtitle: "Enter your info", icon: User },
-    { number: 2, title: "Date & Time", subtitle: "Pick appointment time", icon: Calendar },
+    { number: 2, title: "Date & Time", subtitle: "Pick appointment time", icon: CalendarIcon },
     { number: 3, title: "Doctor", subtitle: "Choose your doctor", icon: Stethoscope },
     { number: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle }
   ];
@@ -375,10 +414,13 @@ const BookAppointment = () => {
         );
 
       case 2:
+        const selectedDate = formData.preferredDate ? new Date(formData.preferredDate) : undefined;
+        const selectedIsSunday = selectedDate ? selectedDate.getDay() === 0 : false;
+        
         return (
           <div className="space-y-6">
             <div className="flex items-center gap-3 mb-8">
-              <Calendar className="h-6 w-6 text-lung-blue" />
+              <CalendarIcon className="h-6 w-6 text-lung-blue" />
               <h2 className="text-2xl font-bold text-foreground font-lexend">Select Date & Time</h2>
             </div>
             <p className="text-muted-foreground mb-8 font-livvic">
@@ -386,31 +428,69 @@ const BookAppointment = () => {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Calendar */}
               <div>
-                <Label htmlFor="date" className="text-sm font-medium mb-4 block">Preferred Date *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={formData.preferredDate}
-                  onChange={(e) => setFormData({ ...formData, preferredDate: e.target.value })}
-                  required
-                  min={new Date().toISOString().split('T')[0]}
-                  className="mt-1"
-                />
+                <Label className="font-semibold mb-4 block text-lung-green">Select Date</Label>
+                <div className="border rounded-lg p-4 flex justify-center bg-white shadow-sm">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setFormData({ 
+                          ...formData, 
+                          preferredDate: format(date, 'yyyy-MM-dd'),
+                          preferredTime: ""
+                        });
+                      }
+                    }}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      if (date < today) return true;
+                      if (date.getDay() === 0) return true;
+                      return false;
+                    }}
+                    className="pointer-events-auto"
+                  />
+                </div>
+                <p className="mt-3 text-sm text-gray-600">
+                  <span className="font-medium">Note:</span> Sundays are closed — you cannot book appointments on Sundays.
+                </p>
               </div>
+
+              {/* Time Slots */}
               <div>
-                <Label htmlFor="time" className="text-sm font-medium mb-2 block">Preferred Time *</Label>
-                <p className="text-xs text-muted-foreground mb-2">Available: 10 AM - 3 PM and 5 PM - 8 PM</p>
-                <Input
-                  id="time"
-                  type="time"
-                  value={formData.preferredTime}
-                  onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
-                  required
-                  min="10:00"
-                  max="20:00"
-                  className="mt-1"
-                />
+                <Label className="font-semibold mb-4 block text-lung-green">
+                  Select Time {selectedDate && `• ${format(selectedDate, "MMM d, yyyy")}`}
+                </Label>
+                
+                {!selectedDate ? (
+                  <div className="text-center py-10 text-gray-500 bg-gray-100 rounded-xl">
+                    Please select a date first
+                  </div>
+                ) : selectedIsSunday ? (
+                  <div className="text-center py-10 text-red-600 bg-red-50 rounded-xl border border-red-100">
+                    <strong>Clinic Closed:</strong> Appointments cannot be booked on Sundays.
+                  </div>
+                ) : (
+                  <div className="max-h-[350px] overflow-y-auto pr-2 grid gap-3">
+                    {ALL_TIME_SLOTS.map((time) => (
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, preferredTime: time })}
+                        className={`w-full py-3 px-4 rounded-lg border text-sm font-medium transition-all ${
+                          formData.preferredTime === time
+                            ? "bg-lung-green text-white border-lung-green"
+                            : "bg-white text-lung-green border-lung-green/30 hover:border-lung-green hover:bg-lung-green/5"
+                        }`}
+                      >
+                        {formatTimeDisplay(time)}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
