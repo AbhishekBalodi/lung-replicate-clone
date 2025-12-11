@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
+import { useAppointments } from "@/contexts/AppointmentContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -20,27 +21,36 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface Appointment {
-  id: number; // MySQL numeric id
+  id: number;
   full_name: string;
   email: string;
   phone: string;
-  appointment_date: string; // yyyy-mm-dd
-  appointment_time: string; // HH:mm
+  appointment_date: string;
+  appointment_time: string;
   selected_doctor: string;
   message: string | null;
   created_at?: string | null;
   status?: string | null;
 }
 
-const API_BASE = "/api/appointment";
-
 export default function Dashboard() {
   const { user, loading: authLoading } = useCustomAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Use shared appointment context
+  const { 
+    appointments, 
+    loading, 
+    fetchAppointments, 
+    markAppointmentDone, 
+    cancelAppointment,
+    loadPatientDetails,
+    patientDetailsCache,
+    prescriptionUpdateTrigger,
+    refreshPatientDetails
+  } = useAppointments();
 
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [actionBusyId, setActionBusyId] = useState<number | null>(null);
   
@@ -57,11 +67,7 @@ export default function Dashboard() {
   });
   const [time, setTime] = useState<string>("");
 
-  //part 1 insertion
-
-  // ============================
-  // 📌 NEW STATE FOR DROPDOWN
-  // ============================
+  // State for expanded row
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [patientDetails, setPatientDetails] = useState<any>(null);
   const [loadingPatient, setLoadingPatient] = useState(false);
@@ -151,53 +157,43 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) fetchAppointments();
-  }, [user]);
+  }, [user, fetchAppointments]);
 
-  const fetchAppointments = async () => {
-    try {
-      setLoading(true);
-      // OPTION A: fetch ALL appointments (no email filter)
-      const res = await fetch(`${API_BASE}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to fetch appointments");
-      setAppointments(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setAppointments([]);
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
+  // Refresh patient details when prescription update trigger changes
+  useEffect(() => {
+    if (expandedRow && patientDetails) {
+      const appt = appointments.find(a => a.id === expandedRow);
+      if (appt) {
+        refreshPatientDetails(expandedRow, appt.email, appt.phone).then(() => {
+          // Update local state from cache
+          const cached = patientDetailsCache[expandedRow];
+          if (cached) setPatientDetails(cached);
+        });
+      }
     }
-  };
+  }, [prescriptionUpdateTrigger]);
 
   const handleDelete = async () => {
     if (deleteId == null) return;
-    try {
-      const res = await fetch(`${API_BASE}/${deleteId}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to cancel appointment");
+    const success = await cancelAppointment(deleteId);
+    if (success) {
       toast({ title: "Success", description: "Appointment cancelled successfully" });
-      fetchAppointments();
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setDeleteId(null);
+    } else {
+      toast({ title: "Error", description: "Failed to cancel appointment", variant: "destructive" });
     }
+    setDeleteId(null);
   };
 
-  // ✅ Mark as Done (sync to patients via Express)
+  // Mark as Done - uses context for instant UI update
   const markDone = async (id: number) => {
-    try {
-      setActionBusyId(id);
-      const res = await fetch(`${API_BASE}/${id}/done`, { method: "PATCH" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to mark as done");
+    setActionBusyId(id);
+    const success = await markAppointmentDone(id);
+    if (success) {
       toast({ title: "Completed", description: "Appointment marked as done." });
-      fetchAppointments();
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setActionBusyId(null);
+    } else {
+      toast({ title: "Error", description: "Failed to mark as done", variant: "destructive" });
     }
+    setActionBusyId(null);
   };
 
   // Generate a simple slot grid for the selected date (UI only; no backend change)

@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
+import { useAppointments } from "@/contexts/AppointmentContext";
 import ConsoleShell from "../layouts/ConsoleShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Edit, Trash2, Check, FileText, Eye, EyeOff } from "lucide-react";
+import { Edit, Trash2, Check, FileText, Eye, EyeOff, Download } from "lucide-react";
+import RescheduleModal from "@/components/RescheduleModal";
 
 interface Appointment {
   id: number;
@@ -20,17 +22,24 @@ interface Appointment {
   created_at?: string | null;
 }
 
-const API_BASE = "/api/appointment";
-
 export default function AppointmentsPage() {
   const { user, loading: authLoading } = useCustomAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Use shared appointment context
+  const { 
+    appointments, 
+    loading, 
+    fetchAppointments, 
+    markAppointmentDone, 
+    cancelAppointment 
+  } = useAppointments();
+
   const [actionBusyId, setActionBusyId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
 
   const searchQuery = searchParams.get("q")?.toLowerCase() || "";
 
@@ -42,51 +51,28 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     if (user) fetchAppointments();
-  }, [user]);
-
-  const fetchAppointments = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to fetch appointments");
-      setAppointments(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-      setAppointments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, fetchAppointments]);
 
   const markDone = async (id: number) => {
-    try {
-      setActionBusyId(id);
-      const res = await fetch(`${API_BASE}/${id}/done`, { method: "PATCH" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to mark as done");
+    setActionBusyId(id);
+    const success = await markAppointmentDone(id);
+    if (success) {
       toast({ title: "Completed", description: "Appointment marked as done." });
-      fetchAppointments();
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setActionBusyId(null);
+    } else {
+      toast({ title: "Error", description: "Failed to mark as done", variant: "destructive" });
     }
+    setActionBusyId(null);
   };
 
   const cancel = async (id: number) => {
-    try {
-      setActionBusyId(id);
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Failed to cancel appointment");
+    setActionBusyId(id);
+    const success = await cancelAppointment(id);
+    if (success) {
       toast({ title: "Cancelled", description: "Appointment cancelled." });
-      fetchAppointments();
-    } catch (e: any) {
-      toast({ title: "Error", description: e.message, variant: "destructive" });
-    } finally {
-      setActionBusyId(null);
+    } else {
+      toast({ title: "Error", description: "Failed to cancel appointment", variant: "destructive" });
     }
+    setActionBusyId(null);
   };
 
   // Filter appointments based on search query
@@ -102,6 +88,15 @@ export default function AppointmentsPage() {
 
   // Check if appointment is done
   const isDone = (a: Appointment) => a.status === "done";
+
+  // PDF generators
+  const generateInvoicePDF = (appointment: Appointment) => {
+    window.open(`/api/invoice/${appointment.id}`, "_blank");
+  };
+
+  const generatePrescriptionPDF = (appointment: Appointment) => {
+    window.open(`/api/prescription/${appointment.id}`, "_blank");
+  };
 
   if (authLoading || loading) {
     return (
@@ -120,7 +115,7 @@ export default function AppointmentsPage() {
             variant="outline"
             size="sm"
             className="shrink-0"
-            onClick={() => navigate(`/consultation?patient=${a.id}`)}
+            onClick={() => generateInvoicePDF(a)}
           >
             <FileText className="h-4 w-4 mr-1" /> Invoice
           </Button>
@@ -128,9 +123,9 @@ export default function AppointmentsPage() {
             variant="outline"
             size="sm"
             className="shrink-0"
-            onClick={() => navigate(`/consultation?patient=${a.id}`)}
+            onClick={() => generatePrescriptionPDF(a)}
           >
-            <FileText className="h-4 w-4 mr-1" /> Prescription
+            <Download className="h-4 w-4 mr-1" /> Prescription
           </Button>
           <Button
             variant="secondary"
@@ -168,7 +163,7 @@ export default function AppointmentsPage() {
           size="sm"
           className="shrink-0"
           disabled={actionBusyId === a.id}
-          onClick={() => navigate(`/book-appointment?edit=${a.id}`)}
+          onClick={() => setRescheduleAppointment(a)}
         >
           <Edit className="h-4 w-4 mr-1" /> Reschedule
         </Button>
@@ -310,6 +305,22 @@ export default function AppointmentsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Reschedule Modal */}
+      {rescheduleAppointment && (
+        <RescheduleModal
+          isOpen={!!rescheduleAppointment}
+          onClose={() => setRescheduleAppointment(null)}
+          appointmentId={rescheduleAppointment.id}
+          patientName={rescheduleAppointment.full_name}
+          currentDate={rescheduleAppointment.appointment_date}
+          currentTime={rescheduleAppointment.appointment_time}
+          onSuccess={() => {
+            setRescheduleAppointment(null);
+            fetchAppointments();
+          }}
+        />
+      )}
     </ConsoleShell>
   );
 }
