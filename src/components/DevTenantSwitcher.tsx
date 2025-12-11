@@ -131,6 +131,11 @@ const DevTenantSwitcher = () => {
               Select a tenant to view their website:
             </div>
             
+            {/* Debug: Show tenant count */}
+            <div className="text-xs text-blue-500">
+              Loaded {tenants.length} tenant(s)
+            </div>
+            
             <div className="flex gap-2">
               <Select
                 value={currentTenant || "none"}
@@ -139,18 +144,13 @@ const DevTenantSwitcher = () => {
                 <SelectTrigger className="flex-1">
                   <SelectValue placeholder="Select tenant..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover z-[10000]">
                   <SelectItem value="none">
-                    <span className="text-muted-foreground">-- Original (Doctor Mann) --</span>
+                    -- Original (Doctor Mann) --
                   </SelectItem>
-                  {tenants.map((tenant) => (
+                  {tenants.length > 0 && tenants.map((tenant) => (
                     <SelectItem key={tenant.id} value={tenant.tenant_code}>
-                      <div className="flex items-center gap-2">
-                        <span>{tenant.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({tenant.type})
-                        </span>
-                      </div>
+                      {tenant.name} ({tenant.type})
                     </SelectItem>
                   ))}
                 </SelectContent>
