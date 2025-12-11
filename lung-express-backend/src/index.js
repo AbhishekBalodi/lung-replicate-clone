@@ -2,6 +2,9 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { pool } from './lib/db.js';
+import { tenantResolver } from './middleware/tenant-resolver.js';
+
+// Existing routes
 import contactRouter from './routes/contact.js';
 import appointmentRouter from './routes/appointment.js';
 import patientsRouter from './routes/patients.js';
@@ -13,11 +16,18 @@ import calendarRouter from './routes/calendar.js';
 import authRouter from './routes/auth.js';
 import smtpSettingsRouter from './routes/smtp-settings.js';
 
+// Platform routes (SaaS management)
+import tenantsRouter from './routes/tenants.js';
+import platformAuthRouter from './routes/platform-auth.js';
+
 const app = express();
 
 const allowed = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : true;
 app.use(cors({ origin: allowed, credentials: true }));
 app.use(express.json());
+
+// Apply tenant resolver middleware
+app.use(tenantResolver);
 
 app.get('/api/ping', (req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
@@ -32,6 +42,11 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// Platform routes (SaaS admin portal)
+app.use('/api/platform/auth', platformAuthRouter);
+app.use('/api/tenants', tenantsRouter);
+
+// Tenant routes (doctor/hospital websites)
 app.use('/api/auth', authRouter);
 app.use('/api/contact', contactRouter);
 app.use('/api/appointment', appointmentRouter);

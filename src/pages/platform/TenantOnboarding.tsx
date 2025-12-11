@@ -1,0 +1,499 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { toast } from 'sonner';
+import { Building2, User, Globe, ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react';
+
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return '';
+};
+
+// Validation schema
+const onboardingSchema = z.object({
+  // Step 1: Tenant Type
+  type: z.enum(['hospital', 'doctor']),
+  
+  // Step 2: Business Info
+  name: z.string().min(2, 'Name must be at least 2 characters').max(255),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(10, 'Phone must be at least 10 digits').max(20).optional(),
+  address: z.string().max(500).optional(),
+  
+  // Step 3: Admin Account
+  adminName: z.string().min(2, 'Name must be at least 2 characters').max(255),
+  adminEmail: z.string().email('Invalid email address'),
+  adminPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  adminPasswordConfirm: z.string(),
+  adminPhone: z.string().max(20).optional(),
+  
+  // Step 4: Custom Domain
+  customDomain: z.string().max(255).optional(),
+}).refine((data) => data.adminPassword === data.adminPasswordConfirm, {
+  message: "Passwords don't match",
+  path: ["adminPasswordConfirm"],
+});
+
+type OnboardingFormData = z.infer<typeof onboardingSchema>;
+
+const TenantOnboarding = () => {
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationResult, setRegistrationResult] = useState<any>(null);
+
+  const form = useForm<OnboardingFormData>({
+    resolver: zodResolver(onboardingSchema),
+    defaultValues: {
+      type: 'doctor',
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+      adminName: '',
+      adminEmail: '',
+      adminPassword: '',
+      adminPasswordConfirm: '',
+      adminPhone: '',
+      customDomain: '',
+    },
+  });
+
+  const { register, handleSubmit, watch, formState: { errors }, setValue } = form;
+  const tenantType = watch('type');
+
+  const steps = [
+    { number: 1, title: 'Type', description: 'Choose your account type' },
+    { number: 2, title: 'Business', description: 'Your business details' },
+    { number: 3, title: 'Admin', description: 'Create admin account' },
+    { number: 4, title: 'Domain', description: 'Custom domain setup' },
+  ];
+
+  const nextStep = () => {
+    if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const onSubmit = async (data: OnboardingFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch(`${getApiBaseUrl()}/api/tenants/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: data.type,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          adminName: data.adminName,
+          adminEmail: data.adminEmail,
+          adminPassword: data.adminPassword,
+          adminPhone: data.adminPhone,
+          customDomain: data.customDomain || undefined,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Registration failed');
+      }
+
+      setRegistrationResult(result);
+      toast.success('Registration successful!');
+      
+    } catch (error: any) {
+      toast.error(error.message || 'Registration failed');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (registrationResult) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <Check className="w-8 h-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl">Registration Successful!</CardTitle>
+            <CardDescription>Your account has been created</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+              <h4 className="font-semibold">Your Tenant Details:</h4>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <span className="text-muted-foreground">Tenant Code:</span>
+                <span className="font-mono">{registrationResult.tenant.tenantCode}</span>
+                <span className="text-muted-foreground">Name:</span>
+                <span>{registrationResult.tenant.name}</span>
+                <span className="text-muted-foreground">Type:</span>
+                <span className="capitalize">{registrationResult.tenant.type}</span>
+                <span className="text-muted-foreground">Status:</span>
+                <span className="text-green-600 capitalize">{registrationResult.tenant.status}</span>
+              </div>
+            </div>
+
+            {registrationResult.domain && (
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-amber-800 dark:text-amber-200">Domain Verification Required</h4>
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  To activate your custom domain <strong>{registrationResult.domain.domain}</strong>, 
+                  add the following DNS TXT record:
+                </p>
+                <div className="bg-white dark:bg-background rounded p-3 font-mono text-sm break-all">
+                  <p><strong>Host:</strong> _saas-verify.{registrationResult.domain.domain}</p>
+                  <p><strong>Value:</strong> {registrationResult.domain.verificationToken}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Next Steps:</h4>
+              <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1 list-disc list-inside">
+                {registrationResult.nextSteps?.map((step: string, index: number) => (
+                  <li key={index}>{step}</li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="flex gap-4">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => navigate('/platform/login')}
+              >
+                Go to Platform Login
+              </Button>
+              <Button 
+                className="flex-1"
+                onClick={() => {
+                  setRegistrationResult(null);
+                  setCurrentStep(1);
+                  form.reset();
+                }}
+              >
+                Register Another
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+      <Card className="w-full max-w-2xl">
+        <CardHeader>
+          <CardTitle className="text-2xl">Create Your Medical Website</CardTitle>
+          <CardDescription>
+            Get your own branded website with patient management in minutes
+          </CardDescription>
+          
+          {/* Progress Steps */}
+          <div className="flex justify-between mt-6">
+            {steps.map((step, index) => (
+              <div key={step.number} className="flex items-center">
+                <div className="flex flex-col items-center">
+                  <div 
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+                      currentStep === step.number 
+                        ? 'bg-primary text-primary-foreground' 
+                        : currentStep > step.number 
+                          ? 'bg-green-500 text-white'
+                          : 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {currentStep > step.number ? <Check className="w-5 h-5" /> : step.number}
+                  </div>
+                  <span className="text-xs mt-1 text-muted-foreground hidden sm:block">{step.title}</span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className={`w-12 sm:w-20 h-1 mx-2 rounded ${
+                    currentStep > step.number ? 'bg-green-500' : 'bg-muted'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            
+            {/* Step 1: Tenant Type */}
+            {currentStep === 1 && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">What type of account do you need?</h3>
+                <RadioGroup
+                  value={tenantType}
+                  onValueChange={(value) => setValue('type', value as 'hospital' | 'doctor')}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                  <Label 
+                    htmlFor="type-doctor" 
+                    className={`cursor-pointer border-2 rounded-lg p-6 transition-all hover:border-primary ${
+                      tenantType === 'doctor' ? 'border-primary bg-primary/5' : 'border-muted'
+                    }`}
+                  >
+                    <RadioGroupItem value="doctor" id="type-doctor" className="sr-only" />
+                    <div className="flex flex-col items-center text-center space-y-3">
+                      <User className="w-12 h-12 text-primary" />
+                      <div>
+                        <p className="font-semibold">Individual Doctor</p>
+                        <p className="text-sm text-muted-foreground">
+                          Single practitioner with their own website and patient management
+                        </p>
+                      </div>
+                    </div>
+                  </Label>
+
+                  <Label 
+                    htmlFor="type-hospital" 
+                    className={`cursor-pointer border-2 rounded-lg p-6 transition-all hover:border-primary ${
+                      tenantType === 'hospital' ? 'border-primary bg-primary/5' : 'border-muted'
+                    }`}
+                  >
+                    <RadioGroupItem value="hospital" id="type-hospital" className="sr-only" />
+                    <div className="flex flex-col items-center text-center space-y-3">
+                      <Building2 className="w-12 h-12 text-primary" />
+                      <div>
+                        <p className="font-semibold">Hospital / Clinic</p>
+                        <p className="text-sm text-muted-foreground">
+                          Multiple doctors under one organization with centralized management
+                        </p>
+                      </div>
+                    </div>
+                  </Label>
+                </RadioGroup>
+                {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
+              </div>
+            )}
+
+            {/* Step 2: Business Info */}
+            {currentStep === 2 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  {tenantType === 'hospital' ? 'Hospital / Clinic Details' : 'Practice Details'}
+                </h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="name">
+                    {tenantType === 'hospital' ? 'Hospital/Clinic Name' : 'Practice/Doctor Name'} *
+                  </Label>
+                  <Input 
+                    id="name" 
+                    placeholder={tenantType === 'hospital' ? 'City Medical Center' : 'Dr. John Smith'} 
+                    {...register('name')}
+                  />
+                  {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Business Email *</Label>
+                  <Input 
+                    id="email" 
+                    type="email"
+                    placeholder="contact@example.com" 
+                    {...register('email')}
+                  />
+                  {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input 
+                      id="phone" 
+                      placeholder="+91 9876543210" 
+                      {...register('phone')}
+                    />
+                    {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea 
+                    id="address" 
+                    placeholder="123 Medical Street, City, State, PIN" 
+                    {...register('address')}
+                  />
+                  {errors.address && <p className="text-sm text-destructive">{errors.address.message}</p>}
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Admin Account */}
+            {currentStep === 3 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  {tenantType === 'hospital' ? 'Super Admin Account' : 'Admin Account'}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  This account will have full access to manage the dashboard
+                </p>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="adminName">Full Name *</Label>
+                  <Input 
+                    id="adminName" 
+                    placeholder="John Doe" 
+                    {...register('adminName')}
+                  />
+                  {errors.adminName && <p className="text-sm text-destructive">{errors.adminName.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adminEmail">Email *</Label>
+                  <Input 
+                    id="adminEmail" 
+                    type="email"
+                    placeholder="admin@example.com" 
+                    {...register('adminEmail')}
+                  />
+                  {errors.adminEmail && <p className="text-sm text-destructive">{errors.adminEmail.message}</p>}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adminPhone">Phone Number</Label>
+                  <Input 
+                    id="adminPhone" 
+                    placeholder="+91 9876543210" 
+                    {...register('adminPhone')}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="adminPassword">Password *</Label>
+                    <Input 
+                      id="adminPassword" 
+                      type="password"
+                      placeholder="Min 8 characters" 
+                      {...register('adminPassword')}
+                    />
+                    {errors.adminPassword && <p className="text-sm text-destructive">{errors.adminPassword.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="adminPasswordConfirm">Confirm Password *</Label>
+                    <Input 
+                      id="adminPasswordConfirm" 
+                      type="password"
+                      placeholder="Confirm password" 
+                      {...register('adminPasswordConfirm')}
+                    />
+                    {errors.adminPasswordConfirm && <p className="text-sm text-destructive">{errors.adminPasswordConfirm.message}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Custom Domain */}
+            {currentStep === 4 && (
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold">Custom Domain (Optional)</h3>
+                <p className="text-sm text-muted-foreground">
+                  Connect your own domain to have your website accessible at your custom URL
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
+                    <Globe className="w-8 h-8 text-primary" />
+                    <div>
+                      <p className="font-medium">Your Custom Domain</p>
+                      <p className="text-sm text-muted-foreground">e.g., www.mydoctorwebsite.com</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customDomain">Domain Name</Label>
+                    <Input 
+                      id="customDomain" 
+                      placeholder="www.yourwebsite.com" 
+                      {...register('customDomain')}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Leave empty to skip for now. You can add a custom domain later from settings.
+                    </p>
+                    {errors.customDomain && <p className="text-sm text-destructive">{errors.customDomain.message}</p>}
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
+                    <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                      How domain verification works:
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-blue-700 dark:text-blue-300">
+                      <li>Enter your domain name above</li>
+                      <li>After registration, you'll receive DNS records to add</li>
+                      <li>Add the TXT record to your domain's DNS settings</li>
+                      <li>Click verify in your dashboard - your site goes live!</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-4 border-t">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={prevStep}
+                disabled={currentStep === 1}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+
+              {currentStep < 4 ? (
+                <Button type="button" onClick={nextStep}>
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              ) : (
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      Complete Registration
+                      <Check className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default TenantOnboarding;
