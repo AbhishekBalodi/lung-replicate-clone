@@ -8,6 +8,10 @@ import { toast } from 'sonner';
 import { Loader2, Shield } from 'lucide-react';
 
 const getApiBaseUrl = () => {
+  // In development, use localhost:5050 directly if proxy doesn't work
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5050';
+  }
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
