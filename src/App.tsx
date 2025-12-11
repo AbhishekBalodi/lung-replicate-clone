@@ -55,7 +55,6 @@ const App = () => (
             
             <Route path="/login" element={<CustomAuth />} />
             <Route path="/dashboard" element={<Dashboard />} />
-           <Route path="/patient-dashboard/:email" element={<PatientDashboard />} />
            <Route path="/patient-dashboard" element={<PatientDashboard />} />
 
             <Route path="/appointments" element={<AppointmentsPage />} />
