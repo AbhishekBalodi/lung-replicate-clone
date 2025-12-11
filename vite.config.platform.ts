@@ -10,7 +10,16 @@ export default defineConfig({
       name: "platform-html",
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
-          if (req.url === "/") {
+          // Serve index.platform.html for all routes (SPA routing)
+          // Skip for assets, API calls, and file requests with extensions
+          if (
+            req.url &&
+            !req.url.startsWith("/api") &&
+            !req.url.startsWith("/src") &&
+            !req.url.startsWith("/node_modules") &&
+            !req.url.startsWith("/@") &&
+            !req.url.includes(".")
+          ) {
             req.url = "/index.platform.html";
           }
           next();
