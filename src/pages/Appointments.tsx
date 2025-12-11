@@ -148,9 +148,21 @@ export default function AppointmentsPage() {
       );
     }
 
-    // Pending/scheduled appointments: Reschedule, Cancel, Done
+    // Pending/scheduled appointments: Details, Reschedule, Cancel, Done
     return (
       <>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="shrink-0"
+          onClick={() => setExpandedId(expandedId === a.id ? null : a.id)}
+        >
+          {expandedId === a.id ? (
+            <><EyeOff className="h-4 w-4 mr-1" /> Hide</>
+          ) : (
+            <><Eye className="h-4 w-4 mr-1" /> Details</>
+          )}
+        </Button>
         <Button
           variant="outline"
           size="sm"
