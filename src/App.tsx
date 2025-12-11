@@ -31,11 +31,6 @@ import CompletedAppointments from "@/pages/CompletedAppointments";
 import Settings from "@/pages/Settings";
 import NewAppointment from "@/pages/admin/NewAppointment";
 
-// Platform (SaaS) pages
-import TenantOnboarding from "./pages/platform/TenantOnboarding";
-import PlatformLogin from "./pages/platform/PlatformLogin";
-import PlatformDashboard from "./pages/platform/PlatformDashboard";
-
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -48,13 +43,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-            {/* Platform (SaaS) routes */}
-            <Route path="/platform/register" element={<TenantOnboarding />} />
-            <Route path="/platform/login" element={<PlatformLogin />} />
-            <Route path="/platform/dashboard" element={<PlatformDashboard />} />
-            
-            {/* Tenant routes (existing) */}
-            <Route path="/" element={<Index />} />
+              {/* Tenant routes - this app serves individual tenant websites */}
+              <Route path="/" element={<Index />} />
             <Route path="/qualifications" element={<Qualifications />} />
             <Route path="/about" element={<DoctorProfile />} />
             <Route path="/doctors/:doctorName" element={<DoctorProfile />} />
