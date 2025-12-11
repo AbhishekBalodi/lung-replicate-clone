@@ -59,13 +59,18 @@ const PlatformDashboard = () => {
   const [typeFilter, setTypeFilter] = useState<string>('');
 
   useEffect(() => {
+    console.log('PlatformDashboard mounted');
     // Check if user is logged in
     const storedUser = localStorage.getItem('platformUser');
+    console.log('Stored user:', storedUser);
     if (!storedUser) {
+      console.log('No user found, redirecting to /login');
       navigate('/login');
       return;
     }
-    setUser(JSON.parse(storedUser));
+    const parsedUser = JSON.parse(storedUser);
+    console.log('Parsed user:', parsedUser);
+    setUser(parsedUser);
     fetchTenants();
   }, [navigate]);
 
