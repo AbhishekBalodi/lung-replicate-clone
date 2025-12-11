@@ -5,8 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CustomAuthProvider } from "./contexts/CustomAuthContext";
+import { AppointmentProvider } from "./contexts/AppointmentContext";
 import Index from "./pages/Index";
-
 import CustomAuth from "./pages/CustomAuth";
 import Dashboard from "./pages/Dashboard";
 import PatientDashboard from "./pages/PatientDashboard";
@@ -35,8 +35,9 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <CustomAuthProvider>
+  <AuthProvider>
+    <CustomAuthProvider>
+      <AppointmentProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -73,9 +74,10 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
-    </CustomAuthProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+    </AppointmentProvider>
+  </CustomAuthProvider>
+  </AuthProvider>
+</QueryClientProvider>
 );
 
 export default App;
