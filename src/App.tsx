@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CustomAuthProvider } from "./contexts/CustomAuthContext";
 import { AppointmentProvider } from "./contexts/AppointmentContext";
+import DevTenantSwitcher from "./components/DevTenantSwitcher";
 import Index from "./pages/Index";
 import CustomAuth from "./pages/CustomAuth";
 import Dashboard from "./pages/Dashboard";
@@ -41,6 +42,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <DevTenantSwitcher />
           <BrowserRouter>
             <Routes>
               {/* Tenant routes - this app serves individual tenant websites */}
