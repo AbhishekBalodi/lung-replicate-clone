@@ -72,7 +72,7 @@ const DevTenantSwitcher = () => {
   };
 
   useEffect(() => {
-    if (isOpen && tenants.length === 0) {
+    if (isOpen) {
       fetchTenants();
     }
   }, [isOpen]);
