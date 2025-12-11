@@ -1,0 +1,214 @@
+-- ============================================
+-- TENANT SCHEMA TEMPLATE
+-- ============================================
+-- This template is used to create a new database schema for each tenant
+-- Replace {{TENANT_CODE}} with the actual tenant code (e.g., 'tenant_hospital_abc')
+
+-- Create the tenant database
+CREATE DATABASE IF NOT EXISTS {{TENANT_CODE}};
+USE {{TENANT_CODE}};
+
+-- ============================================
+-- APPOINTMENTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS appointments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT NULL,                        -- For hospitals: which doctor (NULL for single-doctor tenants)
+  full_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(20) NOT NULL,
+  appointment_date DATE NOT NULL,
+  appointment_time TIME NOT NULL,
+  message TEXT,
+  status ENUM('pending', 'confirmed', 'rescheduled', 'cancelled', 'done') DEFAULT 'pending',
+  reports_uploaded BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_appointments_date (appointment_date),
+  INDEX idx_appointments_status (status),
+  INDEX idx_appointments_email (email)
+);
+
+-- ============================================
+-- PATIENTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS patients (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT NULL,                        -- For hospitals: primary doctor
+  full_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255),
+  phone VARCHAR(20),
+  date_of_birth DATE,
+  gender ENUM('male', 'female', 'other'),
+  address TEXT,
+  blood_group VARCHAR(5),
+  emergency_contact VARCHAR(20),
+  medical_history TEXT,
+  allergies TEXT,
+  notes TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  first_visit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  last_visit_date TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_patient (email, phone),
+  INDEX idx_patients_name (full_name),
+  INDEX idx_patients_phone (phone)
+);
+
+-- ============================================
+-- MEDICINES CATALOG TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS medicines_catalog (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  generic_name VARCHAR(255),
+  form ENUM('tablet', 'capsule', 'syrup', 'injection', 'cream', 'ointment', 'drops', 'inhaler', 'other') DEFAULT 'tablet',
+  strength VARCHAR(50),
+  manufacturer VARCHAR(255),
+  default_dosage VARCHAR(100),
+  default_frequency VARCHAR(100),
+  default_duration VARCHAR(50),
+  route VARCHAR(50),
+  instructions TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_medicines_name (name)
+);
+
+-- ============================================
+-- PRESCRIBED MEDICINES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS prescribed_medicines (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  appointment_id INT,
+  doctor_id INT NULL,
+  medicine_id INT,
+  medicine_name VARCHAR(255) NOT NULL,
+  dosage VARCHAR(100),
+  frequency VARCHAR(100),
+  duration VARCHAR(50),
+  instructions TEXT,
+  prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+  FOREIGN KEY (medicine_id) REFERENCES medicines_catalog(id) ON DELETE SET NULL,
+  INDEX idx_prescribed_patient (patient_id),
+  INDEX idx_prescribed_date (prescribed_date)
+);
+
+-- ============================================
+-- LAB TESTS CATALOG TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS lab_catalogue (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(100),
+  sample_type VARCHAR(100),
+  preparation_instructions TEXT,
+  turnaround_time VARCHAR(50),
+  price DECIMAL(10, 2),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_lab_name (name)
+);
+
+-- ============================================
+-- PRESCRIBED LAB TESTS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS labs_test (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  appointment_id INT,
+  doctor_id INT NULL,
+  lab_id INT,
+  test_name VARCHAR(255) NOT NULL,
+  notes TEXT,
+  status ENUM('ordered', 'sample_collected', 'in_progress', 'completed') DEFAULT 'ordered',
+  result TEXT,
+  turnaround_time VARCHAR(50),
+  prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_date TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+  FOREIGN KEY (lab_id) REFERENCES lab_catalogue(id) ON DELETE SET NULL,
+  INDEX idx_labs_patient (patient_id),
+  INDEX idx_labs_status (status)
+);
+
+-- ============================================
+-- PROCEDURES CATALOG TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS procedure_catalogue (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(100),
+  description TEXT,
+  duration_minutes INT,
+  preparation_instructions TEXT,
+  price DECIMAL(10, 2),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_procedure_name (name)
+);
+
+-- ============================================
+-- PRESCRIBED PROCEDURES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS procedures (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT NOT NULL,
+  appointment_id INT,
+  doctor_id INT NULL,
+  procedure_id INT,
+  procedure_name VARCHAR(255) NOT NULL,
+  notes TEXT,
+  status ENUM('scheduled', 'in_progress', 'completed', 'cancelled') DEFAULT 'scheduled',
+  scheduled_date TIMESTAMP NULL,
+  completed_date TIMESTAMP NULL,
+  prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE SET NULL,
+  FOREIGN KEY (procedure_id) REFERENCES procedure_catalogue(id) ON DELETE SET NULL,
+  INDEX idx_procedures_patient (patient_id),
+  INDEX idx_procedures_status (status)
+);
+
+-- ============================================
+-- CONTACT MESSAGES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  phone VARCHAR(20),
+  subject VARCHAR(255),
+  message TEXT NOT NULL,
+  status ENUM('new', 'read', 'replied', 'archived') DEFAULT 'new',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_contact_status (status)
+);
+
+-- ============================================
+-- SMTP SETTINGS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS smtp_settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  host VARCHAR(255) NOT NULL,
+  port INT DEFAULT 587,
+  username VARCHAR(255),
+  password VARCHAR(255),
+  from_email VARCHAR(255),
+  from_name VARCHAR(255),
+  use_tls BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
