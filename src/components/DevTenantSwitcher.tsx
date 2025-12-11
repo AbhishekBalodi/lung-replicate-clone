@@ -47,13 +47,15 @@ const DevTenantSwitcher = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<string | null>(null);
-
-  // Only render in development
-  if (import.meta.env.PROD) return null;
+  
+  // Check if we're in production mode
+  const isProduction = import.meta.env.PROD;
 
   useEffect(() => {
-    setCurrentTenant(getDevTenantCode());
-  }, []);
+    if (!isProduction) {
+      setCurrentTenant(getDevTenantCode());
+    }
+  }, [isProduction]);
 
   const fetchTenants = async () => {
     setLoading(true);
@@ -78,10 +80,10 @@ const DevTenantSwitcher = () => {
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isProduction && isOpen) {
       fetchTenants();
     }
-  }, [isOpen]);
+  }, [isOpen, isProduction]);
 
   const handleTenantChange = (tenantCode: string) => {
     if (tenantCode === "none") {
@@ -92,6 +94,9 @@ const DevTenantSwitcher = () => {
   };
 
   const currentTenantName = tenants.find(t => t.tenant_code === currentTenant)?.name;
+
+  // Only render in development - move conditional AFTER all hooks
+  if (isProduction) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-[9999]">
