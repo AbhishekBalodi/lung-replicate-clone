@@ -325,7 +325,7 @@ const AppointmentBooking = () => {
   };
 
   const updateFormData = (field: string, value: string | File | null) => {
-    setFormData({ ...formData, [field]: value });
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
