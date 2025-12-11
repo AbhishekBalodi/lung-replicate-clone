@@ -40,7 +40,7 @@ const PlatformLogin = () => {
       // Store platform admin session
       localStorage.setItem('platformUser', JSON.stringify(data.user));
       toast.success('Login successful');
-      navigate('/platform/dashboard');
+      navigate('/dashboard');
 
     } catch (error: any) {
       toast.error(error.message || 'Login failed');
@@ -99,7 +99,7 @@ const PlatformLogin = () => {
           <p className="text-sm text-muted-foreground text-center">
             Want to create a new medical website?
           </p>
-          <Link to="/platform/register">
+          <Link to="/register">
             <Button variant="outline" className="w-full">
               Register as Doctor/Hospital
             </Button>
