@@ -19,6 +19,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const getApiBaseUrl = () => {
+  // In development, use localhost:5050 directly
+  if (import.meta.env.DEV) {
+    return 'http://localhost:5050';
+  }
   if (import.meta.env.VITE_API_BASE_URL) {
     return import.meta.env.VITE_API_BASE_URL;
   }
@@ -58,7 +62,7 @@ const PlatformDashboard = () => {
     // Check if user is logged in
     const storedUser = localStorage.getItem('platformUser');
     if (!storedUser) {
-      navigate('/platform/login');
+      navigate('/login');
       return;
     }
     setUser(JSON.parse(storedUser));
@@ -93,7 +97,7 @@ const PlatformDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('platformUser');
-    navigate('/platform/login');
+    navigate('/login');
   };
 
   const handleStatusChange = async (tenantId: number, newStatus: string) => {
@@ -210,7 +214,7 @@ const PlatformDashboard = () => {
                 <CardTitle>Tenants</CardTitle>
                 <CardDescription>Manage all registered doctors and hospitals</CardDescription>
               </div>
-              <Button onClick={() => navigate('/platform/register')}>
+              <Button onClick={() => navigate('/register')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Add Tenant
               </Button>
@@ -321,11 +325,11 @@ const PlatformDashboard = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => navigate(`/platform/tenants/${tenant.id}`)}>
+                              <DropdownMenuItem onClick={() => navigate(`/tenants/${tenant.id}`)}>
                                 <Eye className="w-4 h-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => navigate(`/platform/tenants/${tenant.id}/settings`)}>
+                              <DropdownMenuItem onClick={() => navigate(`/tenants/${tenant.id}/settings`)}>
                                 <Settings className="w-4 h-4 mr-2" />
                                 Settings
                               </DropdownMenuItem>
