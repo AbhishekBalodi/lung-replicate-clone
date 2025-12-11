@@ -28,14 +28,19 @@ const PlatformLogin = () => {
     e.preventDefault();
     setIsLoading(true);
 
+    const apiUrl = `${getApiBaseUrl()}/api/platform/auth/login`;
+    console.log('Attempting login to:', apiUrl);
+
     try {
-      const response = await fetch(`${getApiBaseUrl()}/api/platform/auth/login`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed');
@@ -47,6 +52,7 @@ const PlatformLogin = () => {
       navigate('/dashboard');
 
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error(error.message || 'Login failed');
     } finally {
       setIsLoading(false);
