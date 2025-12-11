@@ -59,13 +59,19 @@ const DevTenantSwitcher = () => {
     setLoading(true);
     try {
       const apiBase = import.meta.env.VITE_API_BASE_URL || "";
+      console.log("[DevTenantSwitcher] Fetching from:", `${apiBase}/api/tenants`);
       const response = await fetch(`${apiBase}/api/tenants`);
+      console.log("[DevTenantSwitcher] Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
+        console.log("[DevTenantSwitcher] Response data:", data);
+        console.log("[DevTenantSwitcher] Tenants array:", data.tenants);
         setTenants(data.tenants || []);
+      } else {
+        console.error("[DevTenantSwitcher] Response not OK:", response.statusText);
       }
     } catch (error) {
-      console.error("Failed to fetch tenants:", error);
+      console.error("[DevTenantSwitcher] Failed to fetch tenants:", error);
     } finally {
       setLoading(false);
     }
