@@ -73,6 +73,8 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Patient not found' });
     }
 
+    const patient = patients[0];
+
     const [medicines] = await conn.execute(
       'SELECT * FROM medicines WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
       [id]
@@ -88,7 +90,15 @@ router.get('/:id', async (req, res) => {
       [id]
     );
 
-    res.json({ ...patients[0], medicines, lab_tests, procedures });
+    // Get all appointments for this patient (by email AND phone)
+    const [appointments] = await conn.execute(
+      `SELECT * FROM appointments 
+       WHERE email = ? AND phone = ? 
+       ORDER BY appointment_date DESC, appointment_time DESC`,
+      [patient.email, patient.phone]
+    );
+
+    res.json({ ...patient, medicines, lab_tests, procedures, appointments });
   } catch (e) {
     console.error('GET /api/patients/:id failed:', e);
     res.status(500).json({ error: e.message || 'Failed to load patient' });

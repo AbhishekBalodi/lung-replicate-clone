@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
 interface CustomUser {
-  id?: number;
+  id: number | null;
   email: string;
-  phone?: string;
+  phone: string;
   name: string;
   role: 'admin' | 'patient';
 }

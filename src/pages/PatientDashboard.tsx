@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,17 +53,17 @@ interface Procedure {
 }
 
 const PatientDashboard = ({ adminPatientId }: PatientDashboardProps) => {
-  const { email: emailFromURL } = useParams();
   const { user, logout, loading: authLoading } = useCustomAuth();
 
-  // ❗ Decide which ID/email to load
-  const effectiveId = adminPatientId ? adminPatientId.toString() : emailFromURL;
+  // Use adminPatientId if provided (admin viewing patient), otherwise use logged-in patient's ID
+  const effectiveId = adminPatientId ?? user?.id;
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [labTests, setLabTests] = useState<LabTest[]>([]);
   const [procedures, setProcedures] = useState<Procedure[]>([]);
   const [loading, setLoading] = useState(true);
+  const [patientInfo, setPatientInfo] = useState<{ full_name: string; email: string; phone: string } | null>(null);
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -76,30 +76,35 @@ const PatientDashboard = ({ adminPatientId }: PatientDashboardProps) => {
 
     if (effectiveId) {
       fetchPatientData(effectiveId);
+    } else {
+      setLoading(false);
     }
   }, [effectiveId, user, authLoading]);
 
-  const fetchPatientData = async (patientKey: string) => {
+  const fetchPatientData = async (patientId: number) => {
     try {
-      // Load appointments
-      const appointmentsRes = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/appointment?email=${encodeURIComponent(patientKey)}`
-      );
-
-      if (appointmentsRes.ok) {
-        setAppointments(await appointmentsRes.json());
-      }
-
-      // Load complete medical history
+      // Load complete patient data including appointments
       const patientRes = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/patients/${patientKey}`
+        `${import.meta.env.VITE_API_BASE_URL || ''}/api/patients/${patientId}`
       );
 
       if (patientRes.ok) {
         const data = await patientRes.json();
+        setPatientInfo({
+          full_name: data.full_name,
+          email: data.email,
+          phone: data.phone
+        });
+        setAppointments(data.appointments || []);
         setPrescriptions(data.medicines || []);
         setLabTests(data.lab_tests || []);
         setProcedures(data.procedures || []);
+      } else {
+        toast({
+          title: "Error",
+          description: "Patient not found",
+          variant: "destructive",
+        });
       }
     } catch (err) {
       console.error("Error loading dashboard:", err);

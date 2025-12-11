@@ -75,8 +75,8 @@ const CustomAuth = () => {
     if (loginType === 'admin') {
       navigate('/dashboard');
     } else {
-      // patient login → redirect to patient dashboard with their email
-      navigate(`/patient-dashboard/${encodeURIComponent(loggedInUser.email)}`);
+      // patient login → redirect to patient dashboard
+      navigate('/patient-dashboard');
     }
   };
 
