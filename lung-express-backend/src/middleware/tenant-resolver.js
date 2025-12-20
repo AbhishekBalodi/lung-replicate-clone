@@ -1,4 +1,5 @@
 import { resolveTenantFromDomain, getTenantPool, platformPool } from '../lib/platform-db.js';
+import { pool as legacyPool } from '../lib/db.js';
 
 /**
  * Middleware to resolve tenant from request domain
@@ -6,6 +7,8 @@ import { resolveTenantFromDomain, getTenantPool, platformPool } from '../lib/pla
  * 
  * IMPORTANT: Platform data (tenants, tenant_users) is in the `saas_platform` database.
  * Each tenant's operational data (appointments, patients) is in their own schema (e.g., `dr_dr_gaurav_taneja`).
+ * 
+ * LEGACY SUPPORT: For Doctor Mann (the original system before SaaS), we use the `Doctor_Mann` database directly.
  */
 export async function tenantResolver(req, res, next) {
   try {
@@ -23,6 +26,19 @@ export async function tenantResolver(req, res, next) {
       const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
       
       if (tenantCode) {
+        // LEGACY SUPPORT: Handle "doctor_mann" as special case
+        if (tenantCode === 'doctor_mann') {
+          req.tenant = {
+            id: 0,
+            tenant_code: 'doctor_mann',
+            name: 'Dr. Mann Clinic',
+            type: 'doctor',
+            status: 'active'
+          };
+          req.tenantPool = legacyPool;  // Use the legacy Doctor_Mann database
+          return next();
+        }
+
         try {
           // CRITICAL: Query the platform database for tenant info, not the tenant schema
           const [tenants] = await platformPool.execute(
