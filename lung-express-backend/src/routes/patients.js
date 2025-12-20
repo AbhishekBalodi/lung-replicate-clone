@@ -4,6 +4,22 @@ import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-cont
 
 const router = Router();
 
+/**
+ * Get schema-aware configuration based on tenant type
+ * Hospital tenants use doctor_id (INT), individual doctors use doctor_assigned (VARCHAR)
+ */
+function getSchemaConfig(req) {
+  const isHospital = req.tenant?.type === 'hospital';
+  
+  return {
+    isHospital,
+    // Doctor column differs between hospital and doctor schemas
+    doctorColumn: isHospital ? 'doctor_id' : 'doctor_assigned',
+    // Medicines table name differs (hospital uses prescribed_medicines, doctor uses medicines)
+    medicinesTable: isHospital ? 'prescribed_medicines' : 'medicines',
+  };
+}
+
 function makeKey(r) {
   const email = (r.email || '').trim().toLowerCase();
   const phone = (r.phone || '').toString().trim();
@@ -17,17 +33,24 @@ function makeKey(r) {
  */
 router.get('/', async (req, res) => {
   const q = (req.query.q || '').toString().trim().toLowerCase();
+  const config = getSchemaConfig(req);
 
   try {
     const pool = getPool(req);
     
-    // Build query with doctor filter
-    const doctorFilter = getDoctorFilter(req, 'doctor_id');
-    const whereSql = doctorFilter.whereSql ? `WHERE ${doctorFilter.whereSql}` : '';
+    // Build query with doctor filter (only for hospital tenants)
+    let whereSql = '';
+    let params = [];
+    
+    if (config.isHospital) {
+      const doctorFilter = getDoctorFilter(req, 'doctor_id');
+      whereSql = doctorFilter.whereSql ? `WHERE ${doctorFilter.whereSql}` : '';
+      params = doctorFilter.params;
+    }
     
     const [patients] = await pool.execute(
-      `SELECT id, full_name, email, phone, doctor_id FROM patients ${whereSql} ORDER BY full_name ASC`,
-      doctorFilter.params
+      `SELECT id, full_name, email, phone${config.isHospital ? ', doctor_id' : ', doctor_assigned'} FROM patients ${whereSql} ORDER BY full_name ASC`,
+      params
     );
 
     let out = patients;
@@ -49,15 +72,16 @@ router.get('/', async (req, res) => {
 /**
  * GET /api/patients/:id
  * Returns a single patient plus their medicines, newest first.
- * NOTE: We order by `prescribed_date` only because the table does not have `created_at`.
  */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+  const config = getSchemaConfig(req);
   let conn;
+  
   try {
     conn = await getConnection(req);
     
-    // Ensure procedures table exists
+    // Ensure procedures table exists (for backwards compatibility)
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS procedures (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -82,8 +106,9 @@ router.get('/:id', async (req, res) => {
 
     const patient = patients[0];
 
+    // Get medicines from the appropriate table based on schema
     const [medicines] = await conn.execute(
-      'SELECT * FROM medicines WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
+      `SELECT * FROM ${config.medicinesTable} WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC`,
       [id]
     );
 
@@ -120,10 +145,12 @@ router.get('/:id', async (req, res) => {
  */
 router.get('/:id/prescriptions', async (req, res) => {
   const { id } = req.params;
+  const config = getSchemaConfig(req);
+  
   try {
     const pool = getPool(req);
     const [rows] = await pool.execute(
-      'SELECT * FROM medicines WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
+      `SELECT * FROM ${config.medicinesTable} WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC`,
       [id]
     );
     res.json(rows);
@@ -139,6 +166,7 @@ router.get('/:id/prescriptions', async (req, res) => {
  */
 router.get('/search', async (req, res) => {
   const term = (req.query.term || '').toString().trim().toLowerCase();
+  const config = getSchemaConfig(req);
   
   if (!term) {
     return res.status(400).json({ error: 'Search term is required' });
@@ -147,14 +175,16 @@ router.get('/search', async (req, res) => {
   try {
     const pool = getPool(req);
     
-    // Build query with doctor filter
-    const doctorFilter = getDoctorFilter(req, 'doctor_id');
+    // Build query with doctor filter (only for hospital tenants)
     let whereSql = '(LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ?)';
     let params = [`%${term}%`, `%${term}%`, `%${term}%`];
     
-    if (doctorFilter.whereSql) {
-      whereSql = `${doctorFilter.whereSql} AND ${whereSql}`;
-      params = [...doctorFilter.params, ...params];
+    if (config.isHospital) {
+      const doctorFilter = getDoctorFilter(req, 'doctor_id');
+      if (doctorFilter.whereSql) {
+        whereSql = `${doctorFilter.whereSql} AND ${whereSql}`;
+        params = [...doctorFilter.params, ...params];
+      }
     }
     
     const [patients] = await pool.execute(

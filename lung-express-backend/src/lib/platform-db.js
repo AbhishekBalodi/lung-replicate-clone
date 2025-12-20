@@ -76,17 +76,34 @@ export async function resolveTenantFromDomain(domain) {
 /**
  * Create a new tenant database schema
  * @param {string} tenantCode - The tenant code for schema naming
+ * @param {string} tenantType - The type of tenant ('hospital' or 'doctor')
  * @returns {Promise<boolean>}
  */
-export async function createTenantSchema(tenantCode) {
+export async function createTenantSchema(tenantCode, tenantType = 'doctor') {
   const connection = await platformPool.getConnection();
   
   try {
-    // Read the template and replace placeholder
+    // Read the appropriate template based on tenant type
     const fs = await import('fs');
     const path = await import('path');
-    const templatePath = path.join(process.cwd(), 'tenant_schema_template.sql');
-    let template = fs.readFileSync(templatePath, 'utf8');
+    
+    // Select template based on tenant type
+    const templateFile = tenantType === 'hospital' 
+      ? 'hospital_schema_template.sql' 
+      : 'doctor_schema_template.sql';
+    
+    const templatePath = path.join(process.cwd(), templateFile);
+    
+    // Check if template exists, fallback to doctor template if not
+    let template;
+    try {
+      template = fs.readFileSync(templatePath, 'utf8');
+    } catch (err) {
+      console.warn(`Template ${templateFile} not found, falling back to doctor_schema_template.sql`);
+      const fallbackPath = path.join(process.cwd(), 'doctor_schema_template.sql');
+      template = fs.readFileSync(fallbackPath, 'utf8');
+    }
+    
     template = template.replace(/\{\{TENANT_CODE\}\}/g, tenantCode);
 
     // Split by semicolon and execute each statement
@@ -98,6 +115,7 @@ export async function createTenantSchema(tenantCode) {
       }
     }
 
+    console.log(`Created ${tenantType} schema for tenant: ${tenantCode}`);
     return true;
   } catch (error) {
     console.error('Error creating tenant schema:', error);

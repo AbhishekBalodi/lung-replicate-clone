@@ -92,8 +92,8 @@ router.post('/register', async (req, res) => {
         };
       }
 
-      // Create tenant database schema
-      await createTenantSchema(tenantCode);
+      // Create tenant database schema with appropriate template
+      await createTenantSchema(tenantCode, data.type);
 
       // Activate tenant
       await connection.execute(
