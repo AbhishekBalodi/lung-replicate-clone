@@ -10,7 +10,7 @@ export default function Settings() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user || user.role !== "admin") {
+    if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
       navigate("/");
     }
   }, [user, authLoading, navigate]);
