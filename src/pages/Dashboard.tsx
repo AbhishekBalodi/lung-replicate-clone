@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import { useAppointments } from "@/contexts/AppointmentContext";
+import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -78,7 +79,7 @@ export default function Dashboard() {
   const fetchPatientRecord = async (email: string, phone: string) => {
     try {
       const q = email ? email : phone;
-      const res = await fetch(`/api/patients?q=${encodeURIComponent(q)}`);
+      const res = await apiFetch(`/api/patients?q=${encodeURIComponent(q)}`, { method: "GET" });
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) return null;
       return data[0]; // always the first match
@@ -92,7 +93,7 @@ export default function Dashboard() {
   // ============================
   const fetchPatientFullData = async (patientId: number) => {
     try {
-      const res = await fetch(`/api/patients/${patientId}`);
+      const res = await apiFetch(`/api/patients/${patientId}`, { method: "GET" });
       const data = await res.json();
       return data;
     } catch {
@@ -127,7 +128,7 @@ export default function Dashboard() {
     const fullData = await fetchPatientFullData(record.id);
 
     // Step 3: appointment history
-    const histRes = await fetch(`/api/appointment?email=${encodeURIComponent(appt.email)}`);
+    const histRes = await apiFetch(`/api/appointment?email=${encodeURIComponent(appt.email)}`, { method: "GET" });
     const history = await histRes.json();
 
     setPatientDetails({

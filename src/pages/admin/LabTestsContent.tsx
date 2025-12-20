@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 import { Search, Plus } from "lucide-react";
 
 interface Patient {
@@ -105,7 +106,7 @@ export default function LabTestsContent() {
 
   const loadPatients = async () => {
     try {
-      const res = await fetch("/api/patients");
+      const res = await apiFetch("/api/patients", { method: "GET" });
       const data = await res.json();
       setPatients(data);
     } catch (e: any) {
@@ -120,7 +121,7 @@ export default function LabTestsContent() {
     }
 
     try {
-      const res = await fetch(`/api/patients/search?term=${encodeURIComponent(searchTerm)}`);
+      const res = await apiFetch(`/api/patients/search?term=${encodeURIComponent(searchTerm)}`, { method: "GET" });
       const data = await res.json();
       setPatients(data);
     } catch (e: any) {
@@ -131,7 +132,7 @@ export default function LabTestsContent() {
   const selectPatient = async (patient: Patient) => {
     setSelectedPatient(patient);
     try {
-      const res = await fetch(`/api/patients/${patient.id}`);
+      const res = await apiFetch(`/api/patients/${patient.id}`, { method: "GET" });
       const data = await res.json();
       setPrescribedTests(data.lab_tests || []);
     } catch (e: any) {

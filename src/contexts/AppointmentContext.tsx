@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
-
+import { apiFetch } from "@/lib/api";
 interface Appointment {
   id: number;
   full_name: string;
@@ -53,7 +53,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
   const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await fetch(API_BASE);
+      const res = await apiFetch(API_BASE, { method: "GET" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to fetch appointments");
       setAppointments(Array.isArray(data) ? data : []);
@@ -67,14 +67,12 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
 
   const markAppointmentDone = useCallback(async (id: number): Promise<boolean> => {
     try {
-      const res = await fetch(`${API_BASE}/${id}/done`, { method: "PATCH" });
+      const res = await apiFetch(`${API_BASE}/${id}/done`, { method: "PATCH" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to mark as done");
-      
+
       // Update local state immediately without refetching
-      setAppointments(prev => 
-        prev.map(a => a.id === id ? { ...a, status: "done" } : a)
-      );
+      setAppointments((prev) => prev.map((a) => (a.id === id ? { ...a, status: "done" } : a)));
       return true;
     } catch (e) {
       console.error("Error marking appointment done:", e);
@@ -84,12 +82,12 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
 
   const cancelAppointment = useCallback(async (id: number): Promise<boolean> => {
     try {
-      const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
+      const res = await apiFetch(`${API_BASE}/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to cancel appointment");
-      
+
       // Remove from local state immediately
-      setAppointments(prev => prev.filter(a => a.id !== id));
+      setAppointments((prev) => prev.filter((a) => a.id !== id));
       return true;
     } catch (e) {
       console.error("Error cancelling appointment:", e);
@@ -100,7 +98,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
   const fetchPatientRecord = async (email: string, phone: string) => {
     try {
       const q = email ? email : phone;
-      const res = await fetch(`/api/patients?q=${encodeURIComponent(q)}`);
+      const res = await apiFetch(`/api/patients?q=${encodeURIComponent(q)}`, { method: "GET" });
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) return null;
       return data[0];
@@ -111,7 +109,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
 
   const fetchPatientFullData = async (patientId: number) => {
     try {
-      const res = await fetch(`/api/patients/${patientId}`);
+      const res = await apiFetch(`/api/patients/${patientId}`, { method: "GET" });
       const data = await res.json();
       return data;
     } catch {
@@ -132,7 +130,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
     }
 
     const fullData = await fetchPatientFullData(record.id);
-    const histRes = await fetch(`/api/appointment?email=${encodeURIComponent(appt.email)}`);
+    const histRes = await apiFetch(`/api/appointment?email=${encodeURIComponent(appt.email)}`, { method: "GET" });
     const history = await histRes.json();
 
     const details: PatientDetails = {
@@ -152,7 +150,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
     if (!record) return;
 
     const fullData = await fetchPatientFullData(record.id);
-    const histRes = await fetch(`/api/appointment?email=${encodeURIComponent(email)}`);
+    const histRes = await apiFetch(`/api/appointment?email=${encodeURIComponent(email)}`, { method: "GET" });
     const history = await histRes.json();
 
     const details: PatientDetails = {
