@@ -1,5 +1,10 @@
 import { resolveTenantFromDomain, getTenantPool, platformPool } from '../lib/platform-db.js';
-import { pool as legacyPool } from '../lib/db.js';
+
+// Legacy database name mapping - tenant_code -> actual database name
+// This handles cases where database names don't match tenant codes
+const LEGACY_DB_MAP = {
+  'doctor_mann': 'Doctor_Mann'  // Original system before SaaS
+};
 
 /**
  * Middleware to resolve tenant from request domain
@@ -26,19 +31,9 @@ export async function tenantResolver(req, res, next) {
       const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
       
       if (tenantCode) {
-        // LEGACY SUPPORT: Handle "doctor_mann" as special case
-        if (tenantCode === 'doctor_mann') {
-          req.tenant = {
-            id: 0,
-            tenant_code: 'doctor_mann',
-            name: 'Dr. Mann Clinic',
-            type: 'doctor',
-            status: 'active'
-          };
-          req.tenantPool = legacyPool;  // Use the legacy Doctor_Mann database
-          return next();
-        }
-
+        // Check if this is a legacy tenant with a mapped database name
+        const dbName = LEGACY_DB_MAP[tenantCode] || tenantCode;
+        
         try {
           // CRITICAL: Query the platform database for tenant info, not the tenant schema
           const [tenants] = await platformPool.execute(
@@ -48,15 +43,30 @@ export async function tenantResolver(req, res, next) {
 
           if (tenants.length > 0) {
             req.tenant = tenants[0];
-            // Get or create a pool for the tenant's own schema
-            req.tenantPool = await getTenantPool(tenantCode);
+            // Get or create a pool for the tenant's own schema using mapped DB name
+            req.tenantPool = await getTenantPool(dbName);
           } else {
-            console.warn(`Tenant not found for code: ${tenantCode}`);
+            // Legacy fallback: tenant might not be in platform DB yet
+            req.tenant = {
+              id: 0,
+              tenant_code: tenantCode,
+              name: tenantCode === 'doctor_mann' ? 'Dr. Mann Clinic' : tenantCode,
+              type: 'doctor',
+              status: 'active'
+            };
+            req.tenantPool = await getTenantPool(dbName);
           }
         } catch (dbError) {
-          // If platform DB query fails, log but don't crash
+          // If platform DB query fails, still try to connect to tenant DB directly
           console.error('Platform DB query failed:', dbError.message);
-          console.error('Make sure the saas_platform database exists with the tenants table.');
+          req.tenant = {
+            id: 0,
+            tenant_code: tenantCode,
+            name: tenantCode,
+            type: 'doctor',
+            status: 'active'
+          };
+          req.tenantPool = await getTenantPool(dbName);
         }
       }
       
