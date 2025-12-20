@@ -1,12 +1,16 @@
 import mysql from 'mysql2/promise';
 
-// Platform database pool - for SaaS management
+// Platform database name - configurable via env, defaults to saas_platform
+const PLATFORM_DB = process.env.PLATFORM_DB_NAME || 'saas_platform';
+
+// Platform database pool - for SaaS management (tenants, users, domains, settings)
+// This is SEPARATE from tenant databases
 export const platformPool = mysql.createPool({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT ?? 3306),
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: 'saas_platform',
+  database: PLATFORM_DB,
   waitForConnections: true,
   connectionLimit: 20,
   queueLimit: 0
@@ -154,8 +158,10 @@ export function generateVerificationToken() {
     const conn = await platformPool.getConnection();
     await conn.ping();
     conn.release();
-    console.log('Platform MySQL pool ready');
+    console.log(`Platform MySQL pool ready (database: ${PLATFORM_DB})`);
   } catch (e) {
     console.error('Platform MySQL connection failed:', e.message);
+    console.error(`Make sure the "${PLATFORM_DB}" database exists and has the platform schema.`);
+    console.error('Run: mysql -u root -p < platform_schema.sql');
   }
 })();
