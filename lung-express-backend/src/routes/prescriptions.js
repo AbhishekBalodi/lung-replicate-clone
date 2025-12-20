@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getPool } from '../lib/tenant-db.js';
+import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-context.js';
 
 const router = Router();
 
@@ -12,9 +13,20 @@ router.get('/', async (req, res) => {
 
   try {
     const pool = getPool(req);
+    
+    // Build query with doctor filter
+    const doctorFilter = getDoctorFilter(req, 'doctor_id');
+    let whereSql = 'patient_id = ?';
+    let params = [patient_id];
+    
+    if (doctorFilter.whereSql) {
+      whereSql = `${doctorFilter.whereSql} AND ${whereSql}`;
+      params = [...doctorFilter.params, patient_id];
+    }
+    
     const [rows] = await pool.execute(
-      'SELECT * FROM medicines WHERE patient_id = ? ORDER BY prescribed_date DESC',
-      [patient_id]
+      `SELECT * FROM medicines WHERE ${whereSql} ORDER BY prescribed_date DESC`,
+      params
     );
     res.json(rows);
   } catch (e) {
@@ -34,9 +46,10 @@ router.post('/', async (req, res) => {
   }
   try {
     const pool = getPool(req);
+    const doctorId = getDoctorIdForInsert(req);
     const [result] = await pool.execute(
-      'INSERT INTO medicines (patient_id, medicine_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [patient_id, medicine_id || null, medicine_name, dosage || null, frequency || null, duration || null, instructions || null]
+      'INSERT INTO medicines (patient_id, doctor_id, medicine_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [patient_id, doctorId, medicine_id || null, medicine_name, dosage || null, frequency || null, duration || null, instructions || null]
     );
     res.status(201).json({ success: true, id: result.insertId });
   } catch (e) {

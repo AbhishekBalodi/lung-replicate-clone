@@ -2,10 +2,12 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { getPool, getConnection } from '../lib/tenant-db.js';
 import { sendMail, appointmentUserTemplate, appointmentDoctorTemplate } from '../lib/mailer.js';
+import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-context.js';
 
 const TBL = 'appointments';
 const COL = {
   id: 'id',
+  doctor_id: 'doctor_id',
   full_name: 'full_name',
   email: 'email',
   phone: 'phone',
@@ -93,15 +95,17 @@ router.post('/', async (req, res) => {
     }
 
     // 1) Insert appointment (DEFAULT = pending)
+    const doctorId = getDoctorIdForInsert(req);
     const sql =
       `INSERT INTO \`${TBL}\`
-       (\`${COL.full_name}\`, \`${COL.email}\`, \`${COL.phone}\`,
+       (\`${COL.doctor_id}\`, \`${COL.full_name}\`, \`${COL.email}\`, \`${COL.phone}\`,
         \`${COL.appointment_date}\`, \`${COL.appointment_time}\`,
         \`${COL.selected_doctor}\`, \`${COL.message}\`,
         \`${COL.reports_uploaded}\`, \`${COL.status}\`, \`${COL.created_at}\`)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`;
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())`;
 
     const [ins] = await conn.execute(sql, [
+      doctorId,
       v.full_name,
       v.email,
       v.phone,
@@ -190,6 +194,13 @@ router.get('/', async (req, res) => {
   try {
     const where = [];
     const params = [];
+
+    // Add doctor filter for hospital tenants
+    const doctorFilter = getDoctorFilter(req, `\`${COL.doctor_id}\``);
+    if (doctorFilter.whereSql) {
+      where.push(doctorFilter.whereSql);
+      params.push(...doctorFilter.params);
+    }
 
     if (email) {
       where.push(`\`${COL.email}\` = ?`);
