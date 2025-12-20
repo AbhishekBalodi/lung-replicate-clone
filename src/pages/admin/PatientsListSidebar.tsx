@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { apiFetch } from "@/lib/api";
 import { User } from "lucide-react";
 
 export default function PatientsListSidebar({
@@ -12,13 +13,13 @@ export default function PatientsListSidebar({
   const [search, setSearch] = useState("");
 
   const loadPatients = async () => {
-    const res = await fetch("/api/patients");
+    const res = await apiFetch("/api/patients", { method: "GET" });
     const data = await res.json();
     setPatients(data);
   };
 
   const searchPatients = async () => {
-    const res = await fetch(`/api/patients?q=${encodeURIComponent(search)}`);
+    const res = await apiFetch(`/api/patients?q=${encodeURIComponent(search)}`, { method: "GET" });
     const data = await res.json();
     setPatients(data);
   };
