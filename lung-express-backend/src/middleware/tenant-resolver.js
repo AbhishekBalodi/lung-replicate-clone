@@ -3,6 +3,9 @@ import { resolveTenantFromDomain, getTenantPool, platformPool } from '../lib/pla
 /**
  * Middleware to resolve tenant from request domain
  * Sets req.tenant and req.tenantPool if resolved
+ * 
+ * IMPORTANT: Platform data (tenants, tenant_users) is in the `saas_platform` database.
+ * Each tenant's operational data (appointments, patients) is in their own schema (e.g., `dr_dr_gaurav_taneja`).
  */
 export async function tenantResolver(req, res, next) {
   try {
@@ -20,14 +23,24 @@ export async function tenantResolver(req, res, next) {
       const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
       
       if (tenantCode) {
-        const [tenants] = await platformPool.execute(
-          'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
-          [tenantCode, 'active']
-        );
+        try {
+          // CRITICAL: Query the platform database for tenant info, not the tenant schema
+          const [tenants] = await platformPool.execute(
+            'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
+            [tenantCode, 'active']
+          );
 
-        if (tenants.length > 0) {
-          req.tenant = tenants[0];
-          req.tenantPool = await getTenantPool(tenantCode);
+          if (tenants.length > 0) {
+            req.tenant = tenants[0];
+            // Get or create a pool for the tenant's own schema
+            req.tenantPool = await getTenantPool(tenantCode);
+          } else {
+            console.warn(`Tenant not found for code: ${tenantCode}`);
+          }
+        } catch (dbError) {
+          // If platform DB query fails, log but don't crash
+          console.error('Platform DB query failed:', dbError.message);
+          console.error('Make sure the saas_platform database exists with the tenants table.');
         }
       }
       
