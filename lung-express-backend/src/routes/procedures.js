@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getPool, getConnection } from '../lib/tenant-db.js';
+import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-context.js';
 
 const router = Router();
 
@@ -23,6 +24,7 @@ async function ensureTables(conn) {
     CREATE TABLE IF NOT EXISTS procedures (
       id INT AUTO_INCREMENT PRIMARY KEY,
       patient_id INT NOT NULL,
+      doctor_id INT NULL,
       procedure_catalogue_id INT,
       procedure_name VARCHAR(150) NOT NULL,
       category VARCHAR(100),
@@ -83,14 +85,22 @@ router.post('/catalog', async (req, res) => {
 });
 
 /**
- * GET /api/procedures - Get all prescribed procedures
+ * GET /api/procedures - Get all prescribed procedures (filtered by doctor)
  */
 router.get('/', async (req, res) => {
   let conn;
   try {
     conn = await getConnection(req);
     await ensureTables(conn);
-    const [rows] = await conn.execute('SELECT * FROM procedures ORDER BY id DESC');
+    
+    // Build query with doctor filter
+    const doctorFilter = getDoctorFilter(req, 'doctor_id');
+    const whereSql = doctorFilter.whereSql ? `WHERE ${doctorFilter.whereSql}` : '';
+    
+    const [rows] = await conn.execute(
+      `SELECT * FROM procedures ${whereSql} ORDER BY id DESC`,
+      doctorFilter.params
+    );
     res.json(rows);
   } catch (e) {
     console.error('Error fetching prescribed procedures:', e);
@@ -127,6 +137,7 @@ router.post('/', async (req, res) => {
     await conn.beginTransaction();
 
     let finalPatientId = patient_id;
+    const doctorId = getDoctorIdForInsert(req);
 
     // If no patient_id, create a new patient entry
     if (!finalPatientId) {
@@ -136,15 +147,15 @@ router.post('/', async (req, res) => {
       }
 
       const [patientResult] = await conn.execute(
-        'INSERT INTO patients (full_name, email, phone) VALUES (?, ?, ?)',
-        [full_name || 'Unknown', email || null, phone || null]
+        'INSERT INTO patients (full_name, email, phone, doctor_id) VALUES (?, ?, ?, ?)',
+        [full_name || 'Unknown', email || null, phone || null, doctorId]
       );
       finalPatientId = patientResult.insertId;
     }
 
     const [result] = await conn.execute(
-      'INSERT INTO procedures (patient_id, procedure_catalogue_id, procedure_name, category, description, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?)',
-      [finalPatientId, procedure_catalogue_id || null, procedure_name, category || null, description || null, preparation_instructions || null]
+      'INSERT INTO procedures (patient_id, doctor_id, procedure_catalogue_id, procedure_name, category, description, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [finalPatientId, doctorId, procedure_catalogue_id || null, procedure_name, category || null, description || null, preparation_instructions || null]
     );
 
     await conn.commit();

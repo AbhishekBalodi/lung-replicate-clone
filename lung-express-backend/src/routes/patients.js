@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getPool, getConnection } from '../lib/tenant-db.js';
+import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-context.js';
 
 const router = Router();
 
@@ -19,9 +20,14 @@ router.get('/', async (req, res) => {
 
   try {
     const pool = getPool(req);
-    // Simply get all patients - no complex sync logic
+    
+    // Build query with doctor filter
+    const doctorFilter = getDoctorFilter(req, 'doctor_id');
+    const whereSql = doctorFilter.whereSql ? `WHERE ${doctorFilter.whereSql}` : '';
+    
     const [patients] = await pool.execute(
-      'SELECT id, full_name, email, phone FROM patients ORDER BY full_name ASC'
+      `SELECT id, full_name, email, phone, doctor_id FROM patients ${whereSql} ORDER BY full_name ASC`,
+      doctorFilter.params
     );
 
     let out = patients;
@@ -140,9 +146,20 @@ router.get('/search', async (req, res) => {
 
   try {
     const pool = getPool(req);
+    
+    // Build query with doctor filter
+    const doctorFilter = getDoctorFilter(req, 'doctor_id');
+    let whereSql = '(LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ?)';
+    let params = [`%${term}%`, `%${term}%`, `%${term}%`];
+    
+    if (doctorFilter.whereSql) {
+      whereSql = `${doctorFilter.whereSql} AND ${whereSql}`;
+      params = [...doctorFilter.params, ...params];
+    }
+    
     const [patients] = await pool.execute(
-      'SELECT id, full_name, email, phone FROM patients WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ? ORDER BY full_name ASC',
-      [`%${term}%`, `%${term}%`, `%${term}%`]
+      `SELECT id, full_name, email, phone FROM patients WHERE ${whereSql} ORDER BY full_name ASC`,
+      params
     );
     res.json(patients);
   } catch (e) {

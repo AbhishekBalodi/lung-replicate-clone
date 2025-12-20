@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { pool } from './lib/db.js';
 import { tenantResolver } from './middleware/tenant-resolver.js';
+import { doctorContext } from './middleware/doctor-context.js';
 
 // Existing routes
 import contactRouter from './routes/contact.js';
@@ -28,6 +29,9 @@ app.use(express.json());
 
 // Apply tenant resolver middleware
 app.use(tenantResolver);
+
+// Apply doctor context middleware (extracts doctor_id from headers)
+app.use(doctorContext);
 
 app.get('/api/ping', (req, res) => {
   res.json({ ok: true, ts: new Date().toISOString() });
