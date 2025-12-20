@@ -12,6 +12,9 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
+    // Prevent "Invalid hook call" errors caused by multiple React copies
+    // (common in monorepos / linked deps / mixed builds)
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },

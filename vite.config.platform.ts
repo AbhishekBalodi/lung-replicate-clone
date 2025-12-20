@@ -29,6 +29,8 @@ export default defineConfig({
     react(),
   ],
   resolve: {
+    // Prevent "Invalid hook call" errors caused by multiple React copies
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
