@@ -1,8 +1,9 @@
 -- ============================================
--- TENANT SCHEMA TEMPLATE
+-- INDIVIDUAL DOCTOR SCHEMA TEMPLATE
 -- ============================================
--- This template is used to create a new database schema for each tenant
--- Replace {{TENANT_CODE}} with the actual tenant code (e.g., 'tenant_hospital_abc')
+-- This template is used for individual doctor tenants (single-doctor practices)
+-- Uses selected_doctor VARCHAR for doctor reference (simpler structure)
+-- Replace {{TENANT_CODE}} with the actual tenant code
 
 -- Create the tenant database
 CREATE DATABASE IF NOT EXISTS {{TENANT_CODE}};
@@ -13,12 +14,12 @@ USE {{TENANT_CODE}};
 -- ============================================
 CREATE TABLE IF NOT EXISTS appointments (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  doctor_id INT NULL,                        -- For hospitals: which doctor (NULL for single-doctor tenants)
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
   phone VARCHAR(20) NOT NULL,
   appointment_date DATE NOT NULL,
-  appointment_time TIME NOT NULL,
+  appointment_time VARCHAR(50) NOT NULL,
+  selected_doctor VARCHAR(150) NOT NULL,
   message TEXT,
   status ENUM('pending', 'confirmed', 'rescheduled', 'cancelled', 'done') DEFAULT 'pending',
   reports_uploaded BOOLEAN DEFAULT FALSE,
@@ -34,7 +35,6 @@ CREATE TABLE IF NOT EXISTS appointments (
 -- ============================================
 CREATE TABLE IF NOT EXISTS patients (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  doctor_id INT NULL,                        -- For hospitals: primary doctor
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255),
   phone VARCHAR(20),
@@ -47,6 +47,9 @@ CREATE TABLE IF NOT EXISTS patients (
   allergies TEXT,
   notes TEXT,
   is_active BOOLEAN DEFAULT TRUE,
+  last_appointment_date DATE,
+  last_appointment_time VARCHAR(50),
+  doctor_assigned VARCHAR(150),
   first_visit_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   last_visit_date TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -78,13 +81,12 @@ CREATE TABLE IF NOT EXISTS medicines_catalog (
 );
 
 -- ============================================
--- PRESCRIBED MEDICINES TABLE
+-- PRESCRIBED MEDICINES TABLE (named 'medicines' for individual doctors for compatibility)
 -- ============================================
-CREATE TABLE IF NOT EXISTS prescribed_medicines (
+CREATE TABLE IF NOT EXISTS medicines (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT NOT NULL,
   appointment_id INT,
-  doctor_id INT NULL,
   medicine_id INT,
   medicine_name VARCHAR(255) NOT NULL,
   dosage VARCHAR(100),
@@ -124,13 +126,15 @@ CREATE TABLE IF NOT EXISTS labs_test (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT NOT NULL,
   appointment_id INT,
-  doctor_id INT NULL,
   lab_id INT,
   test_name VARCHAR(255) NOT NULL,
+  category VARCHAR(100),
+  sample_type VARCHAR(100),
   notes TEXT,
   status ENUM('ordered', 'sample_collected', 'in_progress', 'completed') DEFAULT 'ordered',
   result TEXT,
   turnaround_time VARCHAR(50),
+  preparation_instructions TEXT,
   prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   completed_date TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -165,11 +169,13 @@ CREATE TABLE IF NOT EXISTS procedures (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT NOT NULL,
   appointment_id INT,
-  doctor_id INT NULL,
   procedure_id INT,
   procedure_name VARCHAR(255) NOT NULL,
+  category VARCHAR(100),
+  description TEXT,
   notes TEXT,
   status ENUM('scheduled', 'in_progress', 'completed', 'cancelled') DEFAULT 'scheduled',
+  preparation_instructions TEXT,
   scheduled_date TIMESTAMP NULL,
   completed_date TIMESTAMP NULL,
   prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
