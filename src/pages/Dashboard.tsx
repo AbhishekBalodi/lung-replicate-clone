@@ -151,7 +151,7 @@ export default function Dashboard() {
 
   // redirect if not logged in or not admin
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "admin")) {
+    if (!authLoading && (!user || (user.role !== "admin" && user.role !== "super_admin"))) {
       navigate("/login");
     }
   }, [authLoading, user, navigate]);
