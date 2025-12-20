@@ -48,13 +48,13 @@ export default function CompletedAppointments() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "admin")) {
+    if (!authLoading && (!user || (user.role !== "admin" && user.role !== "super_admin"))) {
       navigate("/login");
     }
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (user && user.role === "admin") {
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
       fetchCompletedAppointments();
     }
   }, [user]);

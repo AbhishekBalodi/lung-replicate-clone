@@ -60,7 +60,7 @@ export default function Calendar() {
   const [newTime, setNewTime] = useState("");
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "admin")) {
+    if (!authLoading && (!user || (user.role !== "admin" && user.role !== "super_admin"))) {
       navigate("/login");
     }
   }, [authLoading, user, navigate]);

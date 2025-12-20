@@ -95,7 +95,7 @@ export default function NewAppointment() {
 
   // Redirect if not admin
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
+    if (!loading && (!user || (user.role !== "admin" && user.role !== "super_admin"))) {
       navigate("/login");
     }
   }, [loading, user, navigate]);
@@ -253,7 +253,7 @@ export default function NewAppointment() {
     return <div className="min-h-screen bg-emerald-50/30 flex items-center justify-center">Loading...</div>;
   }
 
-  if (!user || user.role !== "admin") {
+  if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
     return null;
   }
 

@@ -92,13 +92,13 @@ export default function Consultation() {
   });
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== "admin")) {
+    if (!authLoading && (!user || (user.role !== "admin" && user.role !== "super_admin"))) {
       navigate("/login");
     }
   }, [authLoading, user, navigate]);
 
   useEffect(() => {
-    if (user && user.role === "admin") {
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
       loadPatients();
       loadMedicinesCatalog();
       loadLabCatalog();

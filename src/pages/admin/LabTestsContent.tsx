@@ -58,7 +58,7 @@ export default function LabTestsContent() {
   });
 
   useEffect(() => {
-    if (user && user.role === "admin") {
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
       loadLabCatalog();
       loadPatients();
     }
