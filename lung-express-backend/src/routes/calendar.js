@@ -1,5 +1,5 @@
 import express from 'express';
-import { pool } from '../lib/db.js';
+import { getPool, getConnection } from '../lib/tenant-db.js';
 
 const router = express.Router();
 
@@ -7,7 +7,7 @@ const router = express.Router();
 router.get('/', async (req, res) => {
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     
     // Ensure appointments table has status column
     await conn.execute(`
@@ -112,7 +112,7 @@ router.get('/', async (req, res) => {
 router.get('/stats', async (req, res) => {
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     const today = new Date().toISOString().split('T')[0];
     
     const [stats] = await conn.query(`
@@ -139,7 +139,7 @@ router.get('/stats', async (req, res) => {
 router.get('/doctors', async (req, res) => {
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     const [doctors] = await conn.query(`
       SELECT 
         selected_doctor as name,

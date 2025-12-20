@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { pool } from '../lib/db.js';
+import { getPool, getConnection } from '../lib/tenant-db.js';
 
 const router = Router();
 
@@ -41,7 +41,7 @@ async function ensureTables(conn) {
 router.get('/catalog', async (req, res) => {
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     await ensureTables(conn);
     const [rows] = await conn.execute('SELECT * FROM procedure_catalogue ORDER BY name ASC');
     res.json(rows);
@@ -65,7 +65,7 @@ router.post('/catalog', async (req, res) => {
 
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     await ensureTables(conn);
 
     const [result] = await conn.execute(
@@ -88,7 +88,7 @@ router.post('/catalog', async (req, res) => {
 router.get('/', async (req, res) => {
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     await ensureTables(conn);
     const [rows] = await conn.execute('SELECT * FROM procedures ORDER BY id DESC');
     res.json(rows);
@@ -122,7 +122,7 @@ router.post('/', async (req, res) => {
 
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     await ensureTables(conn);
     await conn.beginTransaction();
 

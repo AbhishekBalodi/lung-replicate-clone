@@ -1,11 +1,14 @@
 import { Router } from 'express';
-import { pool } from '../lib/db.js';
+import { getPool } from '../lib/tenant-db.js';
+import { platformPool } from '../lib/platform-db.js';
 
 const router = Router();
 
 /**
  * POST /api/auth/login
  * body: { email, password, loginType: 'admin' | 'patient' }
+ * 
+ * For multi-tenant: Admin credentials come from tenant_users table in platform DB
  */
 router.post('/login', async (req, res) => {
   const { email, password, loginType } = req.body;
@@ -15,23 +18,65 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    if (loginType === 'admin') {
-      // Admin login - hardcoded credentials
-      const ADMIN_EMAIL = 'abhishekbalodi729@gmail.com';
-      const ADMIN_PASSWORD = '9560720890';
+    const pool = getPool(req);
 
-      if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+    if (loginType === 'admin') {
+      // Check if we have a tenant context
+      if (req.tenant) {
+        // Multi-tenant mode: Check tenant_users table
+        const [users] = await platformPool.execute(
+          `SELECT tu.*, t.name as tenant_name 
+           FROM tenant_users tu 
+           JOIN tenants t ON tu.tenant_id = t.id 
+           WHERE tu.email = ? AND tu.tenant_id = ? AND tu.status = 'active'`,
+          [email.trim(), req.tenant.id]
+        );
+
+        if (users.length === 0) {
+          return res.status(401).json({ error: 'Invalid admin credentials' });
+        }
+
+        const user = users[0];
+        
+        // For now, simple password check (in production, use bcrypt)
+        // The password should be hashed in tenant_users table
+        const bcrypt = await import('bcryptjs');
+        const isValid = await bcrypt.compare(password, user.password_hash);
+        
+        if (!isValid) {
+          return res.status(401).json({ error: 'Invalid admin credentials' });
+        }
+
         return res.json({
           success: true,
           userType: 'admin',
           user: {
-            email: ADMIN_EMAIL,
-            name: 'Admin',
-            role: 'admin'
+            id: user.id,
+            email: user.email,
+            name: user.full_name || 'Admin',
+            role: user.role,
+            tenantId: req.tenant.id,
+            tenantName: user.tenant_name
           }
         });
       } else {
-        return res.status(401).json({ error: 'Invalid admin credentials' });
+        // Fallback for development without tenant context (Doctor Mann)
+        const ADMIN_EMAIL = 'abhishekbalodi729@gmail.com';
+        const ADMIN_PASSWORD = '9560720890';
+
+        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+          return res.json({
+            success: true,
+            userType: 'admin',
+            user: {
+              email: ADMIN_EMAIL,
+              name: 'Admin',
+              role: 'admin'
+            }
+          });
+        } else {
+          return res.status(401).json({ error: 'Invalid admin credentials' });
+        }
       }
     } else if (loginType === 'patient') {
       // Patient login - check appointments table (email + phone as password)

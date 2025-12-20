@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { pool } from '../lib/db.js';
+import { getPool } from '../lib/tenant-db.js';
 
 const router = Router();
 
@@ -11,6 +11,7 @@ router.get('/', async (req, res) => {
   if (!patient_id) return res.status(400).json({ error: 'patient_id is required' });
 
   try {
+    const pool = getPool(req);
     const [rows] = await pool.execute(
       'SELECT * FROM medicines WHERE patient_id = ? ORDER BY prescribed_date DESC',
       [patient_id]
@@ -32,6 +33,7 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'medicine_name is required' });
   }
   try {
+    const pool = getPool(req);
     const [result] = await pool.execute(
       'INSERT INTO medicines (patient_id, medicine_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [patient_id, medicine_id || null, medicine_name, dosage || null, frequency || null, duration || null, instructions || null]

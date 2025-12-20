@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { pool } from '../lib/db.js';
+import { getPool, getConnection } from '../lib/tenant-db.js';
 import { sendMail, appointmentUserTemplate, appointmentDoctorTemplate } from '../lib/mailer.js';
 
 const TBL = 'appointments';
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
     });
   }
 
-  const conn = await pool.getConnection();
+  const conn = await getConnection(req);
   try {
     await conn.beginTransaction();
 
@@ -225,7 +225,7 @@ router.get('/', async (req, res) => {
        ${whereSql}
        ORDER BY \`${COL.appointment_date}\` ASC, \`${COL.appointment_time}\` ASC, \`${COL.id}\` DESC`;
 
-    const [rows] = await pool.execute(sql, params);
+    const [rows] = await getPool(req).execute(sql, params);
     res.json(rows);
   } catch (e) {
     console.error('GET /api/appointment failed:', e);
@@ -239,7 +239,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await pool.execute(
+    const [rows] = await getPool(req).execute(
       `SELECT * FROM \`${TBL}\` WHERE \`${COL.id}\` = ? LIMIT 1`,
       [id]
     );
@@ -257,6 +257,7 @@ router.get('/:id', async (req, res) => {
 router.patch('/:id/done', async (req, res) => {
   const { id } = req.params;
   try {
+    const pool = getPool(req);
     await pool.execute(
       `UPDATE \`${TBL}\` SET \`${COL.status}\` = 'done' WHERE \`${COL.id}\` = ?`,
       [id]
@@ -344,6 +345,7 @@ router.patch('/:id', async (req, res) => {
     values.push(id);
     const query = `UPDATE \`${TBL}\` SET ${updates.join(', ')} WHERE \`${COL.id}\` = ?`;
 
+    const pool = getPool(req);
     await pool.execute(query, values);
 
     const [rows] = await pool.execute(
@@ -379,6 +381,7 @@ router.patch('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
+    const pool = getPool(req);
     const [rows] = await pool.execute(
       `SELECT * FROM \`${TBL}\` WHERE \`${COL.id}\` = ?`,
       [id]
