@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { pool } from "../lib/db.js";
+import { getPool, getConnection } from "../lib/tenant-db.js";
 
 const router = Router();
 
@@ -37,10 +37,10 @@ async function ensureTables(conn) {
 }
 
 /* ------------------- catalog: GET /catalog ------------------ */
-/** Returns all catalog items used by the UI “Medicines Catalog” list */
-router.get("/catalog", async (_req, res) => {
+/** Returns all catalog items used by the UI "Medicines Catalog" list */
+router.get("/catalog", async (req, res) => {
   try {
-    const conn = await pool.getConnection();
+    const conn = await getConnection(req);
     try {
       await ensureTables(conn);
       const [rows] = await conn.query(
@@ -72,7 +72,7 @@ router.post("/catalog", async (req, res) => {
     return res.status(400).json({ error: "Medicine name is required." });
   }
 
-  const conn = await pool.getConnection();
+  const conn = await getConnection(req);
   try {
     await ensureTables(conn);
     await conn.execute(
@@ -95,8 +95,9 @@ router.post("/catalog", async (req, res) => {
 
 /* --------------- prescribed: GET / (list all) --------------- */
 /** Admin listing of prescribed medicines (not the catalog) */
-router.get("/", async (_req, res) => {
+router.get("/", async (req, res) => {
   try {
+    const pool = getPool(req);
     const [rows] = await pool.query(
       "SELECT * FROM medicines ORDER BY id DESC"
     );
@@ -130,7 +131,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Medicine name is required." });
   }
 
-  const conn = await pool.getConnection();
+  const conn = await getConnection(req);
   try {
     await conn.beginTransaction();
     await ensureTables(conn);

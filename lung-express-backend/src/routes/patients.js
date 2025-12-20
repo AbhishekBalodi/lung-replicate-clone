@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { pool } from '../lib/db.js';
+import { getPool, getConnection } from '../lib/tenant-db.js';
 
 const router = Router();
 
@@ -18,6 +18,7 @@ router.get('/', async (req, res) => {
   const q = (req.query.q || '').toString().trim().toLowerCase();
 
   try {
+    const pool = getPool(req);
     // Simply get all patients - no complex sync logic
     const [patients] = await pool.execute(
       'SELECT id, full_name, email, phone FROM patients ORDER BY full_name ASC'
@@ -48,7 +49,7 @@ router.get('/:id', async (req, res) => {
   const { id } = req.params;
   let conn;
   try {
-    conn = await pool.getConnection();
+    conn = await getConnection(req);
     
     // Ensure procedures table exists
     await conn.execute(`
@@ -114,6 +115,7 @@ router.get('/:id', async (req, res) => {
 router.get('/:id/prescriptions', async (req, res) => {
   const { id } = req.params;
   try {
+    const pool = getPool(req);
     const [rows] = await pool.execute(
       'SELECT * FROM medicines WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
       [id]
@@ -137,6 +139,7 @@ router.get('/search', async (req, res) => {
   }
 
   try {
+    const pool = getPool(req);
     const [patients] = await pool.execute(
       'SELECT id, full_name, email, phone FROM patients WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ? ORDER BY full_name ASC',
       [`%${term}%`, `%${term}%`, `%${term}%`]
