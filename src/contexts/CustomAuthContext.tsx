@@ -82,7 +82,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const tenantCode = getDevTenantCode();
       
-      // Use platform auth for tenant login
+      // Use platform auth for tenant login (works for both SaaS tenants and legacy Doctor Mann)
       const response = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
         method: 'POST',
         headers: getHeaders(),
@@ -90,7 +90,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
           email, 
           password, 
           loginType: 'admin',
-          tenantCode 
+          tenantCode: tenantCode || undefined  // Send undefined if no tenant code (legacy mode)
         })
       });
 
@@ -141,7 +141,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
           email, 
           phone, 
           loginType: 'patient',
-          tenantCode 
+          tenantCode: tenantCode || undefined  // Send undefined if no tenant code (legacy mode)
         })
       });
 

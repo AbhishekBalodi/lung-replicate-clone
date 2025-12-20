@@ -63,8 +63,69 @@ router.post('/tenant-login', async (req, res) => {
   try {
     const { email, password, phone, tenantCode } = req.body;
 
+    // If no tenant code, fall back to legacy Doctor Mann authentication
     if (!tenantCode) {
-      return res.status(400).json({ error: 'Tenant code is required' });
+      // Legacy fallback for Doctor Mann (original system before SaaS)
+      const LEGACY_ADMIN_EMAIL = 'abhishekbalodi729@gmail.com';
+      const LEGACY_ADMIN_PASSWORD = '9560720890';
+
+      if (email && password) {
+        // Admin login for legacy Doctor Mann
+        if (email === LEGACY_ADMIN_EMAIL && password === LEGACY_ADMIN_PASSWORD) {
+          return res.json({
+            success: true,
+            user: {
+              id: null,
+              email: LEGACY_ADMIN_EMAIL,
+              name: 'Dr. Mann Admin',
+              role: 'super_admin',
+              phone: '',
+              userType: 'legacy_admin'
+            },
+            tenant: {
+              id: 0,
+              code: 'doctor_mann',
+              name: 'Dr. Mann Clinic',
+              type: 'doctor'
+            }
+          });
+        }
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      if (email && phone) {
+        // Patient login for legacy Doctor Mann - check Doctor_Mann database
+        const legacyPool = (await import('../lib/db.js')).pool;
+        const [rows] = await legacyPool.execute(
+          'SELECT * FROM appointments WHERE email = ? AND phone = ? LIMIT 1',
+          [email.trim(), phone.trim()]
+        );
+
+        if (rows.length === 0) {
+          return res.status(401).json({ error: 'Invalid credentials. Use your email and phone number.' });
+        }
+
+        const patient = rows[0];
+        return res.json({
+          success: true,
+          user: {
+            id: null,
+            email: patient.email,
+            name: patient.full_name,
+            role: 'patient',
+            phone: patient.phone,
+            userType: 'legacy_patient'
+          },
+          tenant: {
+            id: 0,
+            code: 'doctor_mann',
+            name: 'Dr. Mann Clinic',
+            type: 'doctor'
+          }
+        });
+      }
+
+      return res.status(400).json({ error: 'Email and password (or phone for patients) are required' });
     }
 
     // Get tenant
