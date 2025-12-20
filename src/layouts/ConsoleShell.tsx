@@ -29,10 +29,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== "admin")) {
+    if (!loading && (!user || (user.role !== "admin" && user.role !== "super_admin"))) {
       navigate("/login");
     }
-  }, [loading, user]);
+  }, [loading, user, navigate]);
 
   const isActive = (path: string) =>
     pathname === path

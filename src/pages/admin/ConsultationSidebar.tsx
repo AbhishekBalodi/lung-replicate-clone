@@ -84,7 +84,7 @@ export default function ConsultationSidebar() {
   });
 
   useEffect(() => {
-    if (user && user.role === "admin") {
+    if (user && (user.role === "admin" || user.role === "super_admin")) {
       loadPatients();
       loadMedicinesCatalog();
       loadLabCatalog();
