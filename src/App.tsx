@@ -31,6 +31,7 @@ import Calendar from "@/pages/Calendar";
 import CompletedAppointments from "@/pages/CompletedAppointments";
 import Settings from "@/pages/Settings";
 import NewAppointment from "@/pages/admin/NewAppointment";
+import SuperAdminDashboard from "@/pages/admin/SuperAdminDashboard";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
             <Route path="/login" element={<CustomAuth />} />
             <Route path="/dashboard" element={<Dashboard />} />
            <Route path="/patient-dashboard" element={<PatientDashboard />} />
+            <Route path="/super-admin" element={<SuperAdminDashboard />} />
 
             <Route path="/appointments" element={<AppointmentsPage />} />
             <Route path="/calendar" element={<Calendar />} />
