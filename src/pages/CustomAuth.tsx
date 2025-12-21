@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCustomAuth } from '@/contexts/CustomAuthContext';
 import { Button } from '@/components/ui/button';
@@ -6,18 +6,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Shield, User } from 'lucide-react';
+import { Eye, EyeOff, Shield, User, Crown } from 'lucide-react';
+
+type LoginType = 'patient' | 'admin' | 'super_admin';
 
 const CustomAuth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [loginType, setLoginType] = useState<'admin' | 'patient'>('patient');
-  const { loginAsAdmin, loginAsPatient } = useCustomAuth();
+  const [loginType, setLoginType] = useState<LoginType>('patient');
+  const { loginAsAdmin, loginAsSuperAdmin, loginAsPatient, isHospitalTenant, fetchTenantInfo, tenantInfo } = useCustomAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // Refresh tenant info on mount
+  useEffect(() => {
+    fetchTenantInfo();
+  }, []);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,8 +42,8 @@ const CustomAuth = () => {
 
     if (!password) {
       toast({
-        title: loginType === 'admin' ? "Password Required" : "Phone Number Required",
-        description: loginType === 'admin' ? "Please enter your password" : "Please enter your phone number",
+        title: loginType === 'patient' ? "Phone Number Required" : "Password Required",
+        description: loginType === 'patient' ? "Please enter your phone number" : "Please enter your password",
         variant: "destructive"
       });
       return;
@@ -46,7 +53,9 @@ const CustomAuth = () => {
 
     let result;
 
-    if (loginType === 'admin') {
+    if (loginType === 'super_admin') {
+      result = await loginAsSuperAdmin(email, password);
+    } else if (loginType === 'admin') {
       result = await loginAsAdmin(email, password);
     } else {
       result = await loginAsPatient(email, password);
@@ -66,17 +75,47 @@ const CustomAuth = () => {
     }
 
     // Success
+    const welcomeMessages = {
+      super_admin: "Welcome Super Admin!",
+      admin: "Welcome Doctor!",
+      patient: "Welcome back!"
+    };
+
     toast({
       title: "Login Successful",
-      description: loginType === 'admin' ? "Welcome Admin!" : "Welcome back!"
+      description: welcomeMessages[loginType]
     });
 
     // Redirect based on login type
-    if (loginType === 'admin') {
+    if (loginType === 'super_admin') {
+      navigate('/super-admin');
+    } else if (loginType === 'admin') {
       navigate('/dashboard');
     } else {
-      // patient login → redirect to patient dashboard
       navigate('/patient-dashboard');
+    }
+  };
+
+  const getPasswordLabel = () => {
+    if (loginType === 'patient') return 'Phone Number';
+    return 'Password';
+  };
+
+  const getPasswordPlaceholder = () => {
+    if (loginType === 'patient') return 'Enter your phone number';
+    return 'Enter your password';
+  };
+
+  const getTabDescription = () => {
+    switch (loginType) {
+      case 'super_admin':
+        return 'Login with the credentials used during hospital registration';
+      case 'admin':
+        return 'Login with your doctor credentials provided by the hospital';
+      case 'patient':
+        return 'Use the phone number you provided when booking your appointment';
+      default:
+        return '';
     }
   };
 
@@ -89,12 +128,12 @@ const CustomAuth = () => {
             Select login type and enter your credentials
           </CardDescription>
 
-          {/* Login Type Toggle */}
-          <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
+          {/* Login Type Toggle - Show 3 tabs for hospital, 2 for individual doctor */}
+          <div className={`grid ${isHospitalTenant ? 'grid-cols-3' : 'grid-cols-2'} gap-2 p-1 bg-muted rounded-lg`}>
             <button
               type="button"
               onClick={() => setLoginType('patient')}
-              className={`flex items-center justify-center gap-2 py-2 px-4 rounded-md transition-all ${
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md transition-all text-sm ${
                 loginType === 'patient'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -107,16 +146,38 @@ const CustomAuth = () => {
             <button
               type="button"
               onClick={() => setLoginType('admin')}
-              className={`flex items-center justify-center gap-2 py-2 px-4 rounded-md transition-all ${
+              className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md transition-all text-sm ${
                 loginType === 'admin'
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <Shield className="h-4 w-4" />
-              Admin
+              {isHospitalTenant ? 'Doctor' : 'Admin'}
             </button>
+
+            {isHospitalTenant && (
+              <button
+                type="button"
+                onClick={() => setLoginType('super_admin')}
+                className={`flex items-center justify-center gap-2 py-2 px-3 rounded-md transition-all text-sm ${
+                  loginType === 'super_admin'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Crown className="h-4 w-4" />
+                Super Admin
+              </button>
+            )}
           </div>
+
+          {/* Tab-specific description */}
+          {isHospitalTenant && (
+            <p className="text-xs text-muted-foreground text-center">
+              {getTabDescription()}
+            </p>
+          )}
         </CardHeader>
 
         <CardContent>
@@ -134,14 +195,12 @@ const CustomAuth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">
-                {loginType === 'admin' ? 'Password' : 'Phone Number'}
-              </Label>
+              <Label htmlFor="password">{getPasswordLabel()}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={loginType === 'admin' ? 'Enter your password' : 'Enter your phone number'}
+                  placeholder={getPasswordPlaceholder()}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -156,7 +215,7 @@ const CustomAuth = () => {
                 </button>
               </div>
 
-              {loginType === 'patient' && (
+              {loginType === 'patient' && !isHospitalTenant && (
                 <p className="text-xs text-muted-foreground">
                   Use the phone number you provided when booking your appointment
                 </p>

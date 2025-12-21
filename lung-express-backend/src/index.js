@@ -20,6 +20,7 @@ import smtpSettingsRouter from './routes/smtp-settings.js';
 // Platform routes (SaaS management)
 import tenantsRouter from './routes/tenants.js';
 import platformAuthRouter from './routes/platform-auth.js';
+import doctorsRouter from './routes/doctors.js';
 
 const app = express();
 
@@ -61,6 +62,7 @@ app.use('/api/lab-tests', labTestsRouter);          // lab tests
 app.use('/api/procedures', proceduresRouter);       // procedures
 app.use('/api/calendar', calendarRouter);
 app.use('/api/smtp-settings', smtpSettingsRouter);
+app.use('/api/doctors', doctorsRouter);             // doctor management for hospitals
 
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => {

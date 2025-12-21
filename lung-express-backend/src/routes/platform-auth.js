@@ -56,6 +56,54 @@ router.post('/login', async (req, res) => {
 });
 
 /**
+ * GET /api/platform/auth/tenant-info
+ * Public endpoint to get tenant info (type, name) for login page customization
+ */
+router.get('/tenant-info', async (req, res) => {
+  try {
+    const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
+
+    // If no tenant code, return legacy Doctor Mann info
+    if (!tenantCode) {
+      return res.json({
+        success: true,
+        tenant: {
+          id: 0,
+          code: 'doctor_mann',
+          name: 'Dr. Mann Clinic',
+          type: 'doctor'
+        }
+      });
+    }
+
+    // Get tenant from platform database
+    const [tenants] = await platformPool.execute(
+      'SELECT id, tenant_code, name, type, status FROM tenants WHERE tenant_code = ? AND status = ?',
+      [tenantCode, 'active']
+    );
+
+    if (tenants.length === 0) {
+      return res.status(404).json({ error: 'Tenant not found or inactive' });
+    }
+
+    const tenant = tenants[0];
+    return res.json({
+      success: true,
+      tenant: {
+        id: tenant.id,
+        code: tenant.tenant_code,
+        name: tenant.name,
+        type: tenant.type
+      }
+    });
+
+  } catch (error) {
+    console.error('Tenant info error:', error);
+    res.status(500).json({ error: 'Failed to get tenant info' });
+  }
+});
+
+/**
  * POST /api/platform/auth/tenant-login
  * Tenant user login (Super Admin / Admin / Patient)
  */
