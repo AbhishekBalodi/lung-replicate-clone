@@ -1,7 +1,12 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft } from "lucide-react";
+import { 
+  LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft, 
+  Ambulance, Pill, Droplets, Receipt, Building2, Package, Users2, 
+  FileText, DoorOpen, Star, MessageSquare, ChevronDown, ChevronRight,
+  ListTodo
+} from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import MedicinesContent from "@/pages/admin/MedicinesContent";
 import LabTestsContent from "@/pages/admin/LabTestsContent";
@@ -11,7 +16,7 @@ import SettingsContent from "@/pages/SettingsContent";
 import ConsultationSidebar from "@/pages/admin/ConsultationSidebar";
 
 
-type SidebarPage = "patients" | "medicines" | "lab-tests" | "procedures" | "consultation" | "settings" | null;
+type SidebarPage = "patients" | "medicines" | "lab-tests" | "procedures" | "consultation" | "settings" | "blood-bank" | "billing" | "pharmacy" | "room-allotment" | null;
 
 type Props = {
   children: ReactNode;
@@ -26,6 +31,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSidebarPage, setActiveSidebarPage] = useState<SidebarPage>(null);
+  const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
 
   useEffect(() => {
@@ -55,6 +61,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
   const handleCloseSidebarPage = () => {
     setActiveSidebarPage(null);
+  };
+
+  const toggleMenu = (menuName: string) => {
+    setExpandedMenus(prev => ({ ...prev, [menuName]: !prev[menuName] }));
   };
 
   if (loading || !user) return null;
@@ -128,6 +138,127 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
               <button onClick={() => navigate("/completed-appointments")} className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/completed-appointments")}`}>
                 Completed
+              </button>
+
+              {/* Pending Tasks */}
+              <button className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <ListTodo className="h-4 w-4" />
+                Pending Tasks
+              </button>
+
+              {/* Ambulance - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('ambulance')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Ambulance className="h-4 w-4" />
+                    Ambulance
+                  </span>
+                  {expandedMenus['ambulance'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['ambulance'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Fleet Status</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Dispatch</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Pharmacy - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('pharmacy')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Pill className="h-4 w-4" />
+                    Pharmacy
+                  </span>
+                  {expandedMenus['pharmacy'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['pharmacy'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Medicine List</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Inventory</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Blood Bank - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('blood-bank')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Droplets className="h-4 w-4" />
+                    Blood Bank
+                  </span>
+                  {expandedMenus['blood-bank'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['blood-bank'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Stock</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Donor</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Issued</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Billing - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('billing')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Receipt className="h-4 w-4" />
+                    Billing
+                  </span>
+                  {expandedMenus['billing'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['billing'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Invoices List</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Create Invoice</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Payments History</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Room Allotment - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('room-allotment')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <DoorOpen className="h-4 w-4" />
+                    Room Allotment
+                  </span>
+                  {expandedMenus['room-allotment'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['room-allotment'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Alloted Rooms</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">New Allotment</button>
+                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Rooms by Department</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Reviews */}
+              <button className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                Reviews
+              </button>
+
+              {/* Feedback */}
+              <button className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Feedback
               </button>
 
               <button onClick={() => setActiveSidebarPage("settings")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800">
