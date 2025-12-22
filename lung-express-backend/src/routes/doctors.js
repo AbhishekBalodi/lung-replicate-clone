@@ -6,36 +6,25 @@ import { getTenantPool } from '../lib/tenant-db.js';
 const router = Router();
 
 /**
- * GET /api/doctors
- * Get all doctors for the current hospital tenant
- * Only accessible by super_admin
+ * Middleware: allow ONLY hospital tenants
  */
-router.get('/', async (req, res) => {
+function hospitalOnly(req, res, next) {
+  if (!req.tenant || req.tenant.type !== 'hospital') {
+    return res.status(403).json({
+      error: 'This operation is only allowed for hospital tenants'
+    });
+  }
+  next();
+}
+
+/**
+ * GET /api/doctors
+ * Hospital: list doctors
+ */
+router.get('/', hospitalOnly, async (req, res) => {
   try {
-    const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
-    
-    if (!tenantCode) {
-      return res.status(400).json({ error: 'Tenant code is required' });
-    }
+    const tenantPool = getTenantPool(req);
 
-    // Get tenant info
-    const [tenants] = await platformPool.execute(
-      'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
-      [tenantCode, 'active']
-    );
-
-    if (tenants.length === 0) {
-      return res.status(404).json({ error: 'Tenant not found' });
-    }
-
-    const tenant = tenants[0];
-
-    if (tenant.type !== 'hospital') {
-      return res.status(400).json({ error: 'This endpoint is only for hospital tenants' });
-    }
-
-    // Get doctors from tenant database
-    const tenantPool = await getTenantPool(tenantCode);
     const [doctors] = await tenantPool.execute(
       'SELECT * FROM doctors ORDER BY created_at DESC'
     );
@@ -50,69 +39,89 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/doctors
- * Create a new doctor in the hospital
- * Only accessible by super_admin
+ * Hospital: create doctor
  */
-router.post('/', async (req, res) => {
+router.post('/', hospitalOnly, async (req, res) => {
   try {
-    const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
-    const { name, email, phone, password, specialization, qualifications, bio, consultation_fee } = req.body;
-
-    if (!tenantCode) {
-      return res.status(400).json({ error: 'Tenant code is required' });
-    }
+    const tenantPool = getTenantPool(req);
+    const {
+      name,
+      email,
+      phone,
+      password,
+      specialization,
+      qualifications,
+      bio,
+      consultation_fee
+    } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email, and password are required' });
+      return res.status(400).json({
+        error: 'Name, email, and password are required'
+      });
     }
 
-    // Get tenant info
-    const [tenants] = await platformPool.execute(
-      'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
-      [tenantCode, 'active']
-    );
-
-    if (tenants.length === 0) {
-      return res.status(404).json({ error: 'Tenant not found' });
-    }
-
-    const tenant = tenants[0];
-
-    if (tenant.type !== 'hospital') {
-      return res.status(400).json({ error: 'This endpoint is only for hospital tenants' });
-    }
-
-    // Check if doctor email already exists in tenant_users
+    /**
+     * 1️⃣ Check email uniqueness globally (platform DB)
+     */
     const [existingUsers] = await platformPool.execute(
-      'SELECT id FROM tenant_users WHERE tenant_id = ? AND email = ?',
-      [tenant.id, email]
+      'SELECT id FROM tenant_users WHERE email = ?',
+      [email]
     );
 
     if (existingUsers.length > 0) {
-      return res.status(400).json({ error: 'A user with this email already exists' });
+      return res.status(400).json({
+        error: 'A user with this email already exists'
+      });
     }
 
-    // Hash password
+    /**
+     * 2️⃣ Create platform user
+     */
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create doctor in tenant_users table (platform database) with role 'admin'
     const [userResult] = await platformPool.execute(
-      `INSERT INTO tenant_users (tenant_id, email, password_hash, name, phone, role, is_active)
-       VALUES (?, ?, ?, ?, ?, 'admin', TRUE)`,
-      [tenant.id, email, passwordHash, name, phone || null]
-    );
+  `
+  INSERT INTO tenant_users
+  (tenant_id, email, password_hash, name, phone, role, is_active)
+  VALUES (?, ?, ?, ?, ?, 'admin', TRUE)
+  `,
+  [
+    req.tenant.id,
+    email,
+    passwordHash,
+    name,
+    phone || null
+  ]
+);
+
 
     const tenantUserId = userResult.insertId;
 
-    // Create doctor in tenant's doctors table
-    const tenantPool = await getTenantPool(tenantCode);
+    /**
+     * 3️⃣ Create doctor inside HOSPITAL tenant DB
+     */
     const [doctorResult] = await tenantPool.execute(
-      `INSERT INTO doctors (platform_doctor_id, name, email, phone, specialization, qualifications, bio, consultation_fee, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
-      [tenantUserId, name, email, phone || null, specialization || null, qualifications || null, bio || null, consultation_fee || null]
+      `
+      INSERT INTO doctors
+      (platform_doctor_id, name, email, phone, specialization, qualifications, bio, consultation_fee, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)
+      `,
+      [
+        tenantUserId,
+        name,
+        email,
+        phone || null,
+        specialization || null,
+        qualifications || null,
+        bio || null,
+        consultation_fee || null
+      ]
     );
 
-    // Update tenant_users with doctor_id reference
+    /**
+     * 4️⃣ Link tenant_user → doctor
+     */
     await platformPool.execute(
       'UPDATE tenant_users SET doctor_id = ? WHERE id = ?',
       [doctorResult.insertId, tenantUserId]
@@ -142,32 +151,24 @@ router.post('/', async (req, res) => {
 
 /**
  * PUT /api/doctors/:id
- * Update a doctor's details
+ * Hospital: update doctor
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', hospitalOnly, async (req, res) => {
   try {
+    const tenantPool = getTenantPool(req);
     const { id } = req.params;
-    const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
-    const { name, email, phone, password, specialization, qualifications, bio, consultation_fee, is_active } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      password,
+      specialization,
+      qualifications,
+      bio,
+      consultation_fee,
+      is_active
+    } = req.body;
 
-    if (!tenantCode) {
-      return res.status(400).json({ error: 'Tenant code is required' });
-    }
-
-    // Get tenant info
-    const [tenants] = await platformPool.execute(
-      'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
-      [tenantCode, 'active']
-    );
-
-    if (tenants.length === 0) {
-      return res.status(404).json({ error: 'Tenant not found' });
-    }
-
-    const tenant = tenants[0];
-
-    // Get doctor from tenant database
-    const tenantPool = await getTenantPool(tenantCode);
     const [doctors] = await tenantPool.execute(
       'SELECT * FROM doctors WHERE id = ?',
       [id]
@@ -179,46 +180,46 @@ router.put('/:id', async (req, res) => {
 
     const doctor = doctors[0];
 
-    // Update doctor in tenant's doctors table
     await tenantPool.execute(
-      `UPDATE doctors SET 
-        name = ?, email = ?, phone = ?, specialization = ?, 
-        qualifications = ?, bio = ?, consultation_fee = ?, is_active = ?
-       WHERE id = ?`,
+      `
+      UPDATE doctors SET
+        name = ?,
+        email = ?,
+        phone = ?,
+        specialization = ?,
+        qualifications = ?,
+        bio = ?,
+        consultation_fee = ?,
+        is_active = ?
+      WHERE id = ?
+      `,
       [
-        name || doctor.name,
-        email || doctor.email,
-        phone !== undefined ? phone : doctor.phone,
-        specialization !== undefined ? specialization : doctor.specialization,
-        qualifications !== undefined ? qualifications : doctor.qualifications,
-        bio !== undefined ? bio : doctor.bio,
-        consultation_fee !== undefined ? consultation_fee : doctor.consultation_fee,
-        is_active !== undefined ? is_active : doctor.is_active,
+        name ?? doctor.name,
+        email ?? doctor.email,
+        phone ?? doctor.phone,
+        specialization ?? doctor.specialization,
+        qualifications ?? doctor.qualifications,
+        bio ?? doctor.bio,
+        consultation_fee ?? doctor.consultation_fee,
+        is_active ?? doctor.is_active,
         id
       ]
     );
 
-    // Update corresponding tenant_user if exists
+    /**
+     * Sync platform user
+     */
     if (doctor.platform_doctor_id) {
       const updates = [];
       const values = [];
 
-      if (name) {
-        updates.push('name = ?');
-        values.push(name);
-      }
-      if (email) {
-        updates.push('email = ?');
-        values.push(email);
-      }
-      if (phone !== undefined) {
-        updates.push('phone = ?');
-        values.push(phone);
-      }
+      if (name) { updates.push('name = ?'); values.push(name); }
+      if (email) { updates.push('email = ?'); values.push(email); }
+      if (phone !== undefined) { updates.push('phone = ?'); values.push(phone); }
       if (password) {
-        const passwordHash = await bcrypt.hash(password, 10);
+        const hash = await bcrypt.hash(password, 10);
         updates.push('password_hash = ?');
-        values.push(passwordHash);
+        values.push(hash);
       }
       if (is_active !== undefined) {
         updates.push('is_active = ?');
@@ -234,7 +235,7 @@ router.put('/:id', async (req, res) => {
       }
     }
 
-    res.json({ success: true, message: 'Doctor updated successfully' });
+    res.json({ success: true });
 
   } catch (error) {
     console.error('Error updating doctor:', error);
@@ -244,29 +245,13 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/doctors/:id
- * Delete a doctor (soft delete by setting is_active = false)
+ * Hospital: deactivate doctor
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', hospitalOnly, async (req, res) => {
   try {
+    const tenantPool = getTenantPool(req);
     const { id } = req.params;
-    const tenantCode = req.headers['x-tenant-code'] || req.query.tenantCode;
 
-    if (!tenantCode) {
-      return res.status(400).json({ error: 'Tenant code is required' });
-    }
-
-    // Get tenant info
-    const [tenants] = await platformPool.execute(
-      'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
-      [tenantCode, 'active']
-    );
-
-    if (tenants.length === 0) {
-      return res.status(404).json({ error: 'Tenant not found' });
-    }
-
-    // Get doctor from tenant database
-    const tenantPool = await getTenantPool(tenantCode);
     const [doctors] = await tenantPool.execute(
       'SELECT * FROM doctors WHERE id = ?',
       [id]
@@ -278,13 +263,11 @@ router.delete('/:id', async (req, res) => {
 
     const doctor = doctors[0];
 
-    // Soft delete - set is_active = false
     await tenantPool.execute(
       'UPDATE doctors SET is_active = FALSE WHERE id = ?',
       [id]
     );
 
-    // Also deactivate the tenant_user
     if (doctor.platform_doctor_id) {
       await platformPool.execute(
         'UPDATE tenant_users SET is_active = FALSE WHERE id = ?',
@@ -292,7 +275,7 @@ router.delete('/:id', async (req, res) => {
       );
     }
 
-    res.json({ success: true, message: 'Doctor deactivated successfully' });
+    res.json({ success: true });
 
   } catch (error) {
     console.error('Error deleting doctor:', error);
