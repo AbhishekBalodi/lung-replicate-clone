@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Edit, Trash2, Check, User, Pill, FlaskConical, Stethoscope, ClipboardList, FileText, Download } from "lucide-react";
 import ConsoleShell from "@/layouts/ConsoleShell";
 import RescheduleModal from "@/components/RescheduleModal";
+import DashboardKPICards from "@/components/dashboard/DashboardKPICards";
+import DashboardTabs from "@/components/dashboard/DashboardTabs";
 
 import {
   AlertDialog,
@@ -250,62 +252,62 @@ export default function Dashboard() {
   };
 
 
+  // Calculate KPI values
+  const today = new Date().toISOString().split('T')[0];
+  const todayAppointments = appointments.filter(a => a.appointment_date === today);
+  const urgentAppointments = todayAppointments.filter(a => a.status !== "done").length;
+  const activePatients = new Set(appointments.map(a => a.email)).size;
+  const newPatients = appointments.filter(a => {
+    const apptDate = new Date(a.appointment_date);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return apptDate >= weekAgo;
+  }).length;
+
+  // Handle view appointment from tabs
+  const handleViewAppointment = (appt: Appointment) => {
+    toggleExpand(appt);
+  };
+
   return (
     <>
       <ConsoleShell
         todayCount={appointments.length}
       >
-        {/* Main grid: left KPIs + table, right booking column */}
-        <div className="grid grid-cols-1 xl:grid-cols-1 gap-4 md:gap-6">
+        {/* Welcome Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            Welcome back, {user?.name?.split(' ')[0] || 'Doctor'}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Here's what's happening with your patients today.
+          </p>
+        </div>
+
+        {/* Enhanced KPI Cards */}
+        <DashboardKPICards
+          todayAppointments={todayAppointments.length}
+          urgentAppointments={urgentAppointments}
+          pendingReports={7}
+          reportsReady={2}
+          activePatients={activePatients}
+          newPatients={newPatients}
+          pendingTasks={5}
+          highPriorityTasks={2}
+        />
+
+        {/* Tabbed Dashboard Section */}
+        <div className="mt-8">
+          <DashboardTabs 
+            appointments={appointments}
+            onViewAppointment={handleViewAppointment}
+          />
+        </div>
+
+        {/* Main grid: left table, right booking column */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6 mt-8">
           {/* Left column (spans 2) */}
           <div className="xl:col-span-2 space-y-4 md:space-y-6">
-            {/* KPI cards */}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">
-                    Total Appointments
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-semibold">{appointments.length}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">Upcoming</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-semibold">
-                    {appointments.filter((a) => new Date(a.appointment_date) >= new Date()).length}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-600">Today</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-4xl font-semibold">
-                    {appointments.filter((a) => {
-                      const today = new Date().toISOString().split('T')[0];
-                      return a.appointment_date === today;
-                    }).length}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium">Account Email</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm break-all">{user?.email}</div>
-                </CardContent>
-              </Card>
-            </div>
 
             {/* Appointments table - responsive */}
             <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
