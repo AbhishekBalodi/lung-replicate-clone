@@ -49,7 +49,20 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const getApiBaseUrl = () => {
-    return import.meta.env.VITE_API_BASE_URL || '';
+    const envUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
+
+    // If env is empty, use same-origin (relative URLs like /api/...)
+    if (!envUrl) return "";
+
+    // If env points to localhost but we're on a real domain, ignore it to avoid net::ERR_CONNECTION_REFUSED
+    if (typeof window !== "undefined") {
+      const isProdHost = window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1";
+      const isLocalEnv = /localhost|127\.0\.0\.1/i.test(envUrl);
+      if (isProdHost && isLocalEnv) return "";
+    }
+
+    // Normalize (no trailing slash)
+    return envUrl.replace(/\/+$/, "");
   };
 
   const getHeaders = () => {
@@ -96,6 +109,15 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       // Silently fail - tenant info is optional for single-tenant deployments
       console.log('Could not fetch tenant info (this is OK for single-tenant deployments):', error);
     }
+  };
+
+  const parseJsonOrText = async (response: Response) => {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      return { json: await response.json(), text: null as string | null };
+    }
+    const text = await response.text();
+    return { json: null as any, text };
   };
 
   useEffect(() => {
@@ -147,10 +169,17 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
         })
       });
 
-      const data = await response.json();
+      const { json, text } = await parseJsonOrText(response);
+      const data = json || {};
 
       if (!response.ok) {
-        return { error: { message: data.error || 'Login failed' } };
+        return {
+          error: {
+            message:
+              (data as any).error ||
+              (text ? `Backend error (${response.status}). Please try again.` : 'Login failed'),
+          },
+        };
       }
 
       // For admin login (doctor in hospital), check if role is 'admin' specifically
@@ -208,10 +237,17 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
         })
       });
 
-      const data = await response.json();
+      const { json, text } = await parseJsonOrText(response);
+      const data = json || {};
 
       if (!response.ok) {
-        return { error: { message: data.error || 'Login failed' } };
+        return {
+          error: {
+            message:
+              (data as any).error ||
+              (text ? `Backend error (${response.status}). Please try again.` : 'Login failed'),
+          },
+        };
       }
 
       // Super Admin login requires super_admin role
@@ -264,10 +300,17 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
         })
       });
 
-      const data = await response.json();
+      const { json, text } = await parseJsonOrText(response);
+      const data = json || {};
 
       if (!response.ok) {
-        return { error: { message: data.error || 'Login failed' } };
+        return {
+          error: {
+            message:
+              (data as any).error ||
+              (text ? `Backend error (${response.status}). Please try again.` : 'Login failed'),
+          },
+        };
       }
 
       const userData: CustomUser = {
