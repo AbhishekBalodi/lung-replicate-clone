@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
-
+import { supabase } from '@/integrations/supabase/client';
 interface CustomUser {
   id: number | null;
   email: string;
@@ -31,7 +31,7 @@ interface CustomAuthContextType {
   loginAsAdmin: (email: string, password: string) => Promise<{ user?: CustomUser; error: any }>;
   loginAsSuperAdmin: (email: string, password: string) => Promise<{ user?: CustomUser; error: any }>;
   loginAsPatient: (email: string, phone: string) => Promise<{ user?: CustomUser; error: any }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
   isSuperAdmin: boolean;
   isAdmin: boolean;
@@ -48,7 +48,19 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenantInfo, setTenantInfo] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Check if this is the original Doctor Mann website (legacy single-tenant deployment)
+  const isLegacyDrMannSite = () => {
+    if (typeof window === "undefined") return false;
+    const hostname = window.location.hostname.toLowerCase();
+    return hostname.includes("delhichestphysician") || hostname.includes("drmann");
+  };
+
   const getApiBaseUrl = () => {
+    // For legacy Dr. Mann site, there's no separate backend - it's embedded or uses Supabase directly
+    if (isLegacyDrMannSite()) {
+      return ""; // Will use Supabase auth or fallback logic
+    }
+
     const envUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
 
     // If env is empty, use same-origin (relative URLs like /api/...)
@@ -76,6 +88,19 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch tenant info on mount (for login page to know if it's a hospital)
   const fetchTenantInfo = async () => {
+    // Skip for legacy Dr. Mann site - it's single-tenant, no platform API
+    if (isLegacyDrMannSite()) {
+      console.log('Legacy Dr. Mann site detected, skipping tenant info fetch');
+      // Set default tenant info for Dr. Mann
+      setTenantInfo({
+        id: 1,
+        code: 'drmann',
+        name: 'Dr. Mann Clinic',
+        type: 'doctor'
+      });
+      return;
+    }
+
     try {
       const baseUrl = getApiBaseUrl();
       // Skip if no API URL configured (production may not need tenant-info for single-tenant)
@@ -155,6 +180,42 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const loginAsAdmin = async (email: string, password: string) => {
+    // For legacy Dr. Mann site, use Supabase auth directly
+    if (isLegacyDrMannSite()) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          return { error: { message: error.message } };
+        }
+
+        if (data.user) {
+          const userData: CustomUser = {
+            id: null, // Supabase uses UUID, we'll store null for legacy
+            email: data.user.email || email,
+            phone: data.user.user_metadata?.phone || '',
+            name: data.user.user_metadata?.full_name || 'Admin',
+            role: 'admin',
+            tenantType: 'doctor'
+          };
+
+          setUser(userData);
+          setTenant({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' });
+          localStorage.setItem('customUser', JSON.stringify(userData));
+          localStorage.setItem('customTenant', JSON.stringify({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' }));
+          return { user: userData, error: null };
+        }
+
+        return { error: { message: 'Login failed' } };
+      } catch (error: any) {
+        return { error: { message: error.message || 'Network error' } };
+      }
+    }
+
+    // SaaS platform login via Express backend
     try {
       const tenantCode = getDevTenantCode();
       
@@ -223,6 +284,42 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loginAsSuperAdmin = async (email: string, password: string) => {
+    // For legacy Dr. Mann site, Super Admin uses Supabase auth (same as admin)
+    if (isLegacyDrMannSite()) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          return { error: { message: error.message } };
+        }
+
+        if (data.user) {
+          const userData: CustomUser = {
+            id: null,
+            email: data.user.email || email,
+            phone: data.user.user_metadata?.phone || '',
+            name: data.user.user_metadata?.full_name || 'Super Admin',
+            role: 'super_admin',
+            tenantType: 'doctor'
+          };
+
+          setUser(userData);
+          setTenant({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' });
+          localStorage.setItem('customUser', JSON.stringify(userData));
+          localStorage.setItem('customTenant', JSON.stringify({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' }));
+          return { user: userData, error: null };
+        }
+
+        return { error: { message: 'Login failed' } };
+      } catch (error: any) {
+        return { error: { message: error.message || 'Network error' } };
+      }
+    }
+
+    // SaaS platform login via Express backend
     try {
       const tenantCode = getDevTenantCode();
       
@@ -286,6 +383,68 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loginAsPatient = async (email: string, phone: string) => {
+    // For legacy Dr. Mann site, verify patient exists in Supabase via appointments or patients table
+    if (isLegacyDrMannSite()) {
+      try {
+        // Check if patient exists in the appointments table
+        const { data: appointment, error: aptError } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('email', email)
+          .eq('phone', phone)
+          .limit(1)
+          .single();
+
+        if (aptError || !appointment) {
+          // Also check patients table
+          const { data: patient, error: patError } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('email', email)
+            .eq('phone', phone)
+            .limit(1)
+            .single();
+
+          if (patError || !patient) {
+            return { error: { message: 'No appointment found with this email and phone number' } };
+          }
+
+          const userData: CustomUser = {
+            id: null,
+            email: patient.email || email,
+            phone: patient.phone || phone,
+            name: patient.full_name || 'Patient',
+            role: 'patient',
+            tenantType: 'doctor'
+          };
+
+          setUser(userData);
+          setTenant({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' });
+          localStorage.setItem('customUser', JSON.stringify(userData));
+          localStorage.setItem('customTenant', JSON.stringify({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' }));
+          return { user: userData, error: null };
+        }
+
+        const userData: CustomUser = {
+          id: null,
+          email: appointment.email || email,
+          phone: appointment.phone || phone,
+          name: appointment.full_name || 'Patient',
+          role: 'patient',
+          tenantType: 'doctor'
+        };
+
+        setUser(userData);
+        setTenant({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' });
+        localStorage.setItem('customUser', JSON.stringify(userData));
+        localStorage.setItem('customTenant', JSON.stringify({ id: 1, code: 'drmann', name: 'Dr. Mann Clinic', type: 'doctor' }));
+        return { user: userData, error: null };
+      } catch (error: any) {
+        return { error: { message: error.message || 'Network error' } };
+      }
+    }
+
+    // SaaS platform login via Express backend
     try {
       const tenantCode = getDevTenantCode();
       
@@ -342,7 +501,11 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // For legacy Dr. Mann site, also sign out from Supabase
+    if (isLegacyDrMannSite()) {
+      await supabase.auth.signOut();
+    }
     setUser(null);
     setTenant(null);
     localStorage.removeItem('customUser');
