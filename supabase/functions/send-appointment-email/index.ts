@@ -1,7 +1,32 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+// Resend client initialization
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+
+interface ResendEmailOptions {
+  from: string;
+  to: string[];
+  subject: string;
+  html: string;
+}
+
+const sendEmail = async (options: ResendEmailOptions) => {
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${RESEND_API_KEY}`,
+    },
+    body: JSON.stringify(options),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "Failed to send email");
+  }
+  
+  return response.json();
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending appointment confirmation emails to:", email, "and psmann58@yahoo.com");
 
     // Send email to patient
-    const patientEmailResponse = await resend.emails.send({
+    const patientEmailResponse = await sendEmail({
       from: "Delhi Chest Physician <onboarding@resend.dev>",
       to: [email],
       subject: "Appointment Confirmation - Delhi Chest Physician",
@@ -116,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Patient email sent successfully:", patientEmailResponse);
 
     // Send notification email to doctor
-    const doctorEmailResponse = await resend.emails.send({
+    const doctorEmailResponse = await sendEmail({
       from: "Delhi Chest Physician <onboarding@resend.dev>",
       to: ["psmann58@yahoo.com"],
       subject: "New Appointment Booking - Delhi Chest Physician",

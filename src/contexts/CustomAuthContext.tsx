@@ -64,10 +64,21 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   // Fetch tenant info on mount (for login page to know if it's a hospital)
   const fetchTenantInfo = async () => {
     try {
+      const baseUrl = getApiBaseUrl();
+      // Skip if no API URL configured (production may not need tenant-info for single-tenant)
+      if (!baseUrl) {
+        console.log('No API base URL configured, skipping tenant info fetch');
+        return;
+      }
+      
       const tenantCode = getDevTenantCode();
       const response = await fetch(
-        `${getApiBaseUrl()}/api/platform/auth/tenant-info${tenantCode ? `?tenantCode=${tenantCode}` : ''}`,
-        { headers: getHeaders() }
+        `${baseUrl}/api/platform/auth/tenant-info${tenantCode ? `?tenantCode=${tenantCode}` : ''}`,
+        { 
+          headers: getHeaders(),
+          // Add timeout to prevent long waits if backend is down
+          signal: AbortSignal.timeout(5000)
+        }
       );
       
       if (response.ok) {
@@ -82,7 +93,8 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } catch (error) {
-      console.error('Error fetching tenant info:', error);
+      // Silently fail - tenant info is optional for single-tenant deployments
+      console.log('Could not fetch tenant info (this is OK for single-tenant deployments):', error);
     }
   };
 
