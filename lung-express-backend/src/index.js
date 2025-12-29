@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import session from 'express-session'; // ✅ ADDED
 import { pool } from './lib/db.js';
 
 // Middlewares
@@ -27,6 +28,11 @@ import platformAuthRouter from './routes/platform-auth.js';
 const app = express();
 
 /* ============================================================
+   ✅ TRUST PROXY (REQUIRED BEHIND APACHE / HTTPS)
+   ============================================================ */
+app.set('trust proxy', 1); // ✅ ADDED
+
+/* ============================================================
    ✅ SAAS-READY CORS CONFIGURATION
    ============================================================ */
 
@@ -44,13 +50,12 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // ✅ Allow explicitly configured origins (platform frontend, etc.)
+    // ✅ Allow explicitly configured origins
     if (explicitAllowedOrigins.includes(origin)) {
       return callback(null, true);
     }
 
     // ✅ Allow ANY tenant custom domain (SaaS behavior)
-    // You can tighten this later if needed
     if (
       origin.startsWith('https://') ||
       origin.startsWith('http://')
@@ -58,7 +63,6 @@ app.use(cors({
       return callback(null, true);
     }
 
-    // ❌ Block everything else
     console.error('❌ CORS blocked origin:', origin);
     return callback(new Error(`CORS not allowed: ${origin}`));
   },
@@ -79,6 +83,25 @@ app.options('*', cors());
 app.use(express.json());
 
 /* ============================================================
+   ✅ SESSION CONFIGURATION (ADDED)
+   MUST COME BEFORE tenantResolver
+   ============================================================ */
+const isProd = process.env.NODE_ENV === 'production';
+
+app.use(session({
+  name: 'saas.sid',
+  secret: process.env.SESSION_SECRET || 'dev-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: false, // 🔴 VERY IMPORTANT
+    sameSite: 'none',
+    maxAge: 24 * 60 * 60 * 1000 // 1 day
+  }
+}));
+
+/* ============================================================
    🔹 BASIC HEALTH / DEBUG ROUTES
    ============================================================ */
 
@@ -93,6 +116,17 @@ app.get('/api/health', async (req, res) => {
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
   }
+});
+
+/* ============================================================
+   🐞 SESSION DEBUG ROUTE (ADDED)
+   ============================================================ */
+
+app.get('/api/debug-session', (req, res) => {
+  res.json({
+    session: req.session,
+    cookies: req.headers.cookie || null
+  });
 });
 
 /* ============================================================

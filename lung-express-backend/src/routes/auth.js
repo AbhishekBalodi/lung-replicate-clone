@@ -38,14 +38,26 @@ router.post('/login', async (req, res) => {
 
         const user = users[0];
         
-        // For now, simple password check (in production, use bcrypt)
-        // The password should be hashed in tenant_users table
+        // Password check
         const bcrypt = await import('bcryptjs');
         const isValid = await bcrypt.compare(password, user.password_hash);
         
         if (!isValid) {
           return res.status(401).json({ error: 'Invalid admin credentials' });
         }
+
+        /* ============================================================
+           ✅ SESSION PERSISTENCE (ADDED)
+           ============================================================ */
+        req.session.user = {
+          id: user.id,
+          email: user.email,
+          name: user.full_name || 'Admin',
+          role: user.role,
+          userType: 'admin',
+          tenantId: req.tenant.id,
+          tenantName: user.tenant_name
+        };
 
         return res.json({
           success: true,
@@ -65,6 +77,18 @@ router.post('/login', async (req, res) => {
         const ADMIN_PASSWORD = '9560720890';
 
         if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+
+          /* ============================================================
+             ✅ SESSION PERSISTENCE (ADDED - DEV MODE)
+             ============================================================ */
+          req.session.user = {
+            email: ADMIN_EMAIL,
+            name: 'Admin',
+            role: 'admin',
+            userType: 'admin',
+            tenantId: null
+          };
+
           return res.json({
             success: true,
             userType: 'admin',
@@ -102,6 +126,19 @@ router.post('/login', async (req, res) => {
         patientId = patientRows[0].id;
       }
 
+      /* ============================================================
+         ✅ SESSION PERSISTENCE (ADDED - PATIENT)
+         ============================================================ */
+      req.session.user = {
+        id: patientId,
+        email: patient.email,
+        phone: patient.phone,
+        name: patient.full_name,
+        role: 'patient',
+        userType: 'patient',
+        tenantId: req.tenant?.id || null
+      };
+
       return res.json({
         success: true,
         userType: 'patient',
@@ -120,6 +157,19 @@ router.post('/login', async (req, res) => {
     console.error('Login error:', error);
     return res.status(500).json({ error: 'Login failed' });
   }
+});
+
+/* ============================================================
+   ✅ OPTIONAL: LOGOUT ROUTE (ADDED, SAFE)
+   ============================================================ */
+router.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+    res.clearCookie('saas.sid');
+    res.json({ success: true });
+  });
 });
 
 export default router;
