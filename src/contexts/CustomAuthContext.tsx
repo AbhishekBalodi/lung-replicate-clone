@@ -149,11 +149,12 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
+      const tenantCode = getDevTenantCode();
       const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
         method: 'POST',
         headers: getHeaders(),
         credentials: 'include',
-        body: JSON.stringify({ email, password, loginType: 'admin' })
+        body: JSON.stringify({ email, password, tenantCode, loginType: 'admin' })
       });
 
       const data = await res.json();
@@ -179,11 +180,12 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginAsPatient = async (email: string, phone: string): Promise<AuthResult> => {
     try {
+      const tenantCode = getDevTenantCode();
       const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
         method: 'POST',
         headers: getHeaders(),
         credentials: 'include',
-        body: JSON.stringify({ email, phone, loginType: 'patient' })
+        body: JSON.stringify({ email, phone, tenantCode, loginType: 'patient' })
       });
 
       const data = await res.json();
