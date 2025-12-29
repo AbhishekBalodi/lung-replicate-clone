@@ -1,27 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCustomAuth } from '@/contexts/CustomAuthContext';
+import { apiFetch } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '@/components/ui/switch';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import ConsoleShell from '@/layouts/ConsoleShell';
+import DashboardKPICards from '@/components/dashboard/DashboardKPICards';
+import RescheduleModal from '@/components/RescheduleModal';
 import {
   Plus,
-  UserCog,
-  Users,
   LogOut,
   Edit,
   Trash2,
+  Check,
+  User,
+  Pill,
+  FlaskConical,
+  Stethoscope,
+  FileText,
+  Download,
   Eye,
   EyeOff,
-  Stethoscope,
   Building2,
-  RefreshCw
+  Users,
+  Calendar,
+  Clock,
+  Mail,
+  Phone,
+  ArrowUpRight
 } from 'lucide-react';
 
 interface Doctor {
@@ -38,18 +53,60 @@ interface Doctor {
   created_at: string;
 }
 
+interface Appointment {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  appointment_date: string;
+  appointment_time: string;
+  selected_doctor: string;
+  message: string | null;
+  created_at?: string | null;
+  status?: string | null;
+  doctor_id?: number;
+}
+
+interface Patient {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  doctor_id?: number;
+  doctor_name?: string;
+  created_at?: string;
+  last_visit_date?: string;
+}
+
 const SuperAdminDashboard = () => {
   const { user, tenant, logout, isSuperAdmin } = useCustomAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Main dashboard state
+  const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors'>('overview');
+  
+  // Doctors state
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [doctorsLoading, setDoctorsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [togglingDoctorId, setTogglingDoctorId] = useState<number | null>(null);
+
+  // Appointments state
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [patientDetails, setPatientDetails] = useState<any>(null);
+  const [loadingPatient, setLoadingPatient] = useState(false);
+  const [actionBusyId, setActionBusyId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
+
+  // Patients state (all patients from all doctors)
+  const [allPatients, setAllPatients] = useState<Patient[]>([]);
+  const [patientsLoading, setPatientsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -75,37 +132,63 @@ const SuperAdminDashboard = () => {
     if (!user || !isSuperAdmin) navigate('/login');
   }, [user, isSuperAdmin, navigate]);
 
-  const fetchDoctors = async () => {
+  // Fetch all doctors
+  const fetchDoctors = useCallback(async () => {
     try {
-      setLoading(true);
+      setDoctorsLoading(true);
       const response = await fetch(`${getApiBaseUrl()}/api/doctors`, {
-        headers: getHeaders()
+        headers: getHeaders(),
+        credentials: 'include'
       });
 
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
         setDoctors(data.doctors || []);
-      } else {
-        toast({
-          title: 'Error',
-          description: data.error || 'Failed to fetch doctors',
-          variant: 'destructive'
-        });
       }
     } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch doctors',
-        variant: 'destructive'
-      });
+      console.error('Error fetching doctors:', err);
     } finally {
-      setLoading(false);
+      setDoctorsLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch all appointments (from all doctors in the hospital)
+  const fetchAppointments = useCallback(async () => {
+    try {
+      setAppointmentsLoading(true);
+      const res = await apiFetch('/api/appointment', { method: 'GET' });
+      const data = await res.json();
+      if (res.ok) {
+        setAppointments(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+    } finally {
+      setAppointmentsLoading(false);
+    }
+  }, []);
+
+  // Fetch all patients (from all doctors)
+  const fetchAllPatients = useCallback(async () => {
+    try {
+      setPatientsLoading(true);
+      const res = await apiFetch('/api/patients', { method: 'GET' });
+      const data = await res.json();
+      if (res.ok) {
+        setAllPatients(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching patients:', err);
+    } finally {
+      setPatientsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchDoctors();
-  }, []);
+    fetchAppointments();
+    fetchAllPatients();
+  }, [fetchDoctors, fetchAppointments, fetchAllPatients]);
 
   const resetForm = () => {
     setFormData({
@@ -121,7 +204,6 @@ const SuperAdminDashboard = () => {
     setShowPassword(false);
   };
 
-  // ✅ FIX 1 + FIX 2 APPLIED HERE
   const handleAddDoctor = async () => {
     if (!formData.name || !formData.email || !formData.password) {
       toast({
@@ -138,6 +220,7 @@ const SuperAdminDashboard = () => {
       const response = await fetch(`${getApiBaseUrl()}/api/doctors`, {
         method: 'POST',
         headers: getHeaders(),
+        credentials: 'include',
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
@@ -180,72 +263,721 @@ const SuperAdminDashboard = () => {
     }
   };
 
+  // Toggle doctor access
+  const toggleDoctorAccess = async (doctor: Doctor) => {
+    try {
+      setTogglingDoctorId(doctor.id);
+      
+      const response = await fetch(`${getApiBaseUrl()}/api/doctors/${doctor.id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          is_active: !doctor.is_active
+        })
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: `Doctor ${doctor.is_active ? 'deactivated' : 'activated'} successfully`
+        });
+        await fetchDoctors();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to update doctor access',
+          variant: 'destructive'
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update doctor access',
+        variant: 'destructive'
+      });
+    } finally {
+      setTogglingDoctorId(null);
+    }
+  };
+
+  // Patient details functions
+  const fetchPatientRecord = async (email: string, phone: string) => {
+    try {
+      const q = email ? email : phone;
+      const res = await apiFetch(`/api/patients?q=${encodeURIComponent(q)}`, { method: 'GET' });
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) return null;
+      return data[0];
+    } catch {
+      return null;
+    }
+  };
+
+  const fetchPatientFullData = async (patientId: number) => {
+    try {
+      const res = await apiFetch(`/api/patients/${patientId}`, { method: 'GET' });
+      const data = await res.json();
+      return data;
+    } catch {
+      return null;
+    }
+  };
+
+  const toggleExpand = async (appt: Appointment) => {
+    if (expandedRow === appt.id) {
+      setExpandedRow(null);
+      return;
+    }
+
+    setExpandedRow(appt.id);
+    setPatientDetails(null);
+    setLoadingPatient(true);
+
+    const record = await fetchPatientRecord(appt.email, appt.phone);
+
+    if (!record) {
+      setLoadingPatient(false);
+      return;
+    }
+
+    const fullData = await fetchPatientFullData(record.id);
+    const histRes = await apiFetch(`/api/appointment?email=${encodeURIComponent(appt.email)}`, { method: 'GET' });
+    const history = await histRes.json();
+
+    setPatientDetails({
+      ...record,
+      appointments: history || [],
+      medicines: fullData?.medicines || [],
+      lab_tests: fullData?.lab_tests || [],
+      procedures: fullData?.procedures || []
+    });
+
+    setLoadingPatient(false);
+  };
+
+  const markDone = async (id: number) => {
+    setActionBusyId(id);
+    try {
+      const res = await apiFetch(`/api/appointment/${id}/done`, { method: 'PATCH' });
+      if (res.ok) {
+        setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'done' } : a));
+        toast({ title: 'Completed', description: 'Appointment marked as done.' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to mark as done', variant: 'destructive' });
+    }
+    setActionBusyId(null);
+  };
+
+  const handleDelete = async () => {
+    if (deleteId == null) return;
+    try {
+      const res = await apiFetch(`/api/appointment/${deleteId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setAppointments(prev => prev.filter(a => a.id !== deleteId));
+        toast({ title: 'Success', description: 'Appointment cancelled successfully' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to cancel appointment', variant: 'destructive' });
+    }
+    setDeleteId(null);
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  // Calculate KPI values
+  const today = new Date().toISOString().split('T')[0];
+  const todayAppointments = appointments.filter(a => a.appointment_date === today);
+  const urgentAppointments = todayAppointments.filter(a => a.status !== 'done').length;
+  const activePatients = allPatients.length;
+  const newPatients = allPatients.filter(p => {
+    if (!p.created_at) return false;
+    const createdDate = new Date(p.created_at);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return createdDate >= weekAgo;
+  }).length;
+
+  // Group patients by doctor
+  const patientsByDoctor = useMemo(() => {
+    const grouped: Record<string, Patient[]> = {};
+    allPatients.forEach(patient => {
+      const doctorName = patient.doctor_name || 'Unassigned';
+      if (!grouped[doctorName]) grouped[doctorName] = [];
+      grouped[doctorName].push(patient);
+    });
+    return grouped;
+  }, [allPatients]);
+
+  if (!user || !isSuperAdmin) return null;
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex justify-between">
-          <h1 className="text-xl font-bold">{tenant?.name || 'Hospital'}</h1>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Logout
-          </Button>
+    <ConsoleShell todayCount={appointments.length}>
+      {/* Welcome Header */}
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-2">
+          <Building2 className="h-8 w-8 text-emerald-600" />
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              {tenant?.name || 'Hospital Dashboard'}
+            </h1>
+            <p className="text-muted-foreground">
+              Super Admin • Managing {doctors.length} doctors
+            </p>
+          </div>
         </div>
-      </header>
+      </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <Card>
-          <CardHeader className="flex justify-between flex-row">
-            <CardTitle>Manage Doctors</CardTitle>
+      {/* Main Tabs: Overview & Doctors Management */}
+      <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors')} className="w-full">
+        <TabsList className="bg-slate-100 border border-slate-200 p-1 rounded-lg mb-6">
+          <TabsTrigger 
+            value="overview" 
+            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
+          >
+            <Calendar className="h-4 w-4 mr-2" />
+            Dashboard Overview
+          </TabsTrigger>
+          <TabsTrigger 
+            value="doctors" 
+            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
+          >
+            <Stethoscope className="h-4 w-4 mr-2" />
+            Manage Doctors
+          </TabsTrigger>
+        </TabsList>
 
-            <Dialog
-              open={isAddDialogOpen}
-              onOpenChange={(open) => {
-                if (!formLoading) setIsAddDialogOpen(open);
-              }}
-            >
-              <DialogTrigger asChild>
-                <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }}>
-                  <Plus className="h-4 w-4 mr-2" /> Add Doctor
-                </Button>
-              </DialogTrigger>
+        {/* OVERVIEW TAB */}
+        <TabsContent value="overview">
+          {/* KPI Cards */}
+          <DashboardKPICards
+            todayAppointments={todayAppointments.length}
+            urgentAppointments={urgentAppointments}
+            pendingReports={7}
+            reportsReady={2}
+            activePatients={activePatients}
+            newPatients={newPatients}
+            pendingTasks={5}
+            highPriorityTasks={2}
+          />
 
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Doctor</DialogTitle>
-                </DialogHeader>
-
-                <div className="space-y-4">
-                  <Label>Name *</Label>
-                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-
-                  <Label>Email *</Label>
-                  <Input value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-
-                  <Label>Password *</Label>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  />
-
-                  <Button onClick={handleAddDoctor} disabled={formLoading}>
-                    {formLoading ? 'Adding...' : 'Add Doctor'}
-                  </Button>
+          {/* Quick Stats Cards for Hospital */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
+            <Card className="border-l-4 border-l-blue-500 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-blue-500/10">
+                  <Stethoscope className="h-5 w-5 text-blue-600" />
                 </div>
-              </DialogContent>
-            </Dialog>
-          </CardHeader>
+                <div>
+                  <p className="text-2xl font-bold">{doctors.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Doctors</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="border-l-4 border-l-purple-500 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-purple-500/10">
+                  <Users className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{allPatients.length}</p>
+                  <p className="text-sm text-muted-foreground">Total Patients</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="border-l-4 border-l-orange-500 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-orange-500/10">
+                  <Clock className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{doctors.filter(d => d.is_active).length}</p>
+                  <p className="text-sm text-muted-foreground">Active Doctors</p>
+                </div>
+              </div>
+            </Card>
+            <Card className="border-l-4 border-l-green-500 p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-green-500/10">
+                  <Check className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{appointments.filter(a => a.status === 'done').length}</p>
+                  <p className="text-sm text-muted-foreground">Completed Today</p>
+                </div>
+              </div>
+            </Card>
+          </div>
 
-          <CardContent>
-            {loading ? 'Loading...' : `${doctors.length} doctors`}
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+          {/* All Patients Section */}
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-emerald-600" />
+                All Hospital Patients
+              </CardTitle>
+              <CardDescription>
+                Patients across all doctors in your hospital
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {patientsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin h-6 w-6 border-2 border-emerald-600 border-t-transparent rounded-full" />
+                </div>
+              ) : allPatients.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No patients found</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Patient Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Doctor</TableHead>
+                        <TableHead>Last Visit</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allPatients.slice(0, 10).map((patient) => (
+                        <TableRow key={patient.id}>
+                          <TableCell className="font-medium">{patient.full_name}</TableCell>
+                          <TableCell>{patient.email || '-'}</TableCell>
+                          <TableCell>{patient.phone || '-'}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-emerald-700 border-emerald-200">
+                              {patient.doctor_name || 'Unassigned'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {patient.last_visit_date 
+                              ? new Date(patient.last_visit_date).toLocaleDateString()
+                              : '-'
+                            }
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  {allPatients.length > 10 && (
+                    <div className="text-center mt-4">
+                      <Button variant="outline" size="sm">
+                        View All {allPatients.length} Patients
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Appointments Section */}
+          <Card className="mt-8 bg-white rounded-xl border border-slate-200 shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg md:text-xl">All Appointments</CardTitle>
+              <CardDescription>View and manage appointments across all doctors</CardDescription>
+            </CardHeader>
+
+            <CardContent className="p-0 overflow-hidden">
+              <div className="overflow-x-auto">
+                <div className="min-w-[900px]">
+                  {/* Header row */}
+                  <div className="grid grid-cols-6 gap-3 font-medium text-slate-500 px-5 py-3 border-t border-slate-100">
+                    <div>When</div>
+                    <div>Patient</div>
+                    <div>Doctor</div>
+                    <div>Contact</div>
+                    <div>Status</div>
+                    <div className="text-right">Actions</div>
+                  </div>
+
+                  {/* Rows */}
+                  <div className="max-h-[60vh] overflow-y-auto divide-y">
+                    {appointmentsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin h-6 w-6 border-2 border-emerald-600 border-t-transparent rounded-full" />
+                      </div>
+                    ) : appointments.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No appointments found
+                      </div>
+                    ) : (
+                      appointments.map((a) => (
+                        <div key={a.id}>
+                          <div className="grid grid-cols-6 gap-3 items-center px-5 py-4">
+                            {/* When */}
+                            <div>
+                              <div className="font-medium">
+                                {new Date(a.appointment_date).toLocaleDateString()}
+                              </div>
+                              <div className="text-xs rounded-md bg-slate-100 inline-block px-2 py-0.5 mt-1">
+                                {a.appointment_time}
+                              </div>
+                            </div>
+                            <div className="font-medium">{a.full_name}</div>
+                            <div>
+                              <Badge variant="outline" className="text-emerald-700 border-emerald-200">
+                                {a.selected_doctor}
+                              </Badge>
+                            </div>
+                            <div className="text-sm">
+                              <div className="flex items-center gap-1">
+                                <Mail className="h-3 w-3" />
+                                <span className="truncate">{a.email}</span>
+                              </div>
+                            </div>
+                            <div>
+                              {a.status === 'done' ? (
+                                <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                              ) : (
+                                <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2 justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleExpand(a)}
+                              >
+                                {expandedRow === a.id ? 'Hide' : 'Details'}
+                              </Button>
+                              {a.status !== 'done' && (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                                  disabled={actionBusyId === a.id}
+                                  onClick={() => markDone(a.id)}
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Done
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Expanded Details */}
+                          {expandedRow === a.id && (
+                            <div className="col-span-6 bg-slate-50 border border-emerald-200 rounded-lg p-4 mx-5 mb-4">
+                              {loadingPatient ? (
+                                <div className="flex items-center gap-2 text-emerald-700">
+                                  <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-emerald-700 rounded-full"></span>
+                                  Loading patient details…
+                                </div>
+                              ) : patientDetails ? (
+                                <div className="space-y-4">
+                                  <Card className="border border-emerald-300">
+                                    <CardHeader className="pb-2">
+                                      <CardTitle className="text-emerald-800 text-lg flex items-center gap-2">
+                                        <User className="h-5 w-5 text-emerald-700" />
+                                        Patient Information
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="space-y-1">
+                                      <p><strong>Name:</strong> {patientDetails.full_name}</p>
+                                      <p><strong>Email:</strong> {patientDetails.email}</p>
+                                      <p><strong>Phone:</strong> {patientDetails.phone}</p>
+                                    </CardContent>
+                                  </Card>
+
+                                  {/* Medicines */}
+                                  {patientDetails.medicines?.length > 0 && (
+                                    <Card className="border border-blue-200">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-blue-800 text-sm flex items-center gap-2">
+                                          <Pill className="h-4 w-4" />
+                                          Prescribed Medicines ({patientDetails.medicines.length})
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="flex flex-wrap gap-2">
+                                          {patientDetails.medicines.map((m: any, i: number) => (
+                                            <Badge key={i} variant="outline">{m.medicine_name}</Badge>
+                                          ))}
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  )}
+
+                                  {/* Lab Tests */}
+                                  {patientDetails.lab_tests?.length > 0 && (
+                                    <Card className="border border-amber-200">
+                                      <CardHeader className="pb-2">
+                                        <CardTitle className="text-amber-800 text-sm flex items-center gap-2">
+                                          <FlaskConical className="h-4 w-4" />
+                                          Lab Tests ({patientDetails.lab_tests.length})
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="flex flex-wrap gap-2">
+                                          {patientDetails.lab_tests.map((t: any, i: number) => (
+                                            <Badge key={i} variant="outline">{t.test_name}</Badge>
+                                          ))}
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  )}
+                                </div>
+                              ) : (
+                                <p className="text-muted-foreground">No patient record found</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* DOCTORS MANAGEMENT TAB */}
+        <TabsContent value="doctors">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Stethoscope className="h-5 w-5 text-emerald-600" />
+                  Manage Doctors
+                </CardTitle>
+                <CardDescription>
+                  Add doctors and control their access to the admin dashboard
+                </CardDescription>
+              </div>
+
+              <Dialog
+                open={isAddDialogOpen}
+                onOpenChange={(open) => {
+                  if (!formLoading) setIsAddDialogOpen(open);
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => { resetForm(); setIsAddDialogOpen(true); }}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Doctor
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New Doctor</DialogTitle>
+                  </DialogHeader>
+
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label>Name *</Label>
+                      <Input 
+                        value={formData.name} 
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                        placeholder="Dr. John Smith"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Email *</Label>
+                      <Input 
+                        type="email"
+                        value={formData.email} 
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                        placeholder="doctor@hospital.com"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Phone</Label>
+                      <Input 
+                        value={formData.phone} 
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })} 
+                        placeholder="+91 98765 43210"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Password *</Label>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? 'text' : 'password'}
+                          value={formData.password}
+                          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                          placeholder="••••••••"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label>Specialization</Label>
+                      <Input 
+                        value={formData.specialization} 
+                        onChange={(e) => setFormData({ ...formData, specialization: e.target.value })} 
+                        placeholder="Pulmonology"
+                      />
+                    </div>
+
+                    <div>
+                      <Label>Consultation Fee</Label>
+                      <Input 
+                        type="number"
+                        value={formData.consultation_fee} 
+                        onChange={(e) => setFormData({ ...formData, consultation_fee: e.target.value })} 
+                        placeholder="500"
+                      />
+                    </div>
+
+                    <Button 
+                      className="w-full bg-emerald-600 hover:bg-emerald-700" 
+                      onClick={handleAddDoctor} 
+                      disabled={formLoading}
+                    >
+                      {formLoading ? 'Adding...' : 'Add Doctor'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+
+            <CardContent>
+              {doctorsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin h-6 w-6 border-2 border-emerald-600 border-t-transparent rounded-full" />
+                </div>
+              ) : doctors.length === 0 ? (
+                <div className="text-center py-12">
+                  <Stethoscope className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No doctors added yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Click "Add Doctor" to get started</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Doctor</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Specialization</TableHead>
+                      <TableHead>Consultation Fee</TableHead>
+                      <TableHead className="text-center">Dashboard Access</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {doctors.map((doctor) => (
+                      <TableRow key={doctor.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                              <User className="h-5 w-5 text-emerald-700" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{doctor.name}</p>
+                              {doctor.phone && (
+                                <p className="text-sm text-muted-foreground">{doctor.phone}</p>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>{doctor.email}</TableCell>
+                        <TableCell>{doctor.specialization || '-'}</TableCell>
+                        <TableCell>
+                          {doctor.consultation_fee 
+                            ? `₹${doctor.consultation_fee}` 
+                            : '-'
+                          }
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={doctor.is_active}
+                            onCheckedChange={() => toggleDoctorAccess(doctor)}
+                            disabled={togglingDoctorId === doctor.id}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {doctor.is_active ? (
+                            <Badge className="bg-green-100 text-green-800">Active</Badge>
+                          ) : (
+                            <Badge variant="secondary">Inactive</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Patients by Doctor */}
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-purple-600" />
+                Patients by Doctor
+              </CardTitle>
+              <CardDescription>
+                See patient distribution across your doctors
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(patientsByDoctor).length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No patient data available</p>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(patientsByDoctor).map(([doctorName, patients]) => (
+                    <Card key={doctorName} className="border-l-4 border-l-purple-400">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                              <Stethoscope className="h-5 w-5 text-purple-700" />
+                            </div>
+                            <div>
+                              <p className="font-medium">{doctorName}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {patients.length} patient{patients.length !== 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            <ArrowUpRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Reschedule Modal */}
+      {rescheduleAppointment && (
+        <RescheduleModal
+          isOpen={!!rescheduleAppointment}
+          onClose={() => setRescheduleAppointment(null)}
+          appointmentId={rescheduleAppointment.id}
+          patientName={rescheduleAppointment.full_name}
+          currentDate={rescheduleAppointment.appointment_date}
+          currentTime={rescheduleAppointment.appointment_time}
+          onSuccess={() => {
+            fetchAppointments();
+            setRescheduleAppointment(null);
+          }}
+        />
+      )}
+    </ConsoleShell>
   );
 };
 
