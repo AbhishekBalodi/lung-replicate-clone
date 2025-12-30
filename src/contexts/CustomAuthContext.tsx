@@ -73,6 +73,8 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getApiBaseUrl = () => {
+    // DEV: use same-origin '/api' via Vite proxy so cookies appear on localhost:8080
+    if (import.meta.env.DEV) return '';
     if (isLegacyDrMannSite()) return '';
     const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
     if (!envUrl) return '';

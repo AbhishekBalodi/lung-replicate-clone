@@ -8,13 +8,9 @@ import { toast } from 'sonner';
 import { Loader2, Shield } from 'lucide-react';
 
 const getApiBaseUrl = () => {
-  // In development, use localhost:5050 directly if proxy doesn't work
-  if (import.meta.env.DEV) {
-    return 'http://localhost:5050';
-  }
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
+  // DEV: use same-origin '/api' via Vite proxy so cookies are set on localhost:8080
+  if (import.meta.env.DEV) return '';
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
   return '';
 };
 
@@ -35,6 +31,7 @@ const PlatformLogin = () => {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 

@@ -8,6 +8,9 @@
 import { getDevTenantCode } from "@/components/DevTenantSwitcher";
 
 const getApiBaseUrl = () => {
+  // DEV: use same-origin '/api' via Vite proxy (so cookies are set on localhost:8080)
+  // PROD: use the configured API base URL (often a different domain)
+  if (import.meta.env.DEV) return "";
   return import.meta.env.VITE_API_BASE_URL || "";
 };
 
