@@ -3,8 +3,11 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // Platform app Vite configuration
-// Run with: npx vite --config vite.config.platform.ts
+// Run with: npx vite --config vite.config.platform.ts (run from platform-frontend or root)
+const PLATFORM_ROOT = path.resolve(__dirname, 'platform-frontend');
+
 export default defineConfig({
+  root: PLATFORM_ROOT,
   plugins: [
     {
       name: "platform-html",
@@ -32,7 +35,7 @@ export default defineConfig({
     // Prevent "Invalid hook call" errors caused by multiple React copies
     dedupe: ["react", "react-dom"],
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(PLATFORM_ROOT, "src"),
     },
   },
   server: {
@@ -45,9 +48,9 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: "dist-platform",
+    outDir: path.resolve(PLATFORM_ROOT, "dist-platform"),
     rollupOptions: {
-      input: path.resolve(__dirname, "index.platform.html"),
+      input: path.resolve(PLATFORM_ROOT, "index.platform.html"),
     },
   },
 });

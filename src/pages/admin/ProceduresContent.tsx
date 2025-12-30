@@ -27,6 +27,7 @@ type Patient = {
   phone: string | null;
 };
 
+import api from '@/lib/api';
 const API_ROOT = "/api";
 
 export default function ProceduresContent() {
@@ -53,7 +54,7 @@ export default function ProceduresContent() {
 
   const loadCatalog = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/procedures/catalog`);
+      const res = await api.apiGet(`${API_ROOT}/procedures/catalog`);
       if (!res.ok) throw new Error("Failed to load procedures");
       const data = await res.json();
       setItems(Array.isArray(data) ? data : []);
@@ -80,11 +81,7 @@ export default function ProceduresContent() {
         preparation_instructions: preparationInstructions.trim() || null,
       };
       
-      const res = await fetch(`${API_ROOT}/procedures/catalog`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await api.apiPost(`${API_ROOT}/procedures/catalog`, payload);
       
       if (!res.ok) {
         const js = await res.json();
@@ -109,7 +106,7 @@ export default function ProceduresContent() {
       return;
     }
     try {
-      const res = await fetch(`${API_ROOT}/patients?search=${encodeURIComponent(searchQuery)}`);
+      const res = await api.apiGet(`${API_ROOT}/patients?search=${encodeURIComponent(searchQuery)}`);
       if (!res.ok) throw new Error("Failed to search patients");
       const data = await res.json();
       setPatients(Array.isArray(data) ? data : []);
@@ -147,11 +144,7 @@ export default function ProceduresContent() {
         description: procedureDescription.trim() || null,
         preparation_instructions: procedurePreparation.trim() || null,
       };
-      const res = await fetch(`${API_ROOT}/procedures`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const res = await api.apiPost(`${API_ROOT}/procedures`, payload);
       if (!res.ok) {
         const js = await res.json();
         throw new Error(js?.error || "Failed to prescribe procedure");

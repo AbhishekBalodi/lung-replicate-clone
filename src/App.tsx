@@ -33,6 +33,25 @@ import Settings from "@/pages/Settings";
 import NewAppointment from "@/pages/admin/NewAppointment";
 import SuperAdminDashboard from "@/pages/admin/SuperAdminDashboard";
 
+/* New admin pages */
+import AmbulancesPage from "@/pages/admin/Ambulances";
+import AmbulanceDispatch from "@/pages/admin/AmbulanceDispatch";
+import PharmacyMedicines from "@/pages/admin/PharmacyMedicines";
+import PharmacyInventory from "@/pages/admin/PharmacyInventory";
+import BloodStock from "@/pages/admin/BloodStock";
+import BloodDonors from "@/pages/admin/BloodDonors";
+import BloodIssued from "@/pages/admin/BloodIssued";
+import Feedback from "@/pages/admin/Feedback";
+import RoomsAlloted from "@/pages/admin/RoomsAlloted";
+import NewAllotment from "@/pages/admin/NewAllotment";
+import Rooms from "@/pages/admin/Rooms";
+import Reviews from "@/pages/admin/Reviews";
+import PendingTasks from "@/pages/admin/PendingTasks";
+import InvoicesList from "@/pages/admin/InvoicesList";
+import CreateInvoice from "@/pages/admin/CreateInvoice";
+import InvoiceDetail from "@/pages/admin/InvoiceDetail";
+import PaymentsHistory from "@/pages/admin/PaymentsHistory";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -74,6 +93,28 @@ const App = () => (
             <Route path="/completed-appointments" element={<CompletedAppointments />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/new-appointment" element={<NewAppointment />} />
+
+            {/* Admin feature routes (created for hospital tenants) */}
+            <Route path="/admin/ambulances" element={<AmbulancesPage />} />
+            <Route path="/admin/ambulances/dispatch" element={<AmbulanceDispatch />} />
+            <Route path="/admin/pharmacy/medicines" element={<PharmacyMedicines />} />
+            <Route path="/admin/pharmacy/inventory" element={<PharmacyInventory />} />
+            <Route path="/admin/blood-bank/stock" element={<BloodStock />} />
+            <Route path="/admin/blood-bank/donors" element={<BloodDonors />} />
+            <Route path="/admin/blood-bank/issued" element={<BloodIssued />} />
+            <Route path="/admin/feedback" element={<Feedback />} />
+            <Route path="/admin/rooms/alloted" element={<RoomsAlloted />} />
+            <Route path="/admin/rooms/new" element={<NewAllotment />} />
+            <Route path="/admin/rooms" element={<Rooms />} />
+            <Route path="/admin/reviews" element={<Reviews />} />
+            <Route path="/admin/pending-tasks" element={<PendingTasks />} />
+
+            {/* Billing Routes */}
+            <Route path="/admin/billing" element={<InvoicesList />} />
+            <Route path="/admin/billing/new" element={<CreateInvoice />} />
+            <Route path="/admin/billing/invoices/:id" element={<InvoiceDetail />} />
+            <Route path="/admin/billing/payments" element={<PaymentsHistory />} />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -21,6 +21,16 @@ import authRouter from './routes/auth.js';
 import smtpSettingsRouter from './routes/smtp-settings.js';
 import doctorsRouter from './routes/doctors.js';
 
+// New tenant feature routes
+import bloodBankRouter from './routes/blood-bank.js';
+import ambulancesRouter from './routes/ambulances.js';
+import roomsRouter from './routes/rooms.js';
+import pharmacyRouter from './routes/pharmacy.js';
+import reviewsRouter from './routes/reviews.js';
+import feedbackRouter from './routes/feedback.js';
+import tasksRouter from './routes/tasks.js';
+import billingRouter from './routes/billing.js';
+
 // Platform (SaaS) routes
 import tenantsRouter from './routes/tenants.js';
 import platformAuthRouter from './routes/platform-auth.js';
@@ -158,6 +168,16 @@ app.use('/api/procedures', proceduresRouter);
 app.use('/api/calendar', calendarRouter);
 app.use('/api/smtp-settings', smtpSettingsRouter);
 app.use('/api/doctors', doctorsRouter);
+
+// New feature routes
+app.use('/api/blood-bank', bloodBankRouter);
+app.use('/api/ambulances', ambulancesRouter);
+app.use('/api/rooms', roomsRouter);
+app.use('/api/pharmacy', pharmacyRouter);
+app.use('/api/reviews', reviewsRouter);
+app.use('/api/feedback', feedbackRouter);
+app.use('/api/tasks', tasksRouter);
+app.use('/api/billing', billingRouter);
 
 /* ============================================================
    🚀 SERVER START

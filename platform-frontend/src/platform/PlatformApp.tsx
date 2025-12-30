@@ -21,6 +21,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import TenantOnboarding from "@/pages/platform/TenantOnboarding";
 import PlatformLogin from "@/pages/platform/PlatformLogin";
 import PlatformDashboard from "@/pages/platform/PlatformDashboard";
+import TenantDetails from "@/pages/platform/TenantDetails";
+import TenantSettings from "@/pages/platform/TenantSettings";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,10 @@ const PlatformApp = () => (
           <Route path="/register" element={<TenantOnboarding />} />
           <Route path="/dashboard" element={<PlatformDashboard />} />
           
+          {/* Tenant detail & settings */}
+          <Route path="/tenants/:id" element={<TenantDetails />} />
+          <Route path="/tenants/:id/settings" element={<TenantSettings />} />
+
           {/* Catch all - redirect to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

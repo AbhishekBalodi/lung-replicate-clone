@@ -141,7 +141,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               </button>
 
               {/* Pending Tasks */}
-              <button className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/pending-tasks'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
                 <ListTodo className="h-4 w-4" />
                 Pending Tasks
               </button>
@@ -160,8 +160,8 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['ambulance'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Fleet Status</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Dispatch</button>
+                    <button onClick={() => { navigate('/admin/ambulances'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Fleet Status</button>
+                    <button onClick={() => { navigate('/admin/ambulances/dispatch'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Dispatch</button>
                   </div>
                 )}
               </div>
@@ -180,8 +180,8 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['pharmacy'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Medicine List</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Inventory</button>
+                    <button onClick={() => { navigate('/admin/pharmacy/medicines'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Medicine List</button>
+                    <button onClick={() => { navigate('/admin/pharmacy/inventory'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Inventory</button>
                   </div>
                 )}
               </div>
@@ -200,9 +200,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['blood-bank'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Stock</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Donor</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Issued</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/stock'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Stock</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/donors'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Donor</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/issued'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Issued</button>
                   </div>
                 )}
               </div>
@@ -221,9 +221,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['billing'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Invoices List</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Create Invoice</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Payments History</button>
+                    <button onClick={() => { navigate('/admin/billing'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Invoices List</button>
+                    <button onClick={() => { navigate('/admin/billing/new'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Create Invoice</button>
+                    <button onClick={() => { navigate('/admin/billing/payments'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Payments History</button>
                   </div>
                 )}
               </div>
@@ -242,21 +242,21 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['room-allotment'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Alloted Rooms</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">New Allotment</button>
-                    <button className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Rooms by Department</button>
+                    <button onClick={() => { navigate('/admin/rooms/alloted'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Alloted Rooms</button>
+                    <button onClick={() => { navigate('/admin/rooms/new'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">New Allotment</button>
+                    <button onClick={() => { navigate('/admin/rooms'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Rooms by Department</button>
                   </div>
                 )}
               </div>
 
               {/* Reviews */}
-              <button className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/reviews'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
                 <Star className="h-4 w-4" />
                 Reviews
               </button>
 
               {/* Feedback */}
-              <button className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/feedback'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Feedback
               </button>

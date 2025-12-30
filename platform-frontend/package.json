@@ -4,11 +4,11 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "dev": "vite --config ../vite.config.platform.ts",
+    "build": "vite build --config ../vite.config.platform.ts",
+    "build:dev": "vite build --config ../vite.config.platform.ts --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --config ../vite.config.platform.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",

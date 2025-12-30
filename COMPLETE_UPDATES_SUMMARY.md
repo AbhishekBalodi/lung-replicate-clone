@@ -1,5 +1,16 @@
 # Complete Website Updates Summary
 
+## ✅ New Tenant Features Added
+- **Blood Bank**: Blood groups, stock, donors tables; backend routes (`/api/blood-bank/*`); admin pages (`/admin/blood-bank/*`).
+- **Ambulances**: ambulances table & routes (`/api/ambulances`); admin pages (`/admin/ambulances`).
+- **Rooms & Room Allotments**: room types/rooms/allotments tables & routes (`/api/rooms/*`); admin pages (`/admin/rooms/*`).
+- **Pharmacy**: medicines and inventory tables & routes (`/api/pharmacy/*`); admin pages (`/admin/pharmacy/*`).
+- **Reviews**: reviews table & routes (`/api/reviews`); admin page (`/admin/reviews`).
+
+These are created in both platform and tenant schemas and initialized for new hospital tenants at onboarding.
+
+
+
 ## ✅ Fixed Issues
 
 ### 1. **Font Standardization - Lexend Deca Only**

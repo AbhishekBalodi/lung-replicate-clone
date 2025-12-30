@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import api from '@/lib/api';
 import drMannImage from "@/assets/dr-mann-passport.jpg";
 
 // Generate time slots for the allowed periods (15-min intervals)
@@ -122,7 +123,7 @@ export default function NewAppointment() {
     setLoadingSlots(true);
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const response = await fetch(`/api/appointment?date=${dateStr}`);
+      const response = await api.apiGet(`/api/appointment?date=${dateStr}`);
       const data = await response.json();
       
       if (data.success && Array.isArray(data.data)) {
@@ -201,21 +202,15 @@ export default function NewAppointment() {
     }
 
     try {
-      const response = await fetch(`/api/appointment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          full_name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          appointment_date: format(formData.date, 'yyyy-MM-dd'),
-          appointment_time: formData.time,
-          selected_doctor: doctor.name,
-          message: formData.message || '',
-          reports_uploaded: false
-        }),
+      const response = await api.apiPost(`/api/appointment`, {
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        appointment_date: format(formData.date, 'yyyy-MM-dd'),
+        appointment_time: formData.time,
+        selected_doctor: doctor.name,
+        message: formData.message || '',
+        reports_uploaded: false
       });
 
       const result = await response.json();

@@ -370,6 +370,70 @@ router.patch('/:id/status', async (req, res) => {
 });
 
 /**
+ * PATCH /api/tenants/:id
+ * Update tenant basic details (name, email, phone, address)
+ */
+router.patch('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, address } = req.body || {};
+    const fields = [];
+    const values = [];
+
+    if (name) { fields.push('name = ?'); values.push(name); }
+    if (email) { fields.push('email = ?'); values.push(email); }
+    if (phone !== undefined) { fields.push('phone = ?'); values.push(phone); }
+    if (address !== undefined) { fields.push('address = ?'); values.push(address); }
+
+    if (!fields.length) return res.status(400).json({ error: 'No valid fields to update' });
+
+    values.push(id);
+    await platformPool.execute(`UPDATE tenants SET ${fields.join(', ')} WHERE id = ?`, values);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating tenant:', err);
+    res.status(500).json({ error: 'Failed to update tenant' });
+  }
+});
+
+/**
+ * PATCH /api/tenants/:id/users/:userId
+ * Update tenant user details (email, name, phone, is_active, password)
+ */
+router.patch('/:id/users/:userId', async (req, res) => {
+  try {
+    const { id, userId } = req.params;
+    const { email, name, phone, is_active, password } = req.body || {};
+    const updates = [];
+    const values = [];
+
+    if (email) { updates.push('email = ?'); values.push(email); }
+    if (name) { updates.push('name = ?'); values.push(name); }
+    if (phone !== undefined) { updates.push('phone = ?'); values.push(phone); }
+    if (is_active !== undefined) { updates.push('is_active = ?'); values.push(is_active ? 1 : 0); }
+
+    // If password provided, hash and update
+    if (password) {
+      const hash = await bcrypt.hash(password, 10);
+      updates.push('password_hash = ?');
+      values.push(hash);
+    }
+
+    if (!updates.length) return res.status(400).json({ error: 'No valid fields to update' });
+
+    values.push(userId);
+
+    await platformPool.execute(`UPDATE tenant_users SET ${updates.join(', ')} WHERE id = ?`, values);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating tenant user:', err);
+    res.status(500).json({ error: 'Failed to update tenant user' });
+  }
+});
+
+/**
  * POST /api/tenants/:id/doctors
  * Add a doctor to hospital tenant
  */
@@ -458,6 +522,33 @@ router.get('/:id/doctors', async (req, res) => {
   } catch (error) {
     console.error('Error fetching doctors:', error);
     res.status(500).json({ error: 'Failed to fetch doctors' });
+  }
+});
+
+/**
+ * POST /api/tenants/:id/apply-hospital-schema
+ * Re-apply hospital schema template to a tenant DB (adds missing tables)
+ */
+router.post('/:id/apply-hospital-schema', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch tenant
+    const [tenants] = await platformPool.execute('SELECT * FROM tenants WHERE id = ?', [id]);
+    if (tenants.length === 0) return res.status(404).json({ error: 'Tenant not found' });
+
+    const tenant = tenants[0];
+    if (tenant.type !== 'hospital') {
+      return res.status(400).json({ error: 'This operation is only for hospital tenants' });
+    }
+
+    // Apply the hospital schema template to ensure missing tables are created
+    await createTenantSchema(tenant.tenant_code, 'hospital');
+
+    res.json({ success: true, message: 'Hospital schema applied to tenant (missing tables created)' });
+  } catch (err) {
+    console.error('Error applying hospital schema:', err);
+    res.status(500).json({ error: 'Failed to apply schema', details: err.message });
   }
 });
 
