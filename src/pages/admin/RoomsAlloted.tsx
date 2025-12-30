@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
+const API_ROOT = (import.meta as any).env.VITE_API_URL ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, '')}/api` : '/api';
+
 type RoomAllotment = { id:number; room_id?: number; room_number?: string; patient_name?: string; from_date?: string; to_date?: string };
 
 export default function RoomsAlloted(){
