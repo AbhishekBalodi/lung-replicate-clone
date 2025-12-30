@@ -105,9 +105,9 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false, // 🔴 VERY IMPORTANT
-    sameSite: 'none',
-    maxAge: 24 * 60 * 60 * 1000 // 1 day
+    secure: isProd,                        // true in production (HTTPS), false in dev
+    sameSite: isProd ? 'none' : 'lax',     // 'none' for cross-origin prod, 'lax' for dev
+    maxAge: 24 * 60 * 60 * 1000            // 1 day
   }
 }));
 
