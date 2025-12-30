@@ -64,9 +64,15 @@ export const apiFetch = async (
     options.headers as Record<string, string> || {}
   );
 
+  // In development (with Vite proxy), requests go to same origin
+  // In production, we need credentials: 'include' for cross-origin cookies
+  const isDev = import.meta.env.DEV;
+  
   return fetch(url, {
     ...options,
     headers,
+    // Only include credentials for cross-origin in production
+    credentials: isDev ? 'same-origin' : 'include',
   });
 };
 
