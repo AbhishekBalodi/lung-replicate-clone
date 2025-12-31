@@ -199,11 +199,13 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   </span>
                   {expandedMenus['blood-bank'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 </button>
-                {expandedMenus['blood-bank'] && (
+{expandedMenus['blood-bank'] && (
                   <div className="ml-6 space-y-1 mt-1">
                     <button onClick={() => { navigate('/admin/blood-bank/stock'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Stock</button>
                     <button onClick={() => { navigate('/admin/blood-bank/donors'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Donor</button>
                     <button onClick={() => { navigate('/admin/blood-bank/issued'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Issued</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/add-unit'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Add Blood Unit</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/issue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Issue Blood</button>
                   </div>
                 )}
               </div>
