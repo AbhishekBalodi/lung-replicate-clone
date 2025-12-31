@@ -44,6 +44,8 @@ import PharmacyInventory from "@/pages/admin/PharmacyInventory";
 import BloodStock from "@/pages/admin/BloodStock";
 import BloodDonors from "@/pages/admin/BloodDonors";
 import BloodIssued from "@/pages/admin/BloodIssued";
+import AddBloodUnit from "@/pages/admin/AddBloodUnit";
+import IssueBlood from "@/pages/admin/IssueBlood";
 import Feedback from "@/pages/admin/Feedback";
 import RoomsAlloted from "@/pages/admin/RoomsAlloted";
 import NewAllotment from "@/pages/admin/NewAllotment";
@@ -108,6 +110,8 @@ const App = () => (
             <Route path="/admin/blood-bank/stock" element={<BloodStock />} />
             <Route path="/admin/blood-bank/donors" element={<BloodDonors />} />
             <Route path="/admin/blood-bank/issued" element={<BloodIssued />} />
+            <Route path="/admin/blood-bank/add-unit" element={<AddBloodUnit />} />
+            <Route path="/admin/blood-bank/issue" element={<IssueBlood />} />
             <Route path="/admin/feedback" element={<Feedback />} />
             <Route path="/admin/rooms/alloted" element={<RoomsAlloted />} />
             <Route path="/admin/rooms/new" element={<NewAllotment />} />
