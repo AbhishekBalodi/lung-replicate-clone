@@ -944,8 +944,8 @@ const SuperAdminDashboard = () => {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                              {doctor.profile_photo_url ? (
-                                <img src={doctor.profile_photo_url} className="h-10 w-10 rounded-full object-cover" alt="doctor" />
+                              {(doctor as any).profile_photo_url ? (
+                                <img src={(doctor as any).profile_photo_url} className="h-10 w-10 rounded-full object-cover" alt="doctor" />
                               ) : (
                                 <User className="h-5 w-5 text-emerald-700" />
                               )}
