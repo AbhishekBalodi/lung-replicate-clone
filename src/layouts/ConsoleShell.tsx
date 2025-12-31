@@ -160,8 +160,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['ambulance'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/ambulances'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Fleet Status</button>
-                    <button onClick={() => { navigate('/admin/ambulances/dispatch'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Dispatch</button>
+                    <button onClick={() => { navigate('/admin/ambulances/calls'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Ambulance Call List</button>
+                    <button onClick={() => { navigate('/admin/ambulances/list'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Ambulance List</button>
+                    <button onClick={() => { navigate('/admin/ambulances/details/AMB-002'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Ambulance Details</button>
                   </div>
                 )}
               </div>

@@ -36,6 +36,9 @@ import SuperAdminDashboard from "@/pages/admin/SuperAdminDashboard";
 /* New admin pages */
 import AmbulancesPage from "@/pages/admin/Ambulances";
 import AmbulanceDispatch from "@/pages/admin/AmbulanceDispatch";
+import AmbulanceCallList from "@/pages/admin/AmbulanceCallList";
+import AmbulanceFleetList from "@/pages/admin/AmbulanceFleetList";
+import AmbulanceDetails from "@/pages/admin/AmbulanceDetails";
 import PharmacyMedicines from "@/pages/admin/PharmacyMedicines";
 import PharmacyInventory from "@/pages/admin/PharmacyInventory";
 import BloodStock from "@/pages/admin/BloodStock";
@@ -96,6 +99,9 @@ const App = () => (
 
             {/* Admin feature routes (created for hospital tenants) */}
             <Route path="/admin/ambulances" element={<AmbulancesPage />} />
+            <Route path="/admin/ambulances/calls" element={<AmbulanceCallList />} />
+            <Route path="/admin/ambulances/list" element={<AmbulanceFleetList />} />
+            <Route path="/admin/ambulances/details/:id" element={<AmbulanceDetails />} />
             <Route path="/admin/ambulances/dispatch" element={<AmbulanceDispatch />} />
             <Route path="/admin/pharmacy/medicines" element={<PharmacyMedicines />} />
             <Route path="/admin/pharmacy/inventory" element={<PharmacyInventory />} />
