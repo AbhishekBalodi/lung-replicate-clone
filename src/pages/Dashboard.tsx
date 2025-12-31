@@ -37,7 +37,7 @@ interface Appointment {
 }
 
 export default function Dashboard() {
-  const { user, loading: authLoading } = useCustomAuth();
+  const { user, loading: authLoading, isHospitalTenant, tenantInfo } = useCustomAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -301,6 +301,7 @@ export default function Dashboard() {
           <DashboardTabs 
             appointments={appointments}
             onViewAppointment={handleViewAppointment}
+            isHospital={isHospitalTenant}
           />
         </div>
 
@@ -832,16 +833,16 @@ export default function Dashboard() {
 
           {/* Right column: Quick booking (UI only; routes to existing booking page) */}
           <div className="space-y-4 md:space-y-6">
-            <Card className="bg-white rounded-xl border border-slate-200 shadow-sm">
+            <Card className={isHospitalTenant ? "bg-emerald-700/80 rounded-xl border border-emerald-600 shadow-sm text-white" : "bg-white rounded-xl border border-slate-200 shadow-sm"}>
               <CardHeader>
-                <CardTitle className="text-lg md:text-xl">Book an Appointment</CardTitle>
-                <CardDescription>Live availability</CardDescription>
+                <CardTitle className={isHospitalTenant ? "text-lg md:text-xl text-white" : "text-lg md:text-xl"}>Book an Appointment</CardTitle>
+                <CardDescription className={isHospitalTenant ? "text-slate-100" : ""}>Live availability</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Visit type & Doctor */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-slate-500">Visit Type</label>
+                    <label className={isHospitalTenant ? "text-slate-100 text-xs" : "text-xs text-slate-500"}>Visit Type</label>
                     <select
                       value={visitType}
                       onChange={(e) => setVisitType(e.target.value as any)}
@@ -852,14 +853,14 @@ export default function Dashboard() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs text-slate-500">Preferred Doctor</label>
+                    <label className={isHospitalTenant ? "text-slate-100 text-xs" : "text-xs text-slate-500"}>Preferred Doctor</label>
                     <select
                       value={doctor}
                       onChange={(e) => setDoctor(e.target.value)}
                       className="w-full mt-1 border border-slate-200 rounded-md px-3 py-2 outline-none focus:ring focus:ring-emerald-100"
                     >
                       <option>Dr. Priya Mehta</option>
-                      <option>Dr. Paramjeet Singh Mann</option>
+                      <option>{tenantInfo?.name || 'Dr. Paramjeet Singh Mann'}</option>
                     </select>
                   </div>
                 </div>
@@ -878,7 +879,7 @@ export default function Dashboard() {
                 {/* Times grid */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-600">Available Slots on Selected Day</span>
+                    <span className={isHospitalTenant ? "text-sm text-slate-100" : "text-sm text-slate-600"}>Available Slots on Selected Day</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     {slots.map((t) => (
@@ -889,7 +890,7 @@ export default function Dashboard() {
                           "rounded-md px-3 py-2 border text-sm",
                           time === t
                             ? "border-emerald-600 bg-emerald-50 text-emerald-800"
-                            : "border-slate-200 hover:bg-slate-50",
+                            : (isHospitalTenant ? "border-emerald-600 hover:bg-emerald-600/20 text-white" : "border-slate-200 hover:bg-slate-50"),
                         ].join(" ")}
                       >
                         {t}
@@ -899,21 +900,21 @@ export default function Dashboard() {
                 </div>
 
                 {/* Summary */}
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <div className="font-medium mb-2 text-slate-700">Appointment Summary</div>
+                <div className={isHospitalTenant ? "rounded-lg border border-emerald-600 bg-emerald-600/10 p-3 text-slate-100" : "rounded-lg border border-slate-200 bg-slate-50 p-3"}>
+                  <div className={isHospitalTenant ? "font-medium mb-2 text-white" : "font-medium mb-2 text-slate-700"}>Appointment Summary</div>
                   <dl className="text-sm grid grid-cols-2 gap-y-1">
-                    <dt className="text-slate-500">Doctor</dt>
-                    <dd className="text-slate-900">{doctor}</dd>
-                    <dt className="text-slate-500">Visit Type</dt>
-                    <dd className="text-slate-900">{visitType}</dd>
-                    <dt className="text-slate-500">Date</dt>
-                    <dd className="text-slate-900">{date || "-"}</dd>
-                    <dt className="text-slate-500">Time</dt>
-                    <dd className="text-slate-900">{time || "-"}</dd>
-                    <dt className="text-slate-500">Clinic</dt>
-                    <dd className="text-slate-900">12, Park Street, Kolkata</dd>
-                    <dt className="text-slate-500">Fee</dt>
-                    <dd className="text-emerald-700 font-semibold">₹800</dd>
+                    <dt className={isHospitalTenant ? "text-slate-200": "text-slate-500"}>Doctor</dt>
+                    <dd className={isHospitalTenant ? "text-slate-50" : "text-slate-900"}>{doctor}</dd>
+                    <dt className={isHospitalTenant ? "text-slate-200": "text-slate-500"}>Visit Type</dt>
+                    <dd className={isHospitalTenant ? "text-slate-50" : "text-slate-900"}>{visitType}</dd>
+                    <dt className={isHospitalTenant ? "text-slate-200": "text-slate-500"}>Date</dt>
+                    <dd className={isHospitalTenant ? "text-slate-50" : "text-slate-900"}>{date || "-"}</dd>
+                    <dt className={isHospitalTenant ? "text-slate-200": "text-slate-500"}>Time</dt>
+                    <dd className={isHospitalTenant ? "text-slate-50" : "text-slate-900"}>{time || "-"}</dd>
+                    <dt className={isHospitalTenant ? "text-slate-200": "text-slate-500"}>Clinic</dt>
+                    <dd className={isHospitalTenant ? "text-slate-50" : "text-slate-900"}>12, Park Street, Kolkata</dd>
+                    <dt className={isHospitalTenant ? "text-slate-200": "text-slate-500"}>Fee</dt>
+                    <dd className={isHospitalTenant ? "text-emerald-200 font-semibold" : "text-emerald-700 font-semibold"}>₹800</dd>
                   </dl>
 
                   <div className="mt-3 flex gap-2">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -36,6 +36,15 @@ const onboardingSchema = z.object({
   adminPassword: z.string().min(8, 'Password must be at least 8 characters'),
   adminPasswordConfirm: z.string(),
   adminPhone: z.string().max(20).optional(),
+
+  // Optional doctor/hospital metadata (collected during onboarding)
+  doctorSpecialty: z.string().max(255).optional(),
+  doctorDegrees: z.string().optional(), // comma separated
+  doctorAwards: z.string().optional(),
+  doctorYearsExperience: z.string().optional(),
+  doctorAge: z.string().optional(),
+  doctorGender: z.string().optional(),
+  doctorBio: z.string().optional(),
   
   // Step 4: Custom Domain
   customDomain: z.string().max(255).optional(),
@@ -51,6 +60,49 @@ const TenantOnboarding = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registrationResult, setRegistrationResult] = useState<any>(null);
+  const [tenantDetails, setTenantDetails] = useState<any>(null);
+
+  // After registration, fetch tenant details to surface uploaded assets
+  useEffect(() => {
+    if (!registrationResult?.tenant?.id) return;
+    const fetchDetails = async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/tenants/${registrationResult.tenant.id}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        setTenantDetails(json.tenant || null);
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchDetails();
+  }, [registrationResult]);
+  // File previews for onboarding uploads
+  const [doctorPhotoFile, setDoctorPhotoFile] = useState<File | null>(null);
+  const [doctorPhotoPreview, setDoctorPhotoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [heroFile, setHeroFile] = useState<File | null>(null);
+  const [heroPreview, setHeroPreview] = useState<string | null>(null);
+
+  const fileToDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'doctor' | 'logo' | 'hero') => {
+    const f = e.target.files?.[0] || null;
+    if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { toast.error('Image must be <= 5 MB'); return; }
+
+    fileToDataUrl(f).then((dataUrl) => {
+      if (type === 'doctor') { setDoctorPhotoFile(f); setDoctorPhotoPreview(dataUrl); }
+      if (type === 'logo') { setLogoFile(f); setLogoPreview(dataUrl); }
+      if (type === 'hero') { setHeroFile(f); setHeroPreview(dataUrl); }
+    }).catch(() => toast.error('Failed to read file'));
+  };
 
   const form = useForm<OnboardingFormData>({
     resolver: zodResolver(onboardingSchema),
@@ -65,6 +117,14 @@ const TenantOnboarding = () => {
       adminPassword: '',
       adminPasswordConfirm: '',
       adminPhone: '',
+      // doctor metadata defaults
+      doctorSpecialty: '',
+      doctorDegrees: '',
+      doctorAwards: '',
+      doctorYearsExperience: '',
+      doctorAge: '',
+      doctorGender: '',
+      doctorBio: '',
       customDomain: '',
     },
   });
@@ -95,21 +155,38 @@ const TenantOnboarding = () => {
     setIsSubmitting(true);
     
     try {
+      // Build payload and attach optional metadata and base64 images (if provided)
+      const payload: any = {
+        type: data.type,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        adminName: data.adminName,
+        adminEmail: data.adminEmail,
+        adminPassword: data.adminPassword,
+        adminPhone: data.adminPhone,
+        customDomain: data.customDomain || undefined,
+      };
+
+      // Doctor-specific metadata
+      if (data.doctorSpecialty) payload.doctorSpecialty = data.doctorSpecialty;
+      if (data.doctorDegrees) payload.doctorDegrees = data.doctorDegrees;
+      if (data.doctorAwards) payload.doctorAwards = data.doctorAwards;
+      if (data.doctorYearsExperience) payload.doctorYearsExperience = data.doctorYearsExperience;
+      if (data.doctorAge) payload.doctorAge = data.doctorAge;
+      if (data.doctorGender) payload.doctorGender = data.doctorGender;
+      if (data.doctorBio) payload.doctorBio = data.doctorBio;
+
+      // Attach images as data URLs if present (we use previews which are data URLs)
+      if (doctorPhotoPreview) payload.doctorPhotoBase64 = doctorPhotoPreview;
+      if (logoPreview) payload.logoBase64 = logoPreview;
+      if (heroPreview) payload.heroBase64 = heroPreview;
+
       const response = await fetch(`${getApiBaseUrl()}/api/tenants/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: data.type,
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          address: data.address,
-          adminName: data.adminName,
-          adminEmail: data.adminEmail,
-          adminPassword: data.adminPassword,
-          adminPhone: data.adminPhone,
-          customDomain: data.customDomain || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -153,6 +230,33 @@ const TenantOnboarding = () => {
                 <span className="text-green-600 capitalize">{registrationResult.tenant.status}</span>
               </div>
             </div>
+
+            {/* Show uploaded assets (if available) */}
+            {tenantDetails && (
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold">Uploaded Assets</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                  {tenantDetails.logo_url && (
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-2">Logo</p>
+                      <img src={tenantDetails.logo_url} alt="logo" className="mx-auto h-24 object-contain" />
+                    </div>
+                  )}
+                  {tenantDetails.hero_image_url && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground mb-2">Hero Image</p>
+                      <img src={tenantDetails.hero_image_url} alt="hero" className="w-full h-32 object-cover rounded" />
+                    </div>
+                  )}
+                  {tenantDetails.doctor_photo_url && (
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-2">Doctor Photo</p>
+                      <img src={tenantDetails.doctor_photo_url} alt="doctor" className="mx-auto h-24 w-24 rounded-full object-cover" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {registrationResult.domain && (
               <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-3">
@@ -342,6 +446,82 @@ const TenantOnboarding = () => {
                   />
                   {errors.address && <p className="text-sm text-destructive">{errors.address.message}</p>}
                 </div>
+
+                {/* Tenant-specific metadata & uploads */}
+                {tenantType === 'doctor' ? (
+                  <div className="space-y-4 pt-4 border-t">
+                    <h4 className="font-semibold">Doctor Profile (optional)</h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="doctorSpecialty">Specialty</Label>
+                        <Input id="doctorSpecialty" placeholder="Pulmonology" {...register('doctorSpecialty')} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="doctorYearsExperience">Years of Experience</Label>
+                        <Input id="doctorYearsExperience" placeholder="10" {...register('doctorYearsExperience')} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="doctorDegrees">Degrees (comma separated)</Label>
+                      <Input id="doctorDegrees" placeholder="MBBS, MD, FCCP" {...register('doctorDegrees')} />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="doctorAge">Age</Label>
+                        <Input id="doctorAge" placeholder="55" {...register('doctorAge')} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="doctorGender">Gender</Label>
+                        <select id="doctorGender" className="input" {...register('doctorGender')}>
+                          <option value="">Select</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="doctorBio">Short Bio</Label>
+                      <Textarea id="doctorBio" placeholder="Short bio for public site" {...register('doctorBio')} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Upload Doctor Photo</Label>
+                      <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'doctor')} />
+                      {doctorPhotoPreview && (
+                        <img src={doctorPhotoPreview} alt="preview" className="w-24 h-24 rounded-full object-cover mt-2" />
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 pt-4 border-t">
+                    <h4 className="font-semibold">Hospital Assets (optional)</h4>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Upload Logo</Label>
+                        <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'logo')} />
+                        {logoPreview && (
+                          <img src={logoPreview} alt="logo" className="w-32 h-32 object-contain mt-2" />
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Upload Hero Image</Label>
+                        <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'hero')} />
+                        {heroPreview && (
+                          <img src={heroPreview} alt="hero" className="w-full h-36 object-cover mt-2 rounded" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

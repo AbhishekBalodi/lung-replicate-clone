@@ -29,7 +29,7 @@ interface PatientsTabProps {
   todaysAppointments: Appointment[];
 }
 
-export default function PatientsTab({ todaysAppointments }: PatientsTabProps) {
+export default function PatientsTab({ todaysAppointments, isHospital }: PatientsTabProps & { isHospital?: boolean }) {
   const [recentNotes, setRecentNotes] = useState<PatientNote[]>([]);
 
   const getInitials = (name: string) => {
@@ -65,13 +65,18 @@ export default function PatientsTab({ todaysAppointments }: PatientsTabProps) {
     setRecentNotes(mockNotes);
   }, [todaysAppointments]);
 
+  const isHosp = !!isHospital;
+  const headerSubText = isHosp ? 'text-slate-100 text-sm' : 'text-slate-400 text-sm';
+  const cardClass = isHosp ? 'bg-emerald-700/80 border-emerald-600 text-white' : 'bg-slate-800/50 border-slate-700 text-white';
+  const itemBg = isHosp ? 'bg-emerald-600/50 hover:bg-emerald-600' : 'bg-slate-700/50 hover:bg-slate-700';
+
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       {/* Today's Patients */}
-      <Card className="bg-slate-800/50 border-slate-700 text-white">
+      <Card className={cardClass}>
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Today's Patients</CardTitle>
-          <p className="text-slate-400 text-sm">Patients you're seeing today</p>
+          <p className={headerSubText}>Patients you're seeing today</p>
         </CardHeader>
         <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
           {todaysAppointments.length === 0 ? (
@@ -80,7 +85,7 @@ export default function PatientsTab({ todaysAppointments }: PatientsTabProps) {
             todaysAppointments.map((appt, index) => (
               <div 
                 key={appt.id} 
-                className="flex items-center justify-between p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                className={`flex items-center justify-between p-4 rounded-lg ${itemBg} transition-colors`}
               >
                 <div className="flex items-center gap-3">
                   <Avatar className={getAvatarColor(appt.full_name)}>
@@ -130,13 +135,13 @@ export default function PatientsTab({ todaysAppointments }: PatientsTabProps) {
       </Card>
 
       {/* Recent Patient Notes */}
-      <Card className="bg-slate-800/50 border-slate-700 text-white">
+      <Card className="bg-emerald-700/80 border-emerald-600 text-white">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-xl font-semibold">Recent Patient Notes</CardTitle>
             <p className="text-slate-400 text-sm">Your latest clinical notes</p>
           </div>
-          <Button size="sm" className="bg-slate-700 hover:bg-slate-600">
+          <Button size="sm" className="bg-emerald-700 hover:bg-emerald-600">
             <Plus className="h-4 w-4 mr-1" />
             New Note
           </Button>

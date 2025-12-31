@@ -107,6 +107,7 @@ app.use(session({
     httpOnly: true,
     secure: isProd,                        // true in production (HTTPS), false in dev
     sameSite: isProd ? 'none' : 'lax',     // 'none' for cross-origin prod, 'lax' for dev
+    domain: process.env.COOKIE_DOMAIN || undefined, // Set in prod if you want to share cookies across subdomains
     maxAge: 24 * 60 * 60 * 1000            // 1 day
   }
 }));

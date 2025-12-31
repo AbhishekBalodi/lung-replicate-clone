@@ -22,6 +22,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 // Generate time slots for the allowed periods (15-min intervals)
 const generateTimeSlots = () => {
@@ -224,6 +226,30 @@ const BookAppointment = () => {
     { number: 3, title: "Doctor", subtitle: "Choose your doctor", icon: Stethoscope },
     { number: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle }
   ];
+
+  // Tenant-aware doctor profile (falls back to Dr. Mann asset)
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const profileImage = `/tenants/${tenantCode}/dr-mann-passport.jpg`;
+  const doctorDisplayName = tenantInfo?.name || 'Dr. Paramjeet Singh Mann';
+
+  const [doctors, setDoctors] = useState<any[]>([]);
+  useEffect(() => {
+    const loadDoctors = async () => {
+      try {
+        const headers: Record<string,string> = {};
+        const tenantCodeHeader = getDevTenantCode();
+        if (tenantCodeHeader) headers['X-Tenant-Code'] = tenantCodeHeader;
+        const res = await fetch('/api/doctors', { credentials: 'include', headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.doctors)) setDoctors(data.doctors);
+        }
+      } catch (e) {}
+    };
+
+    if (tenantInfo?.type === 'hospital') loadDoctors();
+  }, [tenantInfo]);
 
   const validateStep = () => {
     if (currentStep === 1) {
@@ -557,39 +583,71 @@ const BookAppointment = () => {
             </p>
 
             <div className="grid gap-4">
-              <Card
-                className={`p-6 cursor-pointer border-2 transition-colors ${
-                  formData.selectedDoctor === "Dr. Paramjeet Singh Mann - Pulmonologist"
-                    ? "border-lung-blue bg-lung-blue/5"
-                    : "border-gray-200 hover:border-lung-blue/50"
-                }`}
-                onClick={() =>
-                  setFormData({
-                    ...formData,
-                    selectedDoctor: "Dr. Paramjeet Singh Mann - Pulmonologist"
-                  })
-                }
-              >
-                <div className="flex items-center gap-4">
-                  <img
-                    src={drMannImage}
-                    alt="Dr. Paramjeet Singh Mann"
-                    className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-foreground font-lexend">
-                      Dr. Paramjeet Singh Mann
-                    </h3>
-                    <p className="text-muted-foreground font-livvic">
-                      Pulmonologist & Respiratory Medicine
-                    </p>
-                    <p className="text-sm text-lung-blue font-medium">40+ Years Experience</p>
+              {doctors.length > 0 ? (
+                doctors.map((doc: any) => (
+                  <Card
+                    key={doc.id}
+                    className={`p-6 cursor-pointer border-2 transition-colors ${
+                      formData.selectedDoctor === `${doc.name} - ${doc.specialization || 'Pulmonologist'}`
+                        ? "border-lung-blue bg-lung-blue/5"
+                        : "border-gray-200 hover:border-lung-blue/50"
+                    }`}
+                    onClick={() => setFormData({ ...formData, selectedDoctor: `${doc.name} - ${doc.specialization || 'Pulmonologist'}` })}
+                  >
+                    <div className="flex items-center gap-4">
+                      <img
+                        src={`/tenants/${tenantCode}/doctors/${doc.id}.jpg`}
+                        onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
+                        alt={doc.name}
+                        className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
+                      />
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-foreground font-lexend">{doc.name}</h3>
+                        <p className="text-muted-foreground font-livvic">{doc.specialization || 'Pulmonologist'}</p>
+                        <p className="text-sm text-lung-blue font-medium">{doc.years_experience || '—'} Years Experience</p>
+                      </div>
+                      {formData.selectedDoctor === `${doc.name} - ${doc.specialization || 'Pulmonologist'}` && (
+                        <CheckCircle className="h-6 w-6 text-lung-blue" />
+                      )}
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <Card
+                  className={`p-6 cursor-pointer border-2 transition-colors ${
+                    formData.selectedDoctor === `${doctorDisplayName} - Pulmonologist`
+                      ? "border-lung-blue bg-lung-blue/5"
+                      : "border-gray-200 hover:border-lung-blue/50"
+                  }`}
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      selectedDoctor: `${doctorDisplayName} - Pulmonologist`
+                    })
+                  }
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={profileImage}
+                      onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
+                      alt={doctorDisplayName}
+                      className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
+                    />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-foreground font-lexend">
+                        {doctorDisplayName}
+                      </h3>
+                      <p className="text-muted-foreground font-livvic">
+                        Pulmonologist & Respiratory Medicine
+                      </p>
+                      <p className="text-sm text-lung-blue font-medium">40+ Years Experience</p>
+                    </div>
+                    {formData.selectedDoctor === `${doctorDisplayName} - Pulmonologist` && (
+                      <CheckCircle className="h-6 w-6 text-lung-blue" />
+                    )}
                   </div>
-                  {formData.selectedDoctor === "Dr. Paramjeet Singh Mann - Pulmonologist" && (
-                    <CheckCircle className="h-6 w-6 text-lung-blue" />
-                  )}
-                </div>
-              </Card>
+                </Card>
+              )}
             </div>
           </div>
         );

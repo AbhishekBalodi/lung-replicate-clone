@@ -22,6 +22,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 // Generate time slots for the allowed periods (15-min intervals)
 const generateTimeSlots = () => {
@@ -224,6 +226,29 @@ const BookAppointment = () => {
     { number: 3, title: "Doctor", subtitle: "Choose your doctor", icon: Stethoscope },
     { number: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle }
   ];
+
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const profileImage = `/tenants/${tenantCode}/dr-mann-passport.jpg`;
+  const doctorDisplayName = tenantInfo?.name || 'Dr. Paramjeet Singh Mann';
+
+  const [doctors, setDoctors] = useState<any[]>([]);
+  useEffect(() => {
+    const loadDoctors = async () => {
+      try {
+        const headers: Record<string,string> = {};
+        const tenantCodeHeader = getDevTenantCode();
+        if (tenantCodeHeader) headers['X-Tenant-Code'] = tenantCodeHeader;
+        const res = await fetch('/api/doctors', { credentials: 'include', headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.doctors)) setDoctors(data.doctors);
+        }
+      } catch (e) {}
+    };
+
+    if (tenantInfo?.type === 'hospital') loadDoctors();
+  }, [tenantInfo]);
 
   const validateStep = () => {
     if (currentStep === 1) {
@@ -559,26 +584,27 @@ const BookAppointment = () => {
             <div className="grid gap-4">
               <Card
                 className={`p-6 cursor-pointer border-2 transition-colors ${
-                  formData.selectedDoctor === "Dr. Paramjeet Singh Mann - Pulmonologist"
+                  formData.selectedDoctor === `${doctorDisplayName} - Pulmonologist`
                     ? "border-lung-blue bg-lung-blue/5"
                     : "border-gray-200 hover:border-lung-blue/50"
-                }`}
+                }`)
                 onClick={() =>
                   setFormData({
                     ...formData,
-                    selectedDoctor: "Dr. Paramjeet Singh Mann - Pulmonologist"
+                    selectedDoctor: `${doctorDisplayName} - Pulmonologist`
                   })
                 }
               >
                 <div className="flex items-center gap-4">
                   <img
-                    src={drMannImage}
-                    alt="Dr. Paramjeet Singh Mann"
+                    src={profileImage}
+                    onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
+                    alt={doctorDisplayName}
                     className="w-16 h-16 rounded-full object-contain border-2 border-gray-200"
                   />
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-foreground font-lexend">
-                      Dr. Paramjeet Singh Mann
+                      {doctorDisplayName}
                     </h3>
                     <p className="text-muted-foreground font-livvic">
                       Pulmonologist & Respiratory Medicine

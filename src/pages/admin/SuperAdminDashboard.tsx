@@ -94,6 +94,14 @@ const SuperAdminDashboard = () => {
   const [formLoading, setFormLoading] = useState(false);
   const [togglingDoctorId, setTogglingDoctorId] = useState<number | null>(null);
 
+  // Edit doctor modal state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [editingFormData, setEditingFormData] = useState({ name: '', email: '', phone: '', specialization: '', qualifications: '', bio: '', consultation_fee: '' });
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
+  const [editHeroFile, setEditHeroFile] = useState<File | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+
   // Appointments state
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
@@ -202,6 +210,63 @@ const SuperAdminDashboard = () => {
       consultation_fee: ''
     });
     setShowPassword(false);
+  };
+
+  const handleSaveEditDoctor = async () => {
+    if (!editingDoctor) return;
+    setEditLoading(true);
+    try {
+      const payload = {
+        name: editingFormData.name,
+        email: editingFormData.email,
+        phone: editingFormData.phone || null,
+        specialization: editingFormData.specialization || null,
+        qualifications: editingFormData.qualifications || null,
+        bio: editingFormData.bio || null,
+        consultation_fee: editingFormData.consultation_fee ? parseFloat(editingFormData.consultation_fee) : null
+      };
+
+      const res = await fetch(`${getApiBaseUrl()}/api/doctors/${editingDoctor.id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const js = await res.json().catch(() => ({}));
+        throw new Error(js.error || 'Failed to update');
+      }
+
+      // If photo file selected, upload
+      if (editPhotoFile) {
+        const fd = new FormData(); fd.append('photo', editPhotoFile);
+        const uploadUrl = tenant?.id ? `${getApiBaseUrl()}/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo` : `${getApiBaseUrl()}/api/doctors/${editingDoctor.id}/photo`;
+        const uploadRes = await fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include' });
+        if (!uploadRes.ok) {
+          const js = await uploadRes.json().catch(() => ({}));
+          throw new Error(js.error || 'Failed to upload photo');
+        }
+      }
+
+      // If hero file selected, upload as assetType=hero
+      if (editHeroFile) {
+        const fd2 = new FormData(); fd2.append('photo', editHeroFile); fd2.append('assetType', 'hero');
+        const uploadUrl2 = tenant?.id ? `${getApiBaseUrl()}/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo?assetType=hero` : `${getApiBaseUrl()}/api/doctors/${editingDoctor.id}/photo?assetType=hero`;
+        const uploadRes2 = await fetch(uploadUrl2, { method: 'POST', body: fd2, credentials: 'include' });
+        if (!uploadRes2.ok) {
+          const js = await uploadRes2.json().catch(() => ({}));
+          throw new Error(js.error || 'Failed to upload hero image');
+        }
+      }
+
+      toast({ title: 'Success', description: 'Doctor updated' });
+      setIsEditDialogOpen(false); setEditingDoctor(null); await fetchDoctors();
+    } catch (err) {
+      const e = err as Error; toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const handleAddDoctor = async () => {
@@ -860,6 +925,7 @@ const SuperAdminDashboard = () => {
                   <p className="text-sm text-muted-foreground mt-1">Click "Add Doctor" to get started</p>
                 </div>
               ) : (
+                <>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -869,6 +935,7 @@ const SuperAdminDashboard = () => {
                       <TableHead>Consultation Fee</TableHead>
                       <TableHead className="text-center">Dashboard Access</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -877,7 +944,11 @@ const SuperAdminDashboard = () => {
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                              <User className="h-5 w-5 text-emerald-700" />
+                              {doctor.profile_photo_url ? (
+                                <img src={doctor.profile_photo_url} className="h-10 w-10 rounded-full object-cover" alt="doctor" />
+                              ) : (
+                                <User className="h-5 w-5 text-emerald-700" />
+                              )}
                             </div>
                             <div>
                               <p className="font-medium">{doctor.name}</p>
@@ -909,10 +980,88 @@ const SuperAdminDashboard = () => {
                             <Badge variant="secondary">Inactive</Badge>
                           )}
                         </TableCell>
+
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              setEditingDoctor(doctor);
+                              setEditingFormData({
+                                name: doctor.name || '',
+                                email: doctor.email || '',
+                                phone: doctor.phone || '',
+                                specialization: doctor.specialization || '',
+                                qualifications: doctor.qualifications || '',
+                                bio: doctor.bio || '',
+                                consultation_fee: doctor.consultation_fee ? String(doctor.consultation_fee) : ''
+                              });
+                              setEditPhotoFile(null);
+                              setIsEditDialogOpen(true);
+                            }}>
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+
+                {/* Edit Doctor Dialog */}
+                <Dialog open={isEditDialogOpen} onOpenChange={(open)=>{ if(!editLoading) setIsEditDialogOpen(open); }}>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Edit Doctor</DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4 mt-4">
+                      <div>
+                        <Label>Name *</Label>
+                        <Input value={editingFormData.name} onChange={(e)=>setEditingFormData({...editingFormData, name: e.target.value})} />
+                      </div>
+                      <div>
+                        <Label>Email *</Label>
+                        <Input value={editingFormData.email} onChange={(e)=>setEditingFormData({...editingFormData, email: e.target.value})} />
+                      </div>
+                      <div>
+                        <Label>Phone</Label>
+                        <Input value={editingFormData.phone} onChange={(e)=>setEditingFormData({...editingFormData, phone: e.target.value})} />
+                      </div>
+                      <div>
+                        <Label>Specialization</Label>
+                        <Input value={editingFormData.specialization} onChange={(e)=>setEditingFormData({...editingFormData, specialization: e.target.value})} />
+                      </div>
+                      <div>
+                        <Label>Qualifications</Label>
+                        <Input value={editingFormData.qualifications} onChange={(e)=>setEditingFormData({...editingFormData, qualifications: e.target.value})} />
+                      </div>
+                      <div>
+                        <Label>Bio</Label>
+                        <Input value={editingFormData.bio} onChange={(e)=>setEditingFormData({...editingFormData, bio: e.target.value})} />
+                      </div>
+                      <div>
+                        <Label>Consultation Fee</Label>
+                        <Input type="number" value={editingFormData.consultation_fee} onChange={(e)=>setEditingFormData({...editingFormData, consultation_fee: e.target.value})} />
+                      </div>
+
+                      <div>
+                        <Label>Profile photo</Label>
+                        <input type="file" accept="image/*" onChange={(e:any)=>{ setEditPhotoFile(e.target.files?.[0] || null); }} />
+                      </div>
+
+                      <div>
+                        <Label>Hero image (optional)</Label>
+                        <input type="file" accept="image/*" onChange={(e:any)=>{ setEditHeroFile(e.target.files?.[0] || null); }} />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSaveEditDoctor} disabled={editLoading}>{editLoading ? 'Saving...' : 'Save'}</Button>
+                        <Button variant="ghost" onClick={()=>{ if(!editLoading){ setIsEditDialogOpen(false); setEditingDoctor(null); }}}>Cancel</Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                </>
               )}
             </CardContent>
           </Card>

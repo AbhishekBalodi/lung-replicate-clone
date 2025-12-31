@@ -19,7 +19,7 @@ interface StatsTabProps {
   appointments: Appointment[];
 }
 
-export default function StatsTab({ appointments }: StatsTabProps) {
+export default function StatsTab({ appointments, isHospital }: StatsTabProps & { isHospital?: boolean }) {
   const [statsView, setStatsView] = useState("visits");
 
   // Generate monthly data from appointments
@@ -38,11 +38,15 @@ export default function StatsTab({ appointments }: StatsTabProps) {
     { month: "Dec", visits: 65, satisfaction: 87 },
   ];
 
+  const isHosp = !!isHospital;
+  const headerSubText = isHosp ? 'text-slate-100 text-sm' : 'text-slate-400 text-sm';
+  const cardClass = isHosp ? 'bg-emerald-700/80 border-emerald-600 text-white' : 'bg-slate-800/50 border-slate-700 text-white';
+
   return (
-    <Card className="bg-slate-800/50 border-slate-700 text-white">
+    <Card className={cardClass}>
       <CardHeader>
         <CardTitle className="text-xl font-semibold">Performance Metrics</CardTitle>
-        <p className="text-slate-400 text-sm">Your clinical performance and patient outcomes</p>
+        <p className={headerSubText}>Your clinical performance and patient outcomes</p>
       </CardHeader>
       <CardContent>
         <Tabs value={statsView} onValueChange={setStatsView} className="mb-6">

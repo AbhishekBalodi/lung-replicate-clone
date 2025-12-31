@@ -38,6 +38,17 @@ router.post('/login', async (req, res) => {
       [admin.id]
     );
 
+    // Store session for platform admin
+    if (req.session) {
+      req.session.user = {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+        userType: 'platform_admin'
+      };
+    }
+
     res.json({
       success: true,
       user: {
@@ -225,6 +236,20 @@ router.post('/tenant-login', async (req, res) => {
         }
       }
 
+      // Store session for tenant user
+      if (req.session) {
+        req.session.user = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          phone: user.phone,
+          doctorId: user.doctor_id,
+          userType: 'tenant_user',
+          tenantId: tenant.id
+        };
+      }
+
       return res.json({
         success: true,
         user: {
@@ -265,6 +290,19 @@ router.post('/tenant-login', async (req, res) => {
         'UPDATE tenant_users SET last_login = NOW() WHERE id = ?',
         [user.id]
       );
+
+      // Store session for patient
+      if (req.session) {
+        req.session.user = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          phone: user.phone,
+          userType: 'patient',
+          tenantId: tenant.id
+        };
+      }
 
       return res.json({
         success: true,
@@ -336,6 +374,20 @@ router.post('/create-admin', async (req, res) => {
     console.error('Create admin error:', error);
     res.status(500).json({ error: 'Failed to create admin' });
   }
+});
+
+// POST /api/platform/auth/logout
+router.post('/logout', (req, res) => {
+  if (!req.session) return res.json({ success: true });
+  req.session.destroy((err) => {
+    if (err) {
+      console.error('Error destroying session:', err);
+      return res.status(500).json({ error: 'Failed to logout' });
+    }
+    // Clear cookie - cookie name mirrors session config in src/index.js
+    res.clearCookie('saas.sid');
+    res.json({ success: true });
+  });
 });
 
 export default router;

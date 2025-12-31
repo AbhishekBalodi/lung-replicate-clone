@@ -6,9 +6,39 @@ import { Star, Users, Award, CheckCircle, Calendar, Heart, Briefcase, Graduation
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const DoctorProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const [doctorData, setDoctorData] = useState<any | null>(null);
+  const profileImage = doctorData ? `/tenants/${tenantCode}/doctors/${doctorData.id}.jpg` : `/tenants/${tenantCode}/dr-mann-passport.jpg`;
+  const displayName = doctorData?.name || tenantInfo?.name || 'Dr. Paramjeet Singh Mann';
+  const bioText = doctorData?.bio || `Dr. Paramjeet Singh Mann is a highly distinguished chest physician and pulmonologist with over 40 years of exceptional experience in respiratory medicine, sleep medicine, and critical care. He holds an M.D. in Tuberculosis and Chest Diseases from the prestigious Vallabhbhai Patel Chest Institute, Delhi University (WHO listed and Medical Council of India recognized). Dr. Mann has received numerous accolades including the Fellowship of the American College of Chest Physicians (FCCP) in 2009, the Rajshiri Dr. Ram Kishore Memorial Medal for topping the MD examination in 1988, and the Best Doctor Award in Oman in 1998. His extensive clinical expertise spans diagnosis and treatment of COPD, asthma, tuberculosis, pneumonia, sleep disorders, and all respiratory conditions, ensuring the highest standard of patient care.`;
+
+  useEffect(() => {
+    const loadDoctors = async () => {
+      try {
+        const headers: Record<string,string> = {};
+        const tenantCodeHeader = getDevTenantCode();
+        if (tenantCodeHeader) headers['X-Tenant-Code'] = tenantCodeHeader;
+        const res = await fetch(`/api/doctors`, { credentials: 'include', headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.doctors) && data.doctors.length) {
+            setDoctorData(data.doctors[0]);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    // If this tenant is a hospital, try to load doctors from tenant DB
+    if (tenantInfo?.type === 'hospital') loadDoctors();
+  }, [tenantInfo]);
 
   const stats = [
     { label: "Patients Treated", value: "50,000+", icon: Users, color: "text-lung-blue" },
@@ -28,8 +58,9 @@ const DoctorProfile = () => {
             <div className="flex flex-col items-center gap-4">
               <div className="w-48 h-48 rounded-full bg-white p-2">
                 <img 
-                  src={drMannImage} 
-                  alt="Dr. Mann" 
+                  src={profileImage} 
+                  alt={displayName} 
+                  onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
                   className="w-full h-full rounded-full object-cover object-top"
                 />
               </div>
@@ -45,7 +76,7 @@ const DoctorProfile = () => {
             
             <div className="flex-1 text-center lg:text-left">
               <h1 className="text-4xl font-bold text-white mb-4 font-manrope">
-                Dr. Paramjeet Singh Mann
+                {displayName}
               </h1>
               <p className="text-white/90 text-lg mb-6 font-livvic">
                 MD (Tuberculosis & Chest Diseases), FCCP | Chest Physician & Pulmonologist
@@ -126,7 +157,7 @@ const DoctorProfile = () => {
                       <h2 className="text-2xl font-bold text-foreground font-lexend">Professional Summary</h2>
                     </div>
                     <p className="text-muted-foreground leading-relaxed font-manrope">
-                      Dr. Paramjeet Singh Mann is a highly distinguished chest physician and pulmonologist with over 40 years of exceptional experience in respiratory medicine, sleep medicine, and critical care. He holds an M.D. in Tuberculosis and Chest Diseases from the prestigious Vallabhbhai Patel Chest Institute, Delhi University (WHO listed and Medical Council of India recognized). Dr. Mann has received numerous accolades including the Fellowship of the American College of Chest Physicians (FCCP) in 2009, the Rajshiri Dr. Ram Kishore Memorial Medal for topping the MD examination in 1988, and the Best Doctor Award in Oman in 1998. His extensive clinical expertise spans diagnosis and treatment of COPD, asthma, tuberculosis, pneumonia, sleep disorders, and all respiratory conditions, ensuring the highest standard of patient care.
+                      {bioText}
                     </p>
                   </div>
 

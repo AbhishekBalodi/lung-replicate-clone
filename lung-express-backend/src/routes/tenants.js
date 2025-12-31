@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+import sharp from 'sharp';
 import { 
   platformPool, 
   createTenantSchema, 
@@ -102,6 +106,91 @@ router.post('/register', async (req, res) => {
       );
 
       await connection.commit();
+
+      // After commit: handle optional base64 uploads and metadata (if present in the registration request)
+      try {
+        // Helper to write base64 image (data URL or raw base64)
+        const writeBase64Image = (base64Str, outPath) => {
+          if (!base64Str) return false;
+          // strip data:*/*;base64, if present
+          const match = base64Str.match(/^data:(image\/(png|jpeg|jpg));base64,(.+)$/);
+          let buffer;
+          if (match) {
+            buffer = Buffer.from(match[3], 'base64');
+          } else {
+            // assume raw base64
+            buffer = Buffer.from(base64Str, 'base64');
+          }
+          fs.mkdirSync(path.dirname(outPath), { recursive: true });
+          fs.writeFileSync(outPath, buffer);
+          return true;
+        };
+
+        const tenantAssetsDir = path.join(process.cwd(), 'public', 'tenants', tenantCode);
+        fs.mkdirSync(tenantAssetsDir, { recursive: true });
+
+        // Doctor-specific metadata
+        const updates = [];
+        const updateValues = [];
+
+        if (req.body.doctorBio) { updates.push('doctor_bio = ?'); updateValues.push(req.body.doctorBio); }
+        if (req.body.doctorSpecialty) { updates.push('doctor_specialty = ?'); updateValues.push(req.body.doctorSpecialty); }
+        if (req.body.doctorDegrees) { updates.push('doctor_degrees = ?'); updateValues.push(req.body.doctorDegrees); }
+        if (req.body.doctorAwards) { updates.push('doctor_awards = ?'); updateValues.push(req.body.doctorAwards); }
+        if (req.body.doctorYearsExperience) { updates.push('doctor_years_experience = ?'); updateValues.push(req.body.doctorYearsExperience); }
+        if (req.body.doctorAge) { updates.push('doctor_age = ?'); updateValues.push(req.body.doctorAge); }
+        if (req.body.doctorGender) { updates.push('doctor_gender = ?'); updateValues.push(req.body.doctorGender); }
+
+        // Doctor photo
+        if (req.body.doctorPhotoBase64) {
+          // determine extension from data URL
+          const m = req.body.doctorPhotoBase64.match(/^data:image\/(png|jpeg|jpg);base64,/);
+          const ext = m ? (m[1] === 'jpeg' ? 'jpg' : m[1]) : 'jpg';
+          const fileName = `doctor_photo.${ext}`;
+          const outPath = path.join(tenantAssetsDir, fileName);
+          const wrote = writeBase64Image(req.body.doctorPhotoBase64, outPath);
+          if (wrote) {
+            const publicPath = `/tenants/${tenantCode}/${fileName}`;
+            updates.push('doctor_photo_url = ?'); updateValues.push(publicPath);
+          }
+        }
+
+        // Hospital logo
+        if (req.body.logoBase64) {
+          const m = req.body.logoBase64.match(/^data:image\/(png|jpeg|jpg);base64,/);
+          const ext = m ? (m[1] === 'jpeg' ? 'jpg' : m[1]) : 'png';
+          const fileName = `logo.${ext}`;
+          const outPath = path.join(tenantAssetsDir, fileName);
+          const wrote = writeBase64Image(req.body.logoBase64, outPath);
+          if (wrote) {
+            const publicPath = `/tenants/${tenantCode}/${fileName}`;
+            await connection.execute('UPDATE tenants SET logo_url = ? WHERE id = ?', [publicPath, tenantId]);
+          }
+        }
+
+        // Hospital hero
+        if (req.body.heroBase64) {
+          const m = req.body.heroBase64.match(/^data:image\/(png|jpeg|jpg);base64,/);
+          const ext = m ? (m[1] === 'jpeg' ? 'jpg' : m[1]) : 'jpg';
+          const fileName = `hero.${ext}`;
+          const outPath = path.join(tenantAssetsDir, fileName);
+          const wrote = writeBase64Image(req.body.heroBase64, outPath);
+          if (wrote) {
+            const publicPath = `/tenants/${tenantCode}/${fileName}`;
+            await connection.execute('UPDATE tenants SET hero_image_url = ? WHERE id = ?', [publicPath, tenantId]);
+          }
+        }
+
+        // If there are tenant-level updates (doctor metadata), persist them
+        if (updates.length > 0) {
+          updateValues.push(tenantId);
+          await platformPool.execute(`UPDATE tenants SET ${updates.join(', ')} WHERE id = ?`, updateValues);
+        }
+
+      } catch (err) {
+        // Don't fail registration if asset write fails; log and continue
+        console.error('Warning: failed to write registration-supplied assets:', err);
+      }
 
       res.status(201).json({
         success: true,
@@ -397,6 +486,139 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+// -------------------------
+// Tenant asset upload
+// -------------------------
+
+// Middleware: ensure the logged in user is an admin for this tenant
+function ensureTenantAdmin(req, res, next) {
+  const sessionUser = req.session?.user;
+  if (!sessionUser) return res.status(401).json({ error: 'Unauthorized' });
+  if (sessionUser.role !== 'admin' && sessionUser.role !== 'super_admin') return res.status(403).json({ error: 'Forbidden' });
+  if (sessionUser.tenantId && String(sessionUser.tenantId) !== String(req.params.id)) return res.status(403).json({ error: 'Tenant mismatch' });
+  next();
+}
+
+// multer storage for tenant assets
+const tenantStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    try {
+      // resolve tenant code to folder name
+      const tenantId = req.params.id;
+      const [rows] = req.platformPool ? undefined : [];
+      // Fetch tenant code from DB
+      // We'll query the platform DB
+      platformPool.execute('SELECT tenant_code FROM tenants WHERE id = ? LIMIT 1', [tenantId])
+        .then(([rows]) => {
+          const tenantCode = (rows && rows[0] && rows[0].tenant_code) || 'doctor_mann';
+          const dest = path.join(process.cwd(), 'public', 'tenants', tenantCode);
+          fs.mkdirSync(dest, { recursive: true });
+          cb(null, dest);
+        }).catch(err => cb(err));
+    } catch (err) {
+      cb(err);
+    }
+  },
+  filename: (req, file, cb) => {
+    const assetType = req.body.assetType || 'asset';
+    const ext = path.extname(file.originalname) || '.jpg';
+    const fileName = `${assetType}${ext}`;
+    cb(null, fileName);
+  }
+});
+
+const tenantUpload = multer({
+  storage: tenantStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.mimetype)) return cb(new Error('Only JPG and PNG files are allowed'));
+    cb(null, true);
+  }
+});
+
+/**
+ * POST /api/tenants/:id/assets
+ * Upload an asset for tenant (logo, doctor_photo, hero, gallery)
+ * body: assetType (string), file: single file
+ */
+router.post('/:id/assets', ensureTenantAdmin, tenantUpload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const { id } = req.params;
+    const assetType = req.body.assetType || 'asset';
+
+    // determine public URL
+    // fetch tenant_code
+    const [rows] = await platformPool.execute('SELECT tenant_code FROM tenants WHERE id = ? LIMIT 1', [id]);
+    const tenantCode = (rows && rows[0] && rows[0].tenant_code) || 'doctor_mann';
+
+    const publicPath = `/tenants/${tenantCode}/${req.file.filename}`;
+
+    // Run stricter validation + image processing (resize, convert, quality)
+    try {
+      // Use sharp to validate and resize
+      const imagePath = path.join(process.cwd(), 'public', 'tenants', tenantCode, req.file.filename);
+      const sharpImg = sharp(imagePath);
+      const meta = await sharpImg.metadata();
+      // Basic checks
+      if (!meta || !meta.format || !['jpeg','png','jpg','webp'].includes(meta.format)) {
+        // remove file
+        try{ fs.unlinkSync(imagePath); }catch(e){}
+        return res.status(400).json({ error: 'Uploaded file is not a valid image' });
+      }
+
+      // Determine target size based on assetType
+      let resizeOptions = { width: 1200, height: null };
+      if (assetType === 'logo') resizeOptions = { width: 600, height: null };
+      if (assetType === 'doctor_photo') resizeOptions = { width: 600, height: 600 };
+      if (assetType === 'hero') resizeOptions = { width: 1600, height: 600 };
+
+      // Prevent extremely large images
+      const MAX_DIMENSION = 4000;
+      if ((meta.width && meta.width > MAX_DIMENSION) || (meta.height && meta.height > MAX_DIMENSION)) {
+        // downsize aggressively
+        resizeOptions = { width: 1600, height: null };
+      }
+
+      // Perform resize and convert to jpeg for consistency (preserve PNG if it has transparency)
+      const isPng = meta.format === 'png';
+      if (isPng) {
+        await sharpImg.resize(resizeOptions.width, resizeOptions.height, { fit: 'cover' }).png({ quality: 90 }).toFile(imagePath + '.tmp');
+      } else {
+        await sharpImg.resize(resizeOptions.width, resizeOptions.height, { fit: assetType === 'doctor_photo' ? 'cover' : 'inside' }).jpeg({ quality: 85 }).toFile(imagePath + '.tmp');
+      }
+
+      // Replace original file
+      try{ fs.unlinkSync(imagePath); }catch(e){}
+      fs.renameSync(imagePath + '.tmp', imagePath);
+
+    } catch (err) {
+      console.error('Image processing failed:', err);
+      try{ fs.unlinkSync(path.join(process.cwd(), 'public', 'tenants', tenantCode, req.file.filename)); }catch(e){}
+      return res.status(500).json({ error: 'Image processing failed' });
+    }
+
+    // Map common asset types to tenant columns
+    const columnMap = {
+      logo: 'logo_url',
+      doctor_photo: 'doctor_photo_url',
+      hero: 'hero_image_url'
+    };
+
+    const column = columnMap[assetType] || null;
+
+    if (column) {
+      await platformPool.execute(`UPDATE tenants SET ${column} = ? WHERE id = ?`, [publicPath, id]);
+    }
+
+    res.json({ success: true, path: publicPath });
+  } catch (err) {
+    console.error('Error uploading tenant asset:', err);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
 /**
  * PATCH /api/tenants/:id/users/:userId
  * Update tenant user details (email, name, phone, is_active, password)
@@ -522,6 +744,163 @@ router.get('/:id/doctors', async (req, res) => {
   } catch (error) {
     console.error('Error fetching doctors:', error);
     res.status(500).json({ error: 'Failed to fetch doctors' });
+  }
+});
+
+/**
+ * PATCH /api/tenants/:id/doctors/:doctorId
+ * Update metadata for a hospital doctor (platform table)
+ */
+router.patch('/:id/doctors/:doctorId', async (req, res) => {
+  try {
+    const { id, doctorId } = req.params;
+    const {
+      name,
+      email,
+      phone,
+      specialization,
+      qualifications,
+      bio,
+      consultation_fee,
+      years_experience,
+      degrees,
+      awards,
+      age,
+      gender
+    } = req.body || {};
+
+    // verify tenant exists
+    const [tenants] = await platformPool.execute('SELECT id FROM tenants WHERE id = ?', [id]);
+    if (tenants.length === 0) return res.status(404).json({ error: 'Tenant not found' });
+
+    // Fetch doctor
+    const [doctors] = await platformPool.execute('SELECT * FROM hospital_doctors WHERE id = ? AND tenant_id = ?', [doctorId, id]);
+    if (doctors.length === 0) return res.status(404).json({ error: 'Doctor not found for this tenant' });
+
+    await platformPool.execute(
+      `UPDATE hospital_doctors SET
+         name = ?,
+         email = ?,
+         phone = ?,
+         specialization = ?,
+         qualifications = ?,
+         bio = ?,
+         consultation_fee = ?,
+         years_experience = ?,
+         degrees = ?,
+         awards = ?,
+         age = ?,
+         gender = ?
+       WHERE id = ? AND tenant_id = ?`,
+      [
+        name ?? doctors[0].name,
+        email ?? doctors[0].email,
+        phone ?? doctors[0].phone,
+        specialization ?? doctors[0].specialization,
+        qualifications ?? doctors[0].qualifications,
+        bio ?? doctors[0].bio,
+        consultation_fee ?? doctors[0].consultation_fee,
+        years_experience ?? doctors[0].years_experience,
+        degrees ? JSON.stringify(degrees) : doctors[0].degrees,
+        awards ? JSON.stringify(awards) : doctors[0].awards,
+        age ?? doctors[0].age,
+        gender ?? doctors[0].gender,
+        doctorId,
+        id
+      ]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error updating hospital doctor:', err);
+    res.status(500).json({ error: 'Failed to update doctor' });
+  }
+});
+
+/**
+ * POST /api/tenants/:id/doctors/:doctorId/photo
+ * Upload profile photo for a hospital doctor and update platform table
+ */
+const hospitalDoctorStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    try {
+      const { id } = req.params;
+      platformPool.execute('SELECT tenant_code FROM tenants WHERE id = ? LIMIT 1', [id])
+        .then(([rows]) => {
+          const tenantCode = (rows && rows[0] && rows[0].tenant_code) || 'doctor_mann';
+          const dest = path.join(process.cwd(), 'public', 'tenants', tenantCode, 'hospital_doctors');
+          fs.mkdirSync(dest, { recursive: true });
+          cb(null, dest);
+        }).catch(err => cb(err));
+    } catch (err) { cb(err); }
+  },
+  filename: (req, file, cb) => {
+    const { doctorId } = req.params;
+    const assetType = (req.body && req.body.assetType) || (req.query && req.query.assetType) || 'photo';
+    const ext = path.extname(file.originalname) || '.jpg';
+    const suffix = assetType === 'hero' ? '-hero' : '';
+    cb(null, `${doctorId}${suffix}${ext}`);
+  }
+});
+
+const hospitalDoctorUpload = multer({
+  storage: hospitalDoctorStorage,
+  limits: { fileSize: 6 * 1024 * 1024 }, // 6 MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.mimetype)) return cb(new Error('Only JPG and PNG files are allowed'));
+    cb(null, true);
+  }
+});
+
+router.post('/:id/doctors/:doctorId/photo', hospitalDoctorUpload.single('photo'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const { id, doctorId } = req.params;
+    const assetType = req.body.assetType || req.query.assetType || 'photo';
+
+    // fetch tenant code
+    const [rows] = await platformPool.execute('SELECT tenant_code FROM tenants WHERE id = ? LIMIT 1', [id]);
+    const tenantCode = (rows && rows[0] && rows[0].tenant_code) || 'doctor_mann';
+    const imagePath = path.join(process.cwd(), 'public', 'tenants', tenantCode, 'hospital_doctors', req.file.filename);
+
+    // process with sharp
+    try {
+      const sharpImg = sharp(imagePath);
+      const meta = await sharpImg.metadata();
+      if (!meta || !meta.format || !['jpeg','png','jpg','webp'].includes(meta.format)) {
+        try { fs.unlinkSync(imagePath); } catch (e) {}
+        return res.status(400).json({ error: 'Uploaded file is not a valid image' });
+      }
+
+      // hero gets resized differently
+      if (assetType === 'hero') {
+        await sharpImg.resize(1600, 600, { fit: 'cover' }).jpeg({ quality: 85 }).toFile(imagePath + '.tmp');
+      } else {
+        await sharpImg.resize(600, 600, { fit: 'cover' }).jpeg({ quality: 85 }).toFile(imagePath + '.tmp');
+      }
+
+      try{ fs.unlinkSync(imagePath); }catch(e){}
+      fs.renameSync(imagePath + '.tmp', imagePath);
+    } catch (err) {
+      console.error('Image processing failed:', err);
+      try{ fs.unlinkSync(imagePath); }catch(e){}
+      return res.status(500).json({ error: 'Image processing failed' });
+    }
+
+    const publicPath = `/tenants/${tenantCode}/hospital_doctors/${req.file.filename}`;
+
+    // Update appropriate column
+    if (assetType === 'hero') {
+      await platformPool.execute('UPDATE hospital_doctors SET hero_image_url = ? WHERE id = ? AND tenant_id = ?', [publicPath, doctorId, id]);
+    } else {
+      await platformPool.execute('UPDATE hospital_doctors SET profile_photo_url = ? WHERE id = ? AND tenant_id = ?', [publicPath, doctorId, id]);
+    }
+
+    res.json({ success: true, photo_url: publicPath });
+  } catch (err) {
+    console.error('Error uploading hospital doctor photo:', err);
+    res.status(500).json({ error: 'Upload failed' });
   }
 });
 

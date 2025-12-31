@@ -35,7 +35,7 @@ interface Appointment {
 }
 
 export default function Dashboard() {
-  const { user, loading: authLoading } = useCustomAuth();
+  const { user, loading: authLoading, tenantInfo } = useCustomAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -857,7 +857,7 @@ export default function Dashboard() {
                       className="w-full mt-1 border border-slate-200 rounded-md px-3 py-2 outline-none focus:ring focus:ring-emerald-100"
                     >
                       <option>Dr. Priya Mehta</option>
-                      <option>Dr. Paramjeet Singh Mann</option>
+                      <option>{tenantInfo?.name || 'Dr. Paramjeet Singh Mann'}</option>
                     </select>
                   </div>
                 </div>

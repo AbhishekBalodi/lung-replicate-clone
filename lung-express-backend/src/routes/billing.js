@@ -19,7 +19,7 @@ async function ensureTables(conn) {
       tax DECIMAL(12,2) DEFAULT 0,
       discount DECIMAL(12,2) DEFAULT 0,
       total DECIMAL(12,2) DEFAULT 0,
-      issued_date DATE DEFAULT CURRENT_DATE,
+      issued_date DATE DEFAULT NULL,
       due_date DATE NULL,
       notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -93,6 +93,8 @@ router.post('/invoices', async (req, res) => {
   try {
     await ensureTables(conn);
     const { invoice_number, patient_id = null, patient_name, patient_email, patient_phone, items = [], issued_date = null, due_date = null, notes = '' } = req.body || {};
+    // default issued_date to today when not provided for compatibility with older MySQL servers
+    const issuedDateParam = issued_date || (new Date()).toISOString().slice(0,10);
     if (!invoice_number) return res.status(400).json({ error: 'invoice_number required' });
 
     // compute totals
@@ -106,7 +108,7 @@ router.post('/invoices', async (req, res) => {
     const tax = 0; const discount = 0; // extend later
     const total = sub_total + tax - discount;
 
-    const [result] = await conn.execute('INSERT INTO invoices (invoice_number, patient_id, patient_name, patient_email, patient_phone, created_by_user_id, status, sub_total, tax, discount, total, issued_date, due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [invoice_number, patient_id, patient_name, patient_email, patient_phone, req.headers['x-user-id'] || null, 'unpaid', sub_total, tax, discount, total, issued_date, due_date, notes]);
+    const [result] = await conn.execute('INSERT INTO invoices (invoice_number, patient_id, patient_name, patient_email, patient_phone, created_by_user_id, status, sub_total, tax, discount, total, issued_date, due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [invoice_number, patient_id, patient_name, patient_email, patient_phone, req.headers['x-user-id'] || null, 'unpaid', sub_total, tax, discount, total, issuedDateParam, due_date, notes]);
     const invoiceId = result.insertId;
 
     for (const it of items) {

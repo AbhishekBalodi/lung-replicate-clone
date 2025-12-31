@@ -83,10 +83,12 @@ export default function NewAppointment() {
 
   const timeSlotsRef = useRef<HTMLDivElement | null>(null);
 
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || 'doctor_mann';
   const doctor = {
-    name: "Dr. Paramjeet Singh Mann",
+    name: tenantInfo?.name || "Dr. Paramjeet Singh Mann",
     specialty: "Pulmonologist",
-    image: drMannImage
+    image: `/tenants/${tenantCode}/dr-mann-passport.jpg`
   };
 
   // DEBUG: log date/time changes
@@ -402,6 +404,7 @@ export default function NewAppointment() {
               <img 
                 src={doctor.image} 
                 alt={doctor.name}
+                onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
                 className="w-14 h-14 rounded-full object-cover"
               />
               <div>

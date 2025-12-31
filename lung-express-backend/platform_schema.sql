@@ -21,6 +21,15 @@ CREATE TABLE IF NOT EXISTS tenants (
   phone VARCHAR(20),                        -- Contact phone
   address TEXT,                             -- Physical address
   logo_url VARCHAR(500),                    -- Logo image URL
+  -- Doctor-specific fields (for single-doctor tenants)
+  doctor_photo_url VARCHAR(500),
+  doctor_bio TEXT,
+  doctor_specialty VARCHAR(255),
+  doctor_degrees JSON,
+  doctor_awards JSON,
+  doctor_years_experience INT,
+  doctor_age INT,
+  doctor_gender ENUM('male','female','other') DEFAULT NULL,
   status ENUM('pending', 'active', 'suspended', 'cancelled') DEFAULT 'pending',
   subscription_plan ENUM('free', 'basic', 'professional', 'enterprise') DEFAULT 'free',
   subscription_start DATE,
@@ -100,6 +109,12 @@ CREATE TABLE IF NOT EXISTS hospital_doctors (
   qualifications TEXT,
   bio TEXT,
   photo_url VARCHAR(500),
+  -- Additional metadata for hospital doctors
+  years_experience INT DEFAULT NULL,
+  degrees JSON DEFAULT NULL,
+  awards JSON DEFAULT NULL,
+  age INT DEFAULT NULL,
+  gender ENUM('male','female','other') DEFAULT NULL,
   consultation_fee DECIMAL(10, 2),
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

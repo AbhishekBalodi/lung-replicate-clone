@@ -27,7 +27,7 @@ const Header = () => {
             <a href="/" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               Home
             </a>
-            <a href="/doctors/paramjeet-singh-mann" className="text-foreground hover:text-lung-blue transition-colors font-medium">
+            <a href="/doctors" className="text-foreground hover:text-lung-blue transition-colors font-medium">
               About
             </a>
             <a href="/services" className="text-foreground hover:text-lung-blue transition-colors font-medium">
@@ -105,7 +105,7 @@ const Header = () => {
                 Home
               </a>
               <a 
-                href="/doctors/paramjeet-singh-mann" 
+                href="/doctors" 
                 className="block py-2 text-foreground hover:text-lung-blue transition-colors font-medium"
                 onClick={() => setIsMobileMenuOpen(false)}
               >

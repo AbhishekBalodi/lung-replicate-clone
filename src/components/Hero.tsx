@@ -2,8 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Award, Clock } from "lucide-react";
 import doctorMain from "@/assets/dr-mann-passport.jpg";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const Hero = () => {
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const profileImage = `/tenants/${tenantCode}/dr-mann-passport.jpg`;
+
   return (
     <section className="bg-hero-gradient min-h-[400px] sm:min-h-[450px] lg:min-h-[500px] flex items-center py-6 sm:py-8 lg:py-10 px-4" id="home">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-6 items-center w-full">
@@ -35,7 +41,8 @@ const Hero = () => {
         <div className="relative order-2">
           <div className="relative z-10">
             <img 
-              src={doctorMain} 
+              src={profileImage} 
+              onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = doctorMain; }}
               alt="Best chest physician and pulmonologist in Delhi - Expert respiratory care specialist"
               loading="lazy"
               width="400"

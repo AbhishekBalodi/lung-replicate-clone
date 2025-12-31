@@ -22,7 +22,7 @@ interface Prescription {
   prescribed_at: string;
 }
 
-export default function TasksTab() {
+export default function TasksTab({ isHospital }: { isHospital?: boolean }) {
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: 1,
@@ -96,13 +96,17 @@ export default function TasksTab() {
     }
   };
 
+  const isHosp = !!isHospital;
+  const headerSubText = isHosp ? 'text-slate-100 text-sm' : 'text-slate-400 text-sm';
+  const cardClass = isHosp ? 'bg-emerald-700/80 border-emerald-600 text-white' : 'bg-slate-800/50 border-slate-700 text-white';
+
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       {/* Pending Tasks */}
-      <Card className="bg-slate-800/50 border-slate-700 text-white">
+      <Card className={cardClass}>
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Pending Tasks</CardTitle>
-          <p className="text-slate-400 text-sm">Tasks requiring your attention</p>
+          <p className={headerSubText}>Tasks requiring your attention</p>
         </CardHeader>
         <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
           {tasks.map((task) => (
@@ -110,8 +114,8 @@ export default function TasksTab() {
               key={task.id} 
               className={`flex items-start gap-3 p-4 rounded-lg transition-colors ${
                 task.completed 
-                  ? "bg-slate-700/30 opacity-60" 
-                  : "bg-slate-700/50 hover:bg-slate-700"
+                  ? (isHosp ? "bg-emerald-600/30 opacity-60" : "bg-slate-700/30 opacity-60") 
+                  : (isHosp ? "bg-emerald-600/50 hover:bg-emerald-600" : "bg-slate-700/50 hover:bg-slate-700")
               }`}
             >
               <Checkbox 
@@ -124,8 +128,8 @@ export default function TasksTab() {
                   {task.title}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <Clock className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-sm text-slate-400">{task.due_time}</span>
+                  <Clock className="h-3.5 w-3.5 text-slate-100" />
+                  <span className="text-sm text-slate-100">{task.due_time}</span>
                   <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
                     {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                   </Badge>
@@ -153,7 +157,7 @@ export default function TasksTab() {
       </Card>
 
       {/* Recent Prescriptions */}
-      <Card className="bg-slate-800/50 border-slate-700 text-white">
+      <Card className="bg-emerald-700/80 border-emerald-600 text-white">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Recent Prescriptions</CardTitle>
           <p className="text-slate-400 text-sm">Prescriptions you've written recently</p>

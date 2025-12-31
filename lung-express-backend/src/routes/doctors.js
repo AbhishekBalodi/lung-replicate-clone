@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
 import { platformPool } from '../lib/platform-db.js';
 import { getTenantPool } from '../lib/tenant-db.js';
 
@@ -280,6 +283,68 @@ router.delete('/:id', hospitalOnly, async (req, res) => {
   } catch (error) {
     console.error('Error deleting doctor:', error);
     res.status(500).json({ error: 'Failed to delete doctor' });
+  }
+});
+
+// -------------------------
+// Doctor media upload endpoint
+// -------------------------
+
+// multer storage that writes files to public/tenants/{tenant_code}/doctors/
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    try {
+      const tenantCode = req.tenant?.tenant_code || req.headers['x-tenant-code'] || 'doctor_mann';
+      const dest = path.join(process.cwd(), 'public', 'tenants', tenantCode, 'doctors');
+      fs.mkdirSync(dest, { recursive: true });
+      cb(null, dest);
+    } catch (err) {
+      cb(err);
+    }
+  },
+  filename: (req, file, cb) => {
+    const { id } = req.params;
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `${id}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!allowed.includes(file.mimetype)) return cb(new Error('Only JPG and PNG files are allowed'));
+    cb(null, true);
+  }
+});
+
+router.post('/:id/photo', hospitalOnly, upload.single('photo'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const tenantPool = getTenantPool(req);
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const tenantCode = req.tenant?.tenant_code || req.headers['x-tenant-code'] || 'doctor_mann';
+    const publicPath = `/tenants/${tenantCode}/doctors/${req.file.filename}`;
+
+    const assetType = req.body.assetType || req.query.assetType || 'photo';
+    if (assetType === 'hero') {
+      await tenantPool.execute(
+        'UPDATE doctors SET hero_image_url = ? WHERE id = ?',
+        [publicPath, id]
+      );
+    } else {
+      await tenantPool.execute(
+        'UPDATE doctors SET profile_photo_url = ? WHERE id = ?',
+        [publicPath, id]
+      );
+    }
+
+    res.json({ success: true, photo_url: publicPath });
+  } catch (err) {
+    console.error('Error uploading doctor photo:', err);
+    res.status(500).json({ error: 'Upload failed' });
   }
 });
 

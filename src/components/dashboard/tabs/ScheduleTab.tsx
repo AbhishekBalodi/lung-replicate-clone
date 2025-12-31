@@ -25,8 +25,9 @@ interface ScheduleTabProps {
 export default function ScheduleTab({ 
   todaysAppointments, 
   upcomingAppointments,
-  onViewAppointment 
-}: ScheduleTabProps) {
+  onViewAppointment,
+  isHospital
+}: ScheduleTabProps & { isHospital?: boolean }) {
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
@@ -51,13 +52,18 @@ export default function ScheduleTab({
     return colors[index];
   };
 
+  const isHosp = !!isHospital;
+  const headerSubText = isHosp ? 'text-slate-100 text-sm' : 'text-slate-400 text-sm';
+  const cardClass = isHosp ? 'bg-emerald-700/80 border-emerald-600 text-white' : 'bg-slate-800/50 border-slate-700 text-white';
+  const itemBg = isHosp ? 'bg-emerald-600/50 hover:bg-emerald-600' : 'bg-slate-700/50 hover:bg-slate-700';
+
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       {/* Today's Schedule */}
-      <Card className="bg-slate-800/50 border-slate-700 text-white">
+      <Card className={cardClass}>
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Today's Schedule</CardTitle>
-          <p className="text-slate-400 text-sm">
+          <p className={headerSubText}>
             You have {todaysAppointments.length} appointments for today
           </p>
         </CardHeader>
@@ -68,7 +74,7 @@ export default function ScheduleTab({
             todaysAppointments.map((appt) => (
               <div 
                 key={appt.id} 
-                className="flex items-center justify-between p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                className={`flex items-center justify-between p-4 rounded-lg ${itemBg} transition-colors`}
               >
                 <div className="flex items-center gap-3">
                   <Avatar className={getAvatarColor(appt.full_name)}>
@@ -78,7 +84,7 @@ export default function ScheduleTab({
                   </Avatar>
                   <div>
                     <p className="font-medium">{appt.full_name}</p>
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <div className="flex items-center gap-2 text-sm text-slate-100">
                       <Clock className="h-3.5 w-3.5" />
                       <span>{appt.appointment_time}</span>
                       <span>•</span>
@@ -106,10 +112,10 @@ export default function ScheduleTab({
       </Card>
 
       {/* Upcoming Appointments */}
-      <Card className="bg-slate-800/50 border-slate-700 text-white">
+      <Card className={cardClass}>
         <CardHeader>
           <CardTitle className="text-xl font-semibold">Upcoming Appointments</CardTitle>
-          <p className="text-slate-400 text-sm">Your upcoming appointments for the week</p>
+          <p className={headerSubText}>Your upcoming appointments for the week</p>
         </CardHeader>
         <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
           {upcomingAppointments.length === 0 ? (
@@ -118,7 +124,7 @@ export default function ScheduleTab({
             upcomingAppointments.slice(0, 5).map((appt) => (
               <div 
                 key={appt.id} 
-                className="p-4 rounded-lg bg-slate-700/50 hover:bg-slate-700 transition-colors"
+                className={`p-4 rounded-lg ${itemBg} transition-colors`}
               >
                 <div className="flex items-center justify-between">
                   <p className="font-medium">{appt.full_name}</p>
@@ -133,7 +139,7 @@ export default function ScheduleTab({
                     {appt.status || "pending"}
                   </Badge>
                 </div>
-                <p className="text-sm text-slate-400 mt-1">
+                <p className={isHosp ? "text-sm text-slate-100 mt-1" : "text-sm text-slate-400 mt-1"}>
                   {new Date(appt.appointment_date).toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     month: 'long', 

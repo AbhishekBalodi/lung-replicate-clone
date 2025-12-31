@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 // Generate time slots for the allowed periods (15-min intervals)
 const generateTimeSlots = () => {
@@ -200,10 +202,12 @@ const AppointmentBooking = () => {
     { id: 4, title: "Confirm Details", subtitle: "Finalize booking", icon: CheckCircle },
   ];
 
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
   const doctor = {
-    name: "Dr. Paramjeet Singh Mann",
+    name: tenantInfo?.name || "Dr. Paramjeet Singh Mann",
     specialty: "Pulmonologist",
-    image: drMannImage
+    image: `/tenants/${tenantCode}/dr-mann-passport.jpg`
   };
 
   const validateStep = () => {
@@ -548,6 +552,7 @@ const AppointmentBooking = () => {
                     <img 
                       src={doctor.image} 
                       alt={doctor.name}
+                      onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
                       className="w-24 h-24 rounded-full object-contain border-2 border-gray-200"
                     />
                     <div>

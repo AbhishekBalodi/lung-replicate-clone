@@ -22,8 +22,11 @@ interface DashboardTabsProps {
   onViewAppointment: (appointment: Appointment) => void;
 }
 
-export default function DashboardTabs({ appointments, onViewAppointment }: DashboardTabsProps) {
+export default function DashboardTabs({ appointments, onViewAppointment, isHospital }: DashboardTabsProps & { isHospital?: boolean }) {
   const [activeTab, setActiveTab] = useState("schedule");
+
+  const tabsListClass = isHospital ? "bg-emerald-700/80 border border-emerald-600 p-1 rounded-lg" : "bg-slate-800/50 border border-slate-700 p-1 rounded-lg";
+  const triggerBase = isHospital ? "data-[state=active]:bg-emerald-800 data-[state=active]:text-white text-slate-100 px-6" : "data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 px-6";
 
   // Filter today's appointments
   const today = new Date().toISOString().split('T')[0];
@@ -40,29 +43,17 @@ export default function DashboardTabs({ appointments, onViewAppointment }: Dashb
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="bg-slate-800/50 border border-slate-700 p-1 rounded-lg">
-        <TabsTrigger 
-          value="schedule" 
-          className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 px-6"
-        >
+      <TabsList className={tabsListClass}>
+        <TabsTrigger value="schedule" className={triggerBase}>
           Schedule
         </TabsTrigger>
-        <TabsTrigger 
-          value="patients" 
-          className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 px-6"
-        >
+        <TabsTrigger value="patients" className={triggerBase}>
           Patients
         </TabsTrigger>
-        <TabsTrigger 
-          value="tasks" 
-          className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 px-6"
-        >
+        <TabsTrigger value="tasks" className={triggerBase}>
           Tasks
         </TabsTrigger>
-        <TabsTrigger 
-          value="stats" 
-          className="data-[state=active]:bg-slate-700 data-[state=active]:text-white text-slate-400 px-6"
-        >
+        <TabsTrigger value="stats" className={triggerBase}>
           Stats
         </TabsTrigger>
       </TabsList>
@@ -72,19 +63,20 @@ export default function DashboardTabs({ appointments, onViewAppointment }: Dashb
           todaysAppointments={todaysAppointments} 
           upcomingAppointments={upcomingAppointments}
           onViewAppointment={onViewAppointment}
+          isHospital={isHospital}
         />
       </TabsContent>
 
       <TabsContent value="patients" className="mt-6">
-        <PatientsTab todaysAppointments={todaysAppointments} />
+        <PatientsTab todaysAppointments={todaysAppointments} isHospital={isHospital} />
       </TabsContent>
 
       <TabsContent value="tasks" className="mt-6">
-        <TasksTab />
+        <TasksTab isHospital={isHospital} />
       </TabsContent>
 
       <TabsContent value="stats" className="mt-6">
-        <StatsTab appointments={appointments} />
+        <StatsTab appointments={appointments} isHospital={isHospital} />
       </TabsContent>
     </Tabs>
   );

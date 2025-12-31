@@ -66,6 +66,68 @@ export default function TenantSettings(){
           </Card>
         ))}
       </div>
+
+      <h2 className="text-lg font-semibold mt-6">Assets</h2>
+      <Card className="p-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Logo */}
+          <div className="space-y-2">
+            <div className="font-medium">Logo</div>
+            {tenant.tenant.logo_url ? (
+              <img src={tenant.tenant.logo_url} alt="logo" className="w-32 h-20 object-contain border" />
+            ) : (
+              <div className="w-32 h-20 border flex items-center justify-center text-sm text-muted-foreground">No logo</div>
+            )}
+            <input type="file" accept="image/*" onChange={async (e:any)=>{
+              const f = e.target.files && e.target.files[0]; if(!f) return;
+              const fd = new FormData(); fd.append('file', f); fd.append('assetType', 'logo');
+              try{
+                const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/assets`, { method: 'POST', body: fd });
+                const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Upload failed');
+                toast.success('Logo uploaded'); load();
+              }catch(err){ const eerr = err as Error; toast.error('Upload failed: '+(eerr?.message||String(err))); }
+            }} />
+          </div>
+
+          {/* Doctor photo */}
+          <div className="space-y-2">
+            <div className="font-medium">Doctor photo</div>
+            {tenant.tenant.doctor_photo_url ? (
+              <img src={tenant.tenant.doctor_photo_url} alt="doctor" className="w-32 h-32 object-cover border" />
+            ) : (
+              <div className="w-32 h-32 border flex items-center justify-center text-sm text-muted-foreground">No photo</div>
+            )}
+            <input type="file" accept="image/*" onChange={async (e:any)=>{
+              const f = e.target.files && e.target.files[0]; if(!f) return;
+              const fd = new FormData(); fd.append('file', f); fd.append('assetType', 'doctor_photo');
+              try{
+                const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/assets`, { method: 'POST', body: fd });
+                const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Upload failed');
+                toast.success('Doctor photo uploaded'); load();
+              }catch(err){ const eerr = err as Error; toast.error('Upload failed: '+(eerr?.message||String(err))); }
+            }} />
+          </div>
+
+          {/* Hero image */}
+          <div className="space-y-2">
+            <div className="font-medium">Hero image</div>
+            {tenant.tenant.hero_image_url ? (
+              <img src={tenant.tenant.hero_image_url} alt="hero" className="w-full h-28 object-cover border" />
+            ) : (
+              <div className="w-full h-28 border flex items-center justify-center text-sm text-muted-foreground">No hero</div>
+            )}
+            <input type="file" accept="image/*" onChange={async (e:any)=>{
+              const f = e.target.files && e.target.files[0]; if(!f) return;
+              const fd = new FormData(); fd.append('file', f); fd.append('assetType', 'hero');
+              try{
+                const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/assets`, { method: 'POST', body: fd });
+                const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Upload failed');
+                toast.success('Hero uploaded'); load();
+              }catch(err){ const eerr = err as Error; toast.error('Upload failed: '+(eerr?.message||String(err))); }
+            }} />
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }

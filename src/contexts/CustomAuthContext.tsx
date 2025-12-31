@@ -104,13 +104,10 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const baseUrl = getApiBaseUrl();
-      if (!baseUrl) return;
-
       const tenantCode = getDevTenantCode();
-      const res = await fetch(
-        `${baseUrl}/api/platform/auth/tenant-info${tenantCode ? `?tenantCode=${tenantCode}` : ''}`,
-        { headers: getHeaders(), credentials: 'include' }
-      );
+      // In development we allow relative requests (baseUrl may be empty), so build URL accordingly
+      const url = `${baseUrl || ''}/api/platform/auth/tenant-info${tenantCode ? `?tenantCode=${tenantCode}` : ''}`;
+      const res = await fetch(url, { headers: getHeaders(), credentials: 'include' });
 
       if (res.ok) {
         const data = await res.json();
