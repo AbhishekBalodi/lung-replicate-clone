@@ -60,6 +60,24 @@ import CreateInvoice from "@/pages/admin/CreateInvoice";
 import InvoiceDetail from "@/pages/admin/InvoiceDetail";
 import PaymentsHistory from "@/pages/admin/PaymentsHistory";
 
+/* Super Admin pages */
+import HospitalProfile from "@/pages/admin/HospitalProfile";
+import Departments from "@/pages/admin/Departments";
+import Infrastructure from "@/pages/admin/Infrastructure";
+import FinanceRevenue from "@/pages/admin/FinanceRevenue";
+import InsuranceClaims from "@/pages/admin/InsuranceClaims";
+import LabPendingTests from "@/pages/admin/LabPendingTests";
+import LabRevenue from "@/pages/admin/LabRevenue";
+import AuditLogs from "@/pages/admin/AuditLogs";
+import AccessControl from "@/pages/admin/AccessControl";
+import DataAccessLogs from "@/pages/admin/DataAccessLogs";
+import SystemAlerts from "@/pages/admin/SystemAlerts";
+import NotificationSettings from "@/pages/admin/NotificationSettings";
+import DailyReports from "@/pages/admin/DailyReports";
+import MonthlyReports from "@/pages/admin/MonthlyReports";
+import DoctorRevenueReport from "@/pages/admin/DoctorRevenueReport";
+import DepartmentRevenueReport from "@/pages/admin/DepartmentRevenueReport";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -130,6 +148,24 @@ const App = () => (
             <Route path="/admin/billing/new" element={<CreateInvoice />} />
             <Route path="/admin/billing/invoices/:id" element={<InvoiceDetail />} />
             <Route path="/admin/billing/payments" element={<PaymentsHistory />} />
+
+            {/* Super Admin Routes */}
+            <Route path="/admin/hospital-profile" element={<HospitalProfile />} />
+            <Route path="/admin/departments" element={<Departments />} />
+            <Route path="/admin/infrastructure" element={<Infrastructure />} />
+            <Route path="/admin/revenue" element={<FinanceRevenue />} />
+            <Route path="/admin/insurance-claims" element={<InsuranceClaims />} />
+            <Route path="/admin/lab-pending" element={<LabPendingTests />} />
+            <Route path="/admin/lab-revenue" element={<LabRevenue />} />
+            <Route path="/admin/audit-logs" element={<AuditLogs />} />
+            <Route path="/admin/access-control" element={<AccessControl />} />
+            <Route path="/admin/data-access-logs" element={<DataAccessLogs />} />
+            <Route path="/admin/system-alerts" element={<SystemAlerts />} />
+            <Route path="/admin/notification-settings" element={<NotificationSettings />} />
+            <Route path="/admin/reports/daily" element={<DailyReports />} />
+            <Route path="/admin/reports/monthly" element={<MonthlyReports />} />
+            <Route path="/admin/reports/doctor-revenue" element={<DoctorRevenueReport />} />
+            <Route path="/admin/reports/department-revenue" element={<DepartmentRevenueReport />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
