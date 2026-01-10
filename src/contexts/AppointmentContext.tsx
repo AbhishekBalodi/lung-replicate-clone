@@ -11,6 +11,7 @@ interface Appointment {
   message: string | null;
   created_at?: string | null;
   status?: string | null;
+  department?: string | null;
 }
 
 interface PatientDetails {
