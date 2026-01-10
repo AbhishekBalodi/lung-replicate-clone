@@ -100,7 +100,11 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
         {!activeSidebarPage && (
           <div className="flex-1 overflow-y-auto">
             <nav className="space-y-1">
-              <button onClick={() => { navigate("/dashboard"); setSidebarOpen(false); }} className={`w-full text-left rounded-lg px-3 py-2 ${isActive("/dashboard")}`}>
+              <button onClick={() => { 
+                const dashboardPath = user?.role === "super_admin" ? "/super-admin" : "/dashboard";
+                navigate(dashboardPath); 
+                setSidebarOpen(false); 
+              }} className={`w-full text-left rounded-lg px-3 py-2 ${isActive(user?.role === "super_admin" ? "/super-admin" : "/dashboard")}`}>
                 Dashboard
               </button>
 
