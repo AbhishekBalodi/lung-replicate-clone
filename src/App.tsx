@@ -78,6 +78,19 @@ import MonthlyReports from "@/pages/admin/MonthlyReports";
 import DoctorRevenueReport from "@/pages/admin/DoctorRevenueReport";
 import DepartmentRevenueReport from "@/pages/admin/DepartmentRevenueReport";
 
+/* Feedback & Quality Control */
+import PatientFeedback from "@/pages/admin/PatientFeedback";
+import DoctorRatings from "@/pages/admin/DoctorRatings";
+import ComplaintsManagement from "@/pages/admin/ComplaintsManagement";
+import ServiceQualityScore from "@/pages/admin/ServiceQualityScore";
+
+/* System Configuration */
+import AppointmentRules from "@/pages/admin/AppointmentRules";
+import PricingRules from "@/pages/admin/PricingRules";
+import TaxSettings from "@/pages/admin/TaxSettings";
+import PaymentGateways from "@/pages/admin/PaymentGateways";
+import MessagingIntegrations from "@/pages/admin/MessagingIntegrations";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -176,6 +189,19 @@ const App = () => (
             <Route path="/admin/reports/monthly" element={<MonthlyReports />} />
             <Route path="/admin/reports/doctor-revenue" element={<DoctorRevenueReport />} />
             <Route path="/admin/reports/department-revenue" element={<DepartmentRevenueReport />} />
+            
+            {/* Feedback & Quality Control */}
+            <Route path="/admin/feedback/patient" element={<PatientFeedback />} />
+            <Route path="/admin/feedback/doctor-ratings" element={<DoctorRatings />} />
+            <Route path="/admin/feedback/complaints" element={<ComplaintsManagement />} />
+            <Route path="/admin/feedback/quality-score" element={<ServiceQualityScore />} />
+            
+            {/* System Configuration */}
+            <Route path="/admin/config/appointment-rules" element={<AppointmentRules />} />
+            <Route path="/admin/config/pricing-rules" element={<PricingRules />} />
+            <Route path="/admin/config/tax-settings" element={<TaxSettings />} />
+            <Route path="/admin/config/payment-gateways" element={<PaymentGateways />} />
+            <Route path="/admin/config/messaging" element={<MessagingIntegrations />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

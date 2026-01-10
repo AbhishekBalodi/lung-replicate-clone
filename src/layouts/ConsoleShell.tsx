@@ -283,11 +283,52 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 Reviews
               </button>
 
-              {/* Feedback */}
-              <button onClick={() => { navigate('/admin/feedback'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Feedback
-              </button>
+              {/* Feedback & Quality Control - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('feedback')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Feedback & Quality
+                  </span>
+                  {expandedMenus['feedback'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['feedback'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button onClick={() => { navigate('/admin/feedback/patient'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Patient Feedback</button>
+                    <button onClick={() => { navigate('/admin/feedback/doctor-ratings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Doctor Ratings</button>
+                    <button onClick={() => { navigate('/admin/feedback/complaints'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Complaints Management</button>
+                    <button onClick={() => { navigate('/admin/feedback/quality-score'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Service Quality Score</button>
+                  </div>
+                )}
+              </div>
+
+              {/* System Configuration - Expandable (Super Admin Only) */}
+              {user?.role === "super_admin" && (
+                <div>
+                  <button 
+                    onClick={() => toggleMenu('system-config')}
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Settings className="h-4 w-4" />
+                      System Configuration
+                    </span>
+                    {expandedMenus['system-config'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {expandedMenus['system-config'] && (
+                    <div className="ml-6 space-y-1 mt-1">
+                      <button onClick={() => { navigate('/admin/config/appointment-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Appointment Rules</button>
+                      <button onClick={() => { navigate('/admin/config/pricing-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Pricing Rules</button>
+                      <button onClick={() => { navigate('/admin/config/tax-settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Tax Settings</button>
+                      <button onClick={() => { navigate('/admin/config/payment-gateways'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Payment Gateways</button>
+                      <button onClick={() => { navigate('/admin/config/messaging'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">SMS/Email/WhatsApp</button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Hospital Management - Expandable (Super Admin Only) */}
               {user?.role === "super_admin" && (
