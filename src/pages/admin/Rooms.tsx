@@ -84,7 +84,7 @@ export default function Rooms() {
               <td className="p-3">102</td>
               <td>Private</td>
               <td>
-                <Badge variant="success">Available</Badge>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">Available</Badge>
               </td>
               <td>—</td>
               <td>—</td>

@@ -47,8 +47,13 @@ export default function CreateInvoice() {
     value: string | number
   ) => {
     const updated = [...items];
-    updated[index][field] =
-      field === 'description' ? String(value) : Number(value);
+    if (field === 'description') {
+      updated[index].description = String(value);
+    } else if (field === 'quantity') {
+      updated[index].quantity = Number(value);
+    } else if (field === 'unit_price') {
+      updated[index].unit_price = Number(value);
+    }
     setItems(updated);
   };
 
