@@ -1,42 +1,97 @@
-import { useEffect, useState } from 'react';
-import ConsoleShell from '@/layouts/ConsoleShell';
-import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import api from '@/lib/api';
+import { useState } from "react";
+import ConsoleShell from "@/layouts/ConsoleShell";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
-type Room = { id: number; room_number: string; room_type_id?: number | string; room_type_name?: string | null; bed_count?: number; status?: string };
+const departments = [
+  "Cardiology",
+  "Orthopedics",
+  "Neurology",
+  "Pulmonology",
+  "Gastroenterology",
+  "Pediatrics",
+];
 
-export default function Rooms(){
-  const [rooms,setRooms]=useState<Room[]>([]);
-  const [form,setForm]=useState<{ room_number: string; room_type_id: string; bed_count: string }>({ room_number:'', room_type_id:'', bed_count:'1' });
-
-  const load = async()=>{ try{ const res = await api.apiGet('/api/rooms'); const js=await res.json(); if(!res.ok) throw new Error(js?.error||'Failed'); setRooms(js.items||[]); } catch(err: unknown){ const e = err as Error; toast.error('Failed to load rooms: '+(e?.message ?? String(err))); } }
-  const handleAdd = async()=>{ if(!form.room_number.trim()) return toast.error('Room number required'); try{ const res = await api.apiPost('/api/rooms', { ...form, bed_count: Number(form.bed_count) }); const js=await res.json(); if(!res.ok) throw new Error(js?.error||'Failed'); toast.success('Added'); setForm({ room_number:'', room_type_id:'', bed_count:'1' }); load(); } catch(err: unknown){ const e = err as Error; toast.error('Error: '+(e?.message ?? String(err))); } }
-  useEffect(()=>{ load(); },[]);
+export default function Rooms() {
+  const [active, setActive] = useState("Cardiology");
 
   return (
     <ConsoleShell>
-      <h1 className="text-2xl font-semibold text-emerald-900">Rooms</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-semibold">Rooms by Department</h1>
+        <Button>Add New Room</Button>
+      </div>
 
-      <Card className="p-4 mt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <Input placeholder="Room Number" value={form.room_number} onChange={(e)=>setForm({...form,room_number:e.target.value})} />
-          <Input placeholder="Room Type ID" value={form.room_type_id} onChange={(e)=>setForm({...form,room_type_id:e.target.value})} />
-          <Input placeholder="Bed Count" value={form.bed_count} onChange={(e)=>setForm({...form,bed_count:e.target.value})} />
-        </div>
-        <Button className="bg-emerald-700" onClick={handleAdd}>Add Room</Button>
-      </Card>
-
-      <div className="mt-4 space-y-3">
-        {rooms.map(it=> (
-          <Card key={it.id} className="p-3">
-            <div className="font-medium text-emerald-900">{it.room_number} • {it.room_type_name || it.room_type_id}</div>
-            <div className="text-sm text-emerald-700">Beds: {it.bed_count} • Status: {it.status}</div>
+      {/* Department cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {departments.slice(0, 3).map(dep => (
+          <Card key={dep} className="p-4">
+            <h3 className="font-medium">{dep}</h3>
+            <p className="text-2xl font-bold mt-2">25</p>
+            <div className="flex justify-between text-sm mt-2">
+              <span className="text-green-600">Available: 7</span>
+              <span className="text-red-500">Occupied: 18</span>
+            </div>
           </Card>
         ))}
       </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-4">
+        {departments.map(dep => (
+          <button
+            key={dep}
+            onClick={() => setActive(dep)}
+            className={`px-3 py-1.5 rounded-md text-sm ${
+              active === dep ? "bg-black text-white" : "bg-muted"
+            }`}
+          >
+            {dep}
+          </button>
+        ))}
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-3 mb-4">
+        <Input placeholder="Search rooms..." />
+      </div>
+
+      {/* Table */}
+      <Card>
+        <table className="w-full text-sm">
+          <thead className="border-b text-muted-foreground">
+            <tr>
+              <th className="p-3 text-left">Room Number</th>
+              <th>Room Type</th>
+              <th>Status</th>
+              <th>Patient</th>
+              <th>Doctor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b">
+              <td className="p-3">101</td>
+              <td>Private</td>
+              <td>
+                <Badge variant="destructive">Occupied</Badge>
+              </td>
+              <td>John Smith</td>
+              <td>Dr. Emily Chen</td>
+            </tr>
+            <tr>
+              <td className="p-3">102</td>
+              <td>Private</td>
+              <td>
+                <Badge variant="success">Available</Badge>
+              </td>
+              <td>—</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </Card>
     </ConsoleShell>
   );
 }

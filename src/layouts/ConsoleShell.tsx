@@ -167,6 +167,27 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 )}
               </div>
 
+              {/* Ambulance - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('staff')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Users2 className="h-4 w-4" />
+                    Staff
+                  </span>
+                  {expandedMenus['staff'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['staff'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button onClick={() => { navigate('/admin/staffs/calls'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Staff Call List</button>
+                    <button onClick={() => { navigate('/admin/staffs/list'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Staff List</button>
+                    <button onClick={() => { navigate('/admin/staffs/details/STAFF-002'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Staff Details</button>
+                  </div>
+                )}
+              </div>
+
               {/* Pharmacy - Expandable */}
               <div>
                 <button 

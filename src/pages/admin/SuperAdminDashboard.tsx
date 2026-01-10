@@ -78,6 +78,96 @@ interface Patient {
   last_visit_date?: string;
 }
 
+const AnalyticsSection = () => (
+  <div className="grid gap-6">
+    <div className="grid md:grid-cols-3 gap-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Patient Demographics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
+            Chart placeholder
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appointment Types</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
+            Pie chart placeholder
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue Sources</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
+            Bar chart placeholder
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+);
+
+const ReportsSection = () => (
+  <div className="space-y-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Available Reports</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Button variant="outline">Monthly Revenue Summary</Button>
+        <Button variant="outline">Patient Demographics</Button>
+        <Button variant="outline">Staff Performance</Button>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const NotificationsSection = () => (
+  <div className="grid md:grid-cols-2 gap-4">
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Notifications</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <p>New appointment request</p>
+        <p>Appointment confirmed</p>
+        <p>System maintenance completed</p>
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Notification Settings</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex justify-between">
+          <span>Email Notifications</span>
+          <Switch defaultChecked />
+        </div>
+        <div className="flex justify-between">
+          <span>SMS Notifications</span>
+          <Switch />
+        </div>
+        <div className="flex justify-between">
+          <span>Push Notifications</span>
+          <Switch defaultChecked />
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+
 const SuperAdminDashboard = () => {
   const { user, tenant, logout, isSuperAdmin } = useCustomAuth();
   const navigate = useNavigate();
@@ -85,7 +175,7 @@ const SuperAdminDashboard = () => {
 
   // Main dashboard state
   const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors'>('overview');
-  
+
   // Doctors state
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [doctorsLoading, setDoctorsLoading] = useState(true);
@@ -332,7 +422,7 @@ const SuperAdminDashboard = () => {
   const toggleDoctorAccess = async (doctor: Doctor) => {
     try {
       setTogglingDoctorId(doctor.id);
-      
+
       const response = await fetch(`${getApiBaseUrl()}/api/doctors/${doctor.id}`, {
         method: 'PUT',
         headers: getHeaders(),
@@ -500,15 +590,15 @@ const SuperAdminDashboard = () => {
       {/* Main Tabs: Overview & Doctors Management */}
       <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors')} className="w-full">
         <TabsList className="bg-slate-100 border border-slate-200 p-1 rounded-lg mb-6">
-          <TabsTrigger 
-            value="overview" 
+          <TabsTrigger
+            value="overview"
             className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
           >
             <Calendar className="h-4 w-4 mr-2" />
             Dashboard Overview
           </TabsTrigger>
-          <TabsTrigger 
-            value="doctors" 
+          <TabsTrigger
+            value="doctors"
             className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
           >
             <Stethoscope className="h-4 w-4 mr-2" />
@@ -529,6 +619,77 @@ const SuperAdminDashboard = () => {
             pendingTasks={5}
             highPriorityTasks={2}
           />
+
+          {/* ===============================
+   MEDIXPRO KPI CARDS (ADDITIONAL)
+================================ */}
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
+            {/* Total Revenue */}
+            <Card className="bg-slate-900 text-white">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Total Revenue</span>
+                  <span className="text-green-500">$</span>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">$45,231.89</p>
+                <p className="text-sm text-green-400 mt-1">
+                  +20.1% from last month
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Appointments */}
+            <Card className="bg-slate-900 text-white">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Appointments</span>
+                  <Calendar className="h-4 w-4 text-blue-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">+2,350</p>
+                <p className="text-sm text-blue-400 mt-1">
+                  +10.1% from last month
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Patients */}
+            <Card className="bg-slate-900 text-white">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Patients</span>
+                  <Users className="h-4 w-4 text-orange-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">+12,234</p>
+                <p className="text-sm text-orange-400 mt-1">
+                  +19% from last month
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Staff */}
+            <Card className="bg-slate-900 text-white">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-400">Staff</span>
+                  <Users className="h-4 w-4 text-purple-400" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">+573</p>
+                <p className="text-sm text-purple-400 mt-1">
+                  +4 new this month
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
 
           {/* Quick Stats Cards for Hospital */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
@@ -578,6 +739,43 @@ const SuperAdminDashboard = () => {
             </Card>
           </div>
 
+          {/* ============================
+   ADVANCED DASHBOARD SECTIONS
+============================ */}
+
+          <Card className="mt-10">
+            <CardHeader>
+              <CardTitle>Detailed Insights</CardTitle>
+              <CardDescription>
+                Analytics, reports and notifications
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <Tabs defaultValue="analytics">
+                <TabsList>
+                  <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                  <TabsTrigger value="reports">Reports</TabsTrigger>
+                  <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="analytics">
+                  <AnalyticsSection />
+                </TabsContent>
+
+                <TabsContent value="reports">
+                  <ReportsSection />
+                </TabsContent>
+
+                <TabsContent value="notifications">
+                  <NotificationsSection />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+
+
           {/* All Patients Section */}
           <Card className="mt-8">
             <CardHeader>
@@ -620,7 +818,7 @@ const SuperAdminDashboard = () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {patient.last_visit_date 
+                            {patient.last_visit_date
                               ? new Date(patient.last_visit_date).toLocaleDateString()
                               : '-'
                             }
@@ -803,6 +1001,7 @@ const SuperAdminDashboard = () => {
           </Card>
         </TabsContent>
 
+
         {/* DOCTORS MANAGEMENT TAB */}
         <TabsContent value="doctors">
           <Card>
@@ -837,28 +1036,28 @@ const SuperAdminDashboard = () => {
                   <div className="space-y-4 mt-4">
                     <div>
                       <Label>Name *</Label>
-                      <Input 
-                        value={formData.name} 
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })} 
+                      <Input
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Dr. John Smith"
                       />
                     </div>
 
                     <div>
                       <Label>Email *</Label>
-                      <Input 
+                      <Input
                         type="email"
-                        value={formData.email} 
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })} 
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="doctor@hospital.com"
                       />
                     </div>
 
                     <div>
                       <Label>Phone</Label>
-                      <Input 
-                        value={formData.phone} 
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })} 
+                      <Input
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="+91 98765 43210"
                       />
                     </div>
@@ -884,26 +1083,26 @@ const SuperAdminDashboard = () => {
 
                     <div>
                       <Label>Specialization</Label>
-                      <Input 
-                        value={formData.specialization} 
-                        onChange={(e) => setFormData({ ...formData, specialization: e.target.value })} 
+                      <Input
+                        value={formData.specialization}
+                        onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
                         placeholder="Pulmonology"
                       />
                     </div>
 
                     <div>
                       <Label>Consultation Fee</Label>
-                      <Input 
+                      <Input
                         type="number"
-                        value={formData.consultation_fee} 
-                        onChange={(e) => setFormData({ ...formData, consultation_fee: e.target.value })} 
+                        value={formData.consultation_fee}
+                        onChange={(e) => setFormData({ ...formData, consultation_fee: e.target.value })}
                         placeholder="500"
                       />
                     </div>
 
-                    <Button 
-                      className="w-full bg-emerald-600 hover:bg-emerald-700" 
-                      onClick={handleAddDoctor} 
+                    <Button
+                      className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      onClick={handleAddDoctor}
                       disabled={formLoading}
                     >
                       {formLoading ? 'Adding...' : 'Add Doctor'}
@@ -926,141 +1125,141 @@ const SuperAdminDashboard = () => {
                 </div>
               ) : (
                 <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Specialization</TableHead>
-                      <TableHead>Consultation Fee</TableHead>
-                      <TableHead className="text-center">Dashboard Access</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {doctors.map((doctor) => (
-                      <TableRow key={doctor.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                              {(doctor as any).profile_photo_url ? (
-                                <img src={(doctor as any).profile_photo_url} className="h-10 w-10 rounded-full object-cover" alt="doctor" />
-                              ) : (
-                                <User className="h-5 w-5 text-emerald-700" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="font-medium">{doctor.name}</p>
-                              {doctor.phone && (
-                                <p className="text-sm text-muted-foreground">{doctor.phone}</p>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{doctor.email}</TableCell>
-                        <TableCell>{doctor.specialization || '-'}</TableCell>
-                        <TableCell>
-                          {doctor.consultation_fee 
-                            ? `₹${doctor.consultation_fee}` 
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Switch
-                            checked={doctor.is_active}
-                            onCheckedChange={() => toggleDoctorAccess(doctor)}
-                            disabled={togglingDoctorId === doctor.id}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {doctor.is_active ? (
-                            <Badge className="bg-green-100 text-green-800">Active</Badge>
-                          ) : (
-                            <Badge variant="secondary">Inactive</Badge>
-                          )}
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="ghost" onClick={() => {
-                              setEditingDoctor(doctor);
-                              setEditingFormData({
-                                name: doctor.name || '',
-                                email: doctor.email || '',
-                                phone: doctor.phone || '',
-                                specialization: doctor.specialization || '',
-                                qualifications: doctor.qualifications || '',
-                                bio: doctor.bio || '',
-                                consultation_fee: doctor.consultation_fee ? String(doctor.consultation_fee) : ''
-                              });
-                              setEditPhotoFile(null);
-                              setIsEditDialogOpen(true);
-                            }}>
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                          </div>
-                        </TableCell>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Doctor</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Specialization</TableHead>
+                        <TableHead>Consultation Fee</TableHead>
+                        <TableHead className="text-center">Dashboard Access</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {doctors.map((doctor) => (
+                        <TableRow key={doctor.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                                {(doctor as any).profile_photo_url ? (
+                                  <img src={(doctor as any).profile_photo_url} className="h-10 w-10 rounded-full object-cover" alt="doctor" />
+                                ) : (
+                                  <User className="h-5 w-5 text-emerald-700" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium">{doctor.name}</p>
+                                {doctor.phone && (
+                                  <p className="text-sm text-muted-foreground">{doctor.phone}</p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{doctor.email}</TableCell>
+                          <TableCell>{doctor.specialization || '-'}</TableCell>
+                          <TableCell>
+                            {doctor.consultation_fee
+                              ? `₹${doctor.consultation_fee}`
+                              : '-'
+                            }
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Switch
+                              checked={doctor.is_active}
+                              onCheckedChange={() => toggleDoctorAccess(doctor)}
+                              disabled={togglingDoctorId === doctor.id}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {doctor.is_active ? (
+                              <Badge className="bg-green-100 text-green-800">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary">Inactive</Badge>
+                            )}
+                          </TableCell>
 
-                {/* Edit Doctor Dialog */}
-                <Dialog open={isEditDialogOpen} onOpenChange={(open)=>{ if(!editLoading) setIsEditDialogOpen(open); }}>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Edit Doctor</DialogTitle>
-                    </DialogHeader>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                setEditingDoctor(doctor);
+                                setEditingFormData({
+                                  name: doctor.name || '',
+                                  email: doctor.email || '',
+                                  phone: doctor.phone || '',
+                                  specialization: doctor.specialization || '',
+                                  qualifications: doctor.qualifications || '',
+                                  bio: doctor.bio || '',
+                                  consultation_fee: doctor.consultation_fee ? String(doctor.consultation_fee) : ''
+                                });
+                                setEditPhotoFile(null);
+                                setIsEditDialogOpen(true);
+                              }}>
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
 
-                    <div className="space-y-4 mt-4">
-                      <div>
-                        <Label>Name *</Label>
-                        <Input value={editingFormData.name} onChange={(e)=>setEditingFormData({...editingFormData, name: e.target.value})} />
-                      </div>
-                      <div>
-                        <Label>Email *</Label>
-                        <Input value={editingFormData.email} onChange={(e)=>setEditingFormData({...editingFormData, email: e.target.value})} />
-                      </div>
-                      <div>
-                        <Label>Phone</Label>
-                        <Input value={editingFormData.phone} onChange={(e)=>setEditingFormData({...editingFormData, phone: e.target.value})} />
-                      </div>
-                      <div>
-                        <Label>Specialization</Label>
-                        <Input value={editingFormData.specialization} onChange={(e)=>setEditingFormData({...editingFormData, specialization: e.target.value})} />
-                      </div>
-                      <div>
-                        <Label>Qualifications</Label>
-                        <Input value={editingFormData.qualifications} onChange={(e)=>setEditingFormData({...editingFormData, qualifications: e.target.value})} />
-                      </div>
-                      <div>
-                        <Label>Bio</Label>
-                        <Input value={editingFormData.bio} onChange={(e)=>setEditingFormData({...editingFormData, bio: e.target.value})} />
-                      </div>
-                      <div>
-                        <Label>Consultation Fee</Label>
-                        <Input type="number" value={editingFormData.consultation_fee} onChange={(e)=>setEditingFormData({...editingFormData, consultation_fee: e.target.value})} />
-                      </div>
+                  {/* Edit Doctor Dialog */}
+                  <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if (!editLoading) setIsEditDialogOpen(open); }}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Edit Doctor</DialogTitle>
+                      </DialogHeader>
 
-                      <div>
-                        <Label>Profile photo</Label>
-                        <input type="file" accept="image/*" onChange={(e:any)=>{ setEditPhotoFile(e.target.files?.[0] || null); }} />
-                      </div>
+                      <div className="space-y-4 mt-4">
+                        <div>
+                          <Label>Name *</Label>
+                          <Input value={editingFormData.name} onChange={(e) => setEditingFormData({ ...editingFormData, name: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Email *</Label>
+                          <Input value={editingFormData.email} onChange={(e) => setEditingFormData({ ...editingFormData, email: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Phone</Label>
+                          <Input value={editingFormData.phone} onChange={(e) => setEditingFormData({ ...editingFormData, phone: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Specialization</Label>
+                          <Input value={editingFormData.specialization} onChange={(e) => setEditingFormData({ ...editingFormData, specialization: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Qualifications</Label>
+                          <Input value={editingFormData.qualifications} onChange={(e) => setEditingFormData({ ...editingFormData, qualifications: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Bio</Label>
+                          <Input value={editingFormData.bio} onChange={(e) => setEditingFormData({ ...editingFormData, bio: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Consultation Fee</Label>
+                          <Input type="number" value={editingFormData.consultation_fee} onChange={(e) => setEditingFormData({ ...editingFormData, consultation_fee: e.target.value })} />
+                        </div>
 
-                      <div>
-                        <Label>Hero image (optional)</Label>
-                        <input type="file" accept="image/*" onChange={(e:any)=>{ setEditHeroFile(e.target.files?.[0] || null); }} />
-                      </div>
+                        <div>
+                          <Label>Profile photo</Label>
+                          <input type="file" accept="image/*" onChange={(e: any) => { setEditPhotoFile(e.target.files?.[0] || null); }} />
+                        </div>
 
-                      <div className="flex gap-2">
-                        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSaveEditDoctor} disabled={editLoading}>{editLoading ? 'Saving...' : 'Save'}</Button>
-                        <Button variant="ghost" onClick={()=>{ if(!editLoading){ setIsEditDialogOpen(false); setEditingDoctor(null); }}}>Cancel</Button>
+                        <div>
+                          <Label>Hero image (optional)</Label>
+                          <input type="file" accept="image/*" onChange={(e: any) => { setEditHeroFile(e.target.files?.[0] || null); }} />
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSaveEditDoctor} disabled={editLoading}>{editLoading ? 'Saving...' : 'Save'}</Button>
+                          <Button variant="ghost" onClick={() => { if (!editLoading) { setIsEditDialogOpen(false); setEditingDoctor(null); } }}>Cancel</Button>
+                        </div>
                       </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogContent>
+                  </Dialog>
                 </>
               )}
             </CardContent>

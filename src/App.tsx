@@ -39,6 +39,9 @@ import AmbulanceDispatch from "@/pages/admin/AmbulanceDispatch";
 import AmbulanceCallList from "@/pages/admin/AmbulanceCallList";
 import AmbulanceFleetList from "@/pages/admin/AmbulanceFleetList";
 import AmbulanceDetails from "@/pages/admin/AmbulanceDetails";
+import StaffCallList from "@/pages/admin/StaffCallList";
+import StaffFleetList from "@/pages/admin/StaffFleetList";
+import StaffDetails from "@/pages/admin/StaffDetails";
 import PharmacyMedicines from "@/pages/admin/PharmacyMedicines";
 import PharmacyInventory from "@/pages/admin/PharmacyInventory";
 import BloodStock from "@/pages/admin/BloodStock";
@@ -101,6 +104,9 @@ const App = () => (
 
             {/* Admin feature routes (created for hospital tenants) */}
             <Route path="/admin/ambulances" element={<AmbulancesPage />} />
+            <Route path="/admin/staffs/calls" element={<StaffCallList />} />
+            <Route path="/admin/staffs/list" element={<StaffFleetList />} />
+            <Route path="/admin/staffs/details/:id" element={<StaffDetails />} />
             <Route path="/admin/ambulances/calls" element={<AmbulanceCallList />} />
             <Route path="/admin/ambulances/list" element={<AmbulanceFleetList />} />
             <Route path="/admin/ambulances/details/:id" element={<AmbulanceDetails />} />
