@@ -149,19 +149,29 @@ const App = () => (
             <Route path="/admin/billing/invoices/:id" element={<InvoiceDetail />} />
             <Route path="/admin/billing/payments" element={<PaymentsHistory />} />
 
-            {/* Super Admin Routes */}
-            <Route path="/admin/hospital-profile" element={<HospitalProfile />} />
-            <Route path="/admin/departments" element={<Departments />} />
-            <Route path="/admin/infrastructure" element={<Infrastructure />} />
-            <Route path="/admin/revenue" element={<FinanceRevenue />} />
-            <Route path="/admin/insurance-claims" element={<InsuranceClaims />} />
-            <Route path="/admin/lab-pending" element={<LabPendingTests />} />
-            <Route path="/admin/lab-revenue" element={<LabRevenue />} />
-            <Route path="/admin/audit-logs" element={<AuditLogs />} />
-            <Route path="/admin/access-control" element={<AccessControl />} />
-            <Route path="/admin/data-access-logs" element={<DataAccessLogs />} />
-            <Route path="/admin/system-alerts" element={<SystemAlerts />} />
-            <Route path="/admin/notification-settings" element={<NotificationSettings />} />
+            {/* Super Admin Routes - Hospital Management */}
+            <Route path="/admin/hospital/profile" element={<HospitalProfile />} />
+            <Route path="/admin/hospital/departments" element={<Departments />} />
+            <Route path="/admin/hospital/infrastructure" element={<Infrastructure />} />
+            
+            {/* Financial Management */}
+            <Route path="/admin/finance/revenue" element={<FinanceRevenue />} />
+            <Route path="/admin/finance/insurance" element={<InsuranceClaims />} />
+            
+            {/* Lab & Diagnostics */}
+            <Route path="/admin/lab/pending" element={<LabPendingTests />} />
+            <Route path="/admin/lab/revenue" element={<LabRevenue />} />
+            
+            {/* Compliance & Security */}
+            <Route path="/admin/compliance/audit-logs" element={<AuditLogs />} />
+            <Route path="/admin/compliance/access-control" element={<AccessControl />} />
+            <Route path="/admin/compliance/data-access" element={<DataAccessLogs />} />
+            
+            {/* Notifications & Alerts */}
+            <Route path="/admin/notifications/system" element={<SystemAlerts />} />
+            <Route path="/admin/notifications/settings" element={<NotificationSettings />} />
+            
+            {/* Reports */}
             <Route path="/admin/reports/daily" element={<DailyReports />} />
             <Route path="/admin/reports/monthly" element={<MonthlyReports />} />
             <Route path="/admin/reports/doctor-revenue" element={<DoctorRevenueReport />} />
