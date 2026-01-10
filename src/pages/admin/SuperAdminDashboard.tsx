@@ -16,6 +16,7 @@ import { getDevTenantCode } from '@/components/DevTenantSwitcher';
 import ConsoleShell from '@/layouts/ConsoleShell';
 import DashboardKPICards from '@/components/dashboard/DashboardKPICards';
 import SuperAdminKPICards from '@/components/dashboard/SuperAdminKPICards';
+import SuperAdminGraphs from '@/components/dashboard/SuperAdminGraphs';
 import RescheduleModal from '@/components/RescheduleModal';
 import {
   Plus,
@@ -758,7 +759,7 @@ const SuperAdminDashboard = () => {
           </div>
 
           {/* ===============================
-   MEDIXPRO KPI CARDS (ADDITIONAL)
+   DYNAMIC KPI CARDS (CALCULATED FROM DATA)
 ================================ */}
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
@@ -767,13 +768,15 @@ const SuperAdminDashboard = () => {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-400">Total Revenue</span>
-                  <span className="text-green-500">$</span>
+                  <span className="text-green-500">₹</span>
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">$45,231.89</p>
+                <p className="text-3xl font-bold">
+                  ₹{allInvoices.reduce((sum, inv) => sum + ((inv.total_amount as number) || 0), 0).toLocaleString()}
+                </p>
                 <p className="text-sm text-green-400 mt-1">
-                  +20.1% from last month
+                  From {allInvoices.length} invoices
                 </p>
               </CardContent>
             </Card>
@@ -787,9 +790,9 @@ const SuperAdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">+2,350</p>
+                <p className="text-3xl font-bold">{appointments.length}</p>
                 <p className="text-sm text-blue-400 mt-1">
-                  +10.1% from last month
+                  {todayAppointments.length} today
                 </p>
               </CardContent>
             </Card>
@@ -803,9 +806,9 @@ const SuperAdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">+12,234</p>
+                <p className="text-3xl font-bold">{allPatients.length}</p>
                 <p className="text-sm text-orange-400 mt-1">
-                  +19% from last month
+                  {newPatients} new this week
                 </p>
               </CardContent>
             </Card>
@@ -819,12 +822,24 @@ const SuperAdminDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold">+573</p>
+                <p className="text-3xl font-bold">{totalStaff}</p>
                 <p className="text-sm text-purple-400 mt-1">
-                  +4 new this month
+                  +{newStaffThisMonth} new this month
                 </p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* ===============================
+   PERFORMANCE METRICS GRAPHS
+================================ */}
+          <div className="mt-6">
+            <SuperAdminGraphs
+              appointments={appointments}
+              patients={allPatients}
+              invoices={allInvoices}
+              doctors={doctors}
+            />
           </div>
 
 

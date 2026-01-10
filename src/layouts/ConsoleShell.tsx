@@ -5,7 +5,7 @@ import {
   LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft, 
   Ambulance, Pill, Droplets, Receipt, Building2, Package, Users2, 
   FileText, DoorOpen, Star, MessageSquare, ChevronDown, ChevronRight,
-  ListTodo
+  ListTodo, FlaskConical, TrendingUp, Shield, Bell, Settings, BarChart3, Activity
 } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import MedicinesContent from "@/pages/admin/MedicinesContent";
@@ -289,7 +289,144 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 Feedback
               </button>
 
-              <button onClick={() => setActiveSidebarPage("settings")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800">
+              {/* Hospital Management - Expandable (Super Admin Only) */}
+              {user?.role === "super_admin" && (
+                <div>
+                  <button 
+                    onClick={() => toggleMenu('hospital-mgmt')}
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      Hospital Management
+                    </span>
+                    {expandedMenus['hospital-mgmt'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {expandedMenus['hospital-mgmt'] && (
+                    <div className="ml-6 space-y-1 mt-1">
+                      <button onClick={() => { navigate('/admin/hospital/profile'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Hospital Profile</button>
+                      <button onClick={() => { navigate('/admin/hospital/departments'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Departments</button>
+                      <button onClick={() => { navigate('/admin/hospital/infrastructure'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Infrastructure</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Financial Management - Expandable (Super Admin Only) */}
+              {user?.role === "super_admin" && (
+                <div>
+                  <button 
+                    onClick={() => toggleMenu('finance')}
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Financial Management
+                    </span>
+                    {expandedMenus['finance'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {expandedMenus['finance'] && (
+                    <div className="ml-6 space-y-1 mt-1">
+                      <button onClick={() => { navigate('/admin/finance/revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Revenue</button>
+                      <button onClick={() => { navigate('/admin/billing'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Billing</button>
+                      <button onClick={() => { navigate('/admin/finance/insurance'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Insurance & Claims</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Lab & Diagnostics - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('lab')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <FlaskConical className="h-4 w-4" />
+                    Lab & Diagnostics
+                  </span>
+                  {expandedMenus['lab'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['lab'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button onClick={() => setActiveSidebarPage("lab-tests")} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Tests Offered</button>
+                    <button onClick={() => { navigate('/admin/lab/pending'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Pending Tests</button>
+                    <button onClick={() => { navigate('/admin/lab/revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Lab Revenue</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Reports - Expandable (Super Admin Only) */}
+              {user?.role === "super_admin" && (
+                <div>
+                  <button 
+                    onClick={() => toggleMenu('reports')}
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Reports
+                    </span>
+                    {expandedMenus['reports'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {expandedMenus['reports'] && (
+                    <div className="ml-6 space-y-1 mt-1">
+                      <button onClick={() => { navigate('/admin/reports/daily'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Daily Reports</button>
+                      <button onClick={() => { navigate('/admin/reports/monthly'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Monthly Reports</button>
+                      <button onClick={() => { navigate('/admin/reports/doctor-revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Doctor-wise Revenue</button>
+                      <button onClick={() => { navigate('/admin/reports/department-revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Department-wise Revenue</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Compliance & Security - Expandable (Super Admin Only) */}
+              {user?.role === "super_admin" && (
+                <div>
+                  <button 
+                    onClick={() => toggleMenu('compliance')}
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Shield className="h-4 w-4" />
+                      Compliance & Security
+                    </span>
+                    {expandedMenus['compliance'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {expandedMenus['compliance'] && (
+                    <div className="ml-6 space-y-1 mt-1">
+                      <button onClick={() => { navigate('/admin/compliance/audit-logs'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Audit Logs</button>
+                      <button onClick={() => { navigate('/admin/compliance/access-control'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Access Control</button>
+                      <button onClick={() => { navigate('/admin/compliance/data-access'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Data Access Logs</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Notifications & Alerts - Expandable (Super Admin Only) */}
+              {user?.role === "super_admin" && (
+                <div>
+                  <button 
+                    onClick={() => toggleMenu('notifications')}
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Bell className="h-4 w-4" />
+                      Notifications & Alerts
+                    </span>
+                    {expandedMenus['notifications'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                  </button>
+                  {expandedMenus['notifications'] && (
+                    <div className="ml-6 space-y-1 mt-1">
+                      <button onClick={() => { navigate('/admin/notifications/system'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">System Alerts</button>
+                      <button onClick={() => { navigate('/admin/notifications/settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Notification Settings</button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <button onClick={() => setActiveSidebarPage("settings")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <Settings className="h-4 w-4" />
                 Settings
               </button>
             </nav>
