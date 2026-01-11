@@ -1,13 +1,30 @@
 import { Card } from "@/components/ui/card";
 import { Users, Calendar, Star, CheckCircle } from "lucide-react";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const QuickStats = () => {
-  const stats = [
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const isDrMann = tenantCode === 'doctor_mann' || tenantCode === 'drmann';
+
+  // Dr Mann's stats (hardcoded)
+  const drMannStats = [
     { label: "Patients Treated", value: "50,000+", icon: Users, color: "text-lung-blue" },
     { label: "Years Experience", value: "40+", icon: Calendar, color: "text-lung-green" },
     { label: "Patient Rating", value: "4.9/5", icon: Star, color: "text-yellow-500" },
     { label: "Success Rate", value: "98%", icon: CheckCircle, color: "text-lung-green" }
   ];
+
+  // Generic placeholder stats for other tenants
+  const placeholderStats = [
+    { label: "Patients Treated", value: "-", icon: Users, color: "text-lung-blue" },
+    { label: "Years Experience", value: "-", icon: Calendar, color: "text-lung-green" },
+    { label: "Patient Rating", value: "-", icon: Star, color: "text-yellow-500" },
+    { label: "Success Rate", value: "-", icon: CheckCircle, color: "text-lung-green" }
+  ];
+
+  const stats = isDrMann ? drMannStats : placeholderStats;
 
   return (
     <section className="py-12 px-4 bg-muted/30">
