@@ -90,6 +90,7 @@ import PricingRules from "@/pages/admin/PricingRules";
 import TaxSettings from "@/pages/admin/TaxSettings";
 import PaymentGateways from "@/pages/admin/PaymentGateways";
 import MessagingIntegrations from "@/pages/admin/MessagingIntegrations";
+import WebsiteSettings from "@/pages/admin/WebsiteSettings";
 
 const queryClient = new QueryClient();
 
@@ -202,6 +203,7 @@ const App = () => (
             <Route path="/admin/config/tax-settings" element={<TaxSettings />} />
             <Route path="/admin/config/payment-gateways" element={<PaymentGateways />} />
             <Route path="/admin/config/messaging" element={<MessagingIntegrations />} />
+            <Route path="/admin/config/website" element={<WebsiteSettings />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

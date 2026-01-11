@@ -4,11 +4,26 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useTenantContent } from "@/hooks/useTenantContent";
+import { MapPin } from "lucide-react";
 
 const Contact = ({ mapSrc }: { mapSrc?: string }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { content, isDrMannTenant, hasContent } = useTenantContent();
   
-  const defaultMapSrc = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3499.0!2d77.1733!3d28.6667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDQwJzAwLjEiTiA3N8KwMTAnMjMuOSJF!5e0!3m2!1sen!2sin!4v1234567890123";
+  // Dr. Mann's default map
+  const drMannDefaultMap = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3499.0!2d77.1733!3d28.6667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDQwJzAwLjEiTiA3N8KwMTAnMjMuOSJF!5e0!3m2!1sen!2sin!4v1234567890123";
+  
+  // Determine which map URL to use
+  const getMapUrl = () => {
+    if (mapSrc) return mapSrc;
+    if (isDrMannTenant) return drMannDefaultMap;
+    if (content.mapEmbedUrl) return content.mapEmbedUrl;
+    return null; // No map configured
+  };
+
+  const mapUrl = getMapUrl();
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -71,24 +86,29 @@ const Contact = ({ mapSrc }: { mapSrc?: string }) => {
     <section className="py-16 px-4">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-       {/* Map (same as Contact page) */}
-  <div className="relative">
-    <div className="bg-gray-200 rounded-lg overflow-hidden h-64 sm:h-80 lg:h-96">
-      <iframe
-        src={mapSrc || defaultMapSrc}
-        width="100%"
-        height="100%"
-        style={{ border: 0 }}
-        allowFullScreen
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        title="Clinic Location"
-      />
-    </div>
-  </div>
-
-
-
+       {/* Map */}
+        <div className="relative">
+          <div className="bg-gray-200 rounded-lg overflow-hidden h-64 sm:h-80 lg:h-96">
+            {mapUrl ? (
+              <iframe
+                src={mapUrl}
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Clinic Location"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                <MapPin className="h-12 w-12 mb-4 opacity-50" />
+                <p className="text-lg font-medium">Location Map</p>
+                <p className="text-sm">Map not configured yet</p>
+              </div>
+            )}
+          </div>
+        </div>
 
         <Card className="p-8 shadow-medium self-start">
           <h3 className="text-2xl font-semibold mb-6 text-foreground">Send us a Message</h3>
