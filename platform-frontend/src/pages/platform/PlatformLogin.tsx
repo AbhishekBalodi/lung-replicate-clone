@@ -50,7 +50,7 @@ const PlatformLogin = () => {
 
       localStorage.setItem('platformUser', JSON.stringify(data.user));
       toast.success('Login successful');
-      navigate('/dashboard');
+      navigate('/platform-dashboard');
 
     } catch (error: any) {
       console.error('Login error:', error);
@@ -95,6 +95,8 @@ const PlatformLogin = () => {
       // Store tenant user session
       localStorage.setItem('customUser', JSON.stringify(data.user));
       localStorage.setItem('tenantInfo', JSON.stringify(data.tenant));
+      // Keep dashboard API calls consistent (they read dev_tenant_code via DevTenantSwitcher)
+      localStorage.setItem('dev_tenant_code', tenantCode.trim());
       
       toast.success('Login successful');
       
