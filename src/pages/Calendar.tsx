@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 
 interface CalendarEvent {
   id: string;
@@ -73,7 +74,7 @@ export default function Calendar() {
 
   const fetchCalendarData = async () => {
     try {
-      const response = await fetch("/api/calendar");
+      const response = await apiFetch("/api/calendar", { method: "GET" });
       if (response.ok) {
         const data = await response.json();
         setEvents(data);
@@ -87,7 +88,7 @@ export default function Calendar() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch("/api/calendar/stats");
+      const response = await apiFetch("/api/calendar/stats", { method: "GET" });
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -99,7 +100,7 @@ export default function Calendar() {
 
   const fetchDoctors = async () => {
     try {
-      const response = await fetch("/api/calendar/doctors");
+      const response = await apiFetch("/api/calendar/doctors", { method: "GET" });
       if (response.ok) {
         const data = await response.json();
         setDoctors(data);
@@ -129,8 +130,8 @@ export default function Calendar() {
     if (!selectedEvent) return;
     
     try {
-      const response = await fetch(`/api/appointment/${selectedEvent.id}`, {
-        method: 'DELETE'
+      const response = await apiFetch(`/api/appointment/${selectedEvent.id}`, {
+        method: "DELETE",
       });
       
       if (response.ok) {
@@ -150,8 +151,8 @@ export default function Calendar() {
     if (!selectedEvent) return;
     
     try {
-      const response = await fetch(`/api/appointment/${selectedEvent.id}/done`, {
-        method: 'PATCH'
+      const response = await apiFetch(`/api/appointment/${selectedEvent.id}/done`, {
+        method: "PATCH",
       });
       
       if (response.ok) {
@@ -174,16 +175,13 @@ export default function Calendar() {
     }
     
     try {
-      const response = await fetch(`/api/appointment/${selectedEvent.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+      const response = await apiFetch(`/api/appointment/${selectedEvent.id}`, {
+        method: "PATCH",
         body: JSON.stringify({
           appointment_date: newDate,
           appointment_time: newTime,
-          status: 'rescheduled'
-        })
+          status: "rescheduled",
+        }),
       });
       
       if (response.ok) {

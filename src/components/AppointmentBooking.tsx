@@ -17,8 +17,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
-import { getDevTenantCode } from '@/components/DevTenantSwitcher';
-import { useCustomAuth } from '@/contexts/CustomAuthContext';
+import { getDevTenantCode } from "@/components/DevTenantSwitcher";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
+import { apiFetch } from "@/lib/api";
 
 // Generate time slots for the allowed periods (15-min intervals)
 const generateTimeSlots = () => {
@@ -73,8 +74,14 @@ const DateTimeStep = ({ formData, updateFormData }: {
     const fetchBookedSlots = async (date: Date) => {
       setLoadingSlots(true);
       try {
+        const tenantCode = getDevTenantCode();
+        if (!tenantCode) {
+          setBookedSlots([]);
+          return;
+        }
+
         const dateStr = format(date, 'yyyy-MM-dd');
-        const response = await fetch(`/api/appointment?date=${dateStr}`);
+        const response = await apiFetch(`/api/appointment?date=${dateStr}`, { method: "GET" });
         if (response.ok) {
           const data = await response.json();
           const times = data.appointments?.map((apt: any) => apt.appointment_time) || [];
@@ -86,6 +93,7 @@ const DateTimeStep = ({ formData, updateFormData }: {
         setLoadingSlots(false);
       }
     };
+
 
     if (selectedDate) {
       fetchBookedSlots(selectedDate);
@@ -203,11 +211,11 @@ const AppointmentBooking = () => {
   ];
 
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || "";
   const doctor = {
-    name: tenantInfo?.name || "Dr. Paramjeet Singh Mann",
+    name: tenantInfo?.name || (tenantCode ? "Doctor" : "Doctor"),
     specialty: "Pulmonologist",
-    image: `/tenants/${tenantCode}/dr-mann-passport.jpg`
+    image: tenantCode ? `/tenants/${tenantCode}/dr-mann-passport.jpg` : drMannImage,
   };
 
   const validateStep = () => {
@@ -284,13 +292,18 @@ const AppointmentBooking = () => {
       }
     } else {
       try {
-        // Send to Express.js API
-        
-        const response = await fetch(`/api/appointment`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        const tenantCode = tenantInfo?.code || getDevTenantCode();
+        if (!tenantCode) {
+          toast({
+            title: "Tenant not selected",
+            description: "Please select the correct tenant (doctor/hospital) before booking an appointment.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const response = await apiFetch(`/api/appointment`, {
+          method: "POST",
           body: JSON.stringify({
             full_name: formData.fullName,
             email: formData.email,
@@ -298,15 +311,15 @@ const AppointmentBooking = () => {
             appointment_date: formData.date,
             appointment_time: formData.time,
             selected_doctor: formData.doctor,
-            message: formData.message || '',
-            reports_uploaded: !!formData.reports
+            message: formData.message || "",
+            reports_uploaded: !!formData.reports,
           }),
         });
 
         const result = await response.json();
 
         if (!response.ok || !result.success) {
-          throw new Error(result.error || 'Failed to book appointment');
+          throw new Error(result.error || "Failed to book appointment");
         }
 
         // Show confirmation modal
@@ -316,7 +329,7 @@ const AppointmentBooking = () => {
         toast({
           title: "Error",
           description: error.message || "Failed to book appointment. Please try again.",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     }
