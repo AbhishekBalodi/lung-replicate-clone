@@ -5,7 +5,8 @@ import {
   LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft, 
   Ambulance, Pill, Droplets, Receipt, Building2, Package, Users2, 
   FileText, DoorOpen, Star, MessageSquare, ChevronDown, ChevronRight,
-  ListTodo, FlaskConical, TrendingUp, Shield, Bell, Settings, BarChart3, Activity
+  ListTodo, FlaskConical, TrendingUp, Shield, Bell, Settings, BarChart3, Activity,
+  Palette
 } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import MedicinesContent from "@/pages/admin/MedicinesContent";
@@ -148,6 +149,12 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <button onClick={() => { navigate('/admin/pending-tasks'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
                 <ListTodo className="h-4 w-4" />
                 Pending Tasks
+              </button>
+
+              {/* Theme & Templates - Available to both admin and super_admin */}
+              <button onClick={() => { navigate('/admin/config/theme-templates'); setSidebarOpen(false); }} className={`w-full text-left rounded-lg px-3 py-2 ${isActive('/admin/config/theme-templates')} flex items-center gap-2`}>
+                <Palette className="h-4 w-4" />
+                Theme & Templates
               </button>
 
               {/* Ambulance - Expandable */}
@@ -321,6 +328,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   {expandedMenus['system-config'] && (
                     <div className="ml-6 space-y-1 mt-1">
                       <button onClick={() => { navigate('/admin/config/website'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700 font-medium">Website Settings</button>
+                      <button onClick={() => { navigate('/admin/config/theme-templates'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700 flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5" />
+                        Theme & Templates
+                      </button>
                       <button onClick={() => { navigate('/admin/config/appointment-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Appointment Rules</button>
                       <button onClick={() => { navigate('/admin/config/pricing-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Pricing Rules</button>
                       <button onClick={() => { navigate('/admin/config/tax-settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Tax Settings</button>
