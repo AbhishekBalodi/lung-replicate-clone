@@ -1,19 +1,29 @@
 import { Facebook, Twitter, Instagram, MapPin, Phone, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const Footer = () => {
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const isDrMann = tenantCode === 'doctor_mann' || tenantCode === 'drmann';
+  
+  const clinicName = isDrMann ? 'Delhi Chest Physician' : (tenantInfo?.name || 'Healthcare Provider');
+  const clinicDescription = isDrMann 
+    ? 'From wellness tips to expert advice, we\'re here to support your journey to a healthier you. Our team of dedicated healthcare providers has years of experience.'
+    : 'Professional healthcare services tailored to your needs. Contact us for more information.';
+
   return (
     <footer className="bg-slate-800 text-white">
       {/* Main Footer Content */}
       <div className="py-12 lg:py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-            {/* Delhi Chest Physician */}
+            {/* Clinic Name */}
             <div>
-              <h3 className="text-lg lg:text-xl font-bold mb-4 lg:mb-6 font-manrope">Delhi Chest Physician</h3>
+              <h3 className="text-lg lg:text-xl font-bold mb-4 lg:mb-6 font-manrope">{clinicName}</h3>
               <p className="text-gray-300 leading-relaxed font-manrope text-sm lg:text-base">
-                From wellness tips to expert advice, we're here to support your journey to a 
-                healthier you. Our team of dedicated healthcare providers has years of experience.
+                {clinicDescription}
               </p>
             </div>
 
@@ -72,20 +82,29 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Opening Hour */}
-            <div>
-              <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-manrope">Opening Hours</h4>
-              <div className="space-y-2 text-gray-300 font-manrope text-sm lg:text-base">
-                <div>
-                  <p>10 AM - 3 PM Daily</p>
-                  <p className="text-xs opacity-75">Sant Parmanand Hospital, Civil Lines</p>
-                </div>
-                <div className="mt-3">
-                  <p>5 PM - 8 PM Daily</p>
-                  <p className="text-xs opacity-75">North Delhi Chest Center</p>
+            {/* Opening Hours - Only show for Dr Mann */}
+            {isDrMann ? (
+              <div>
+                <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-manrope">Opening Hours</h4>
+                <div className="space-y-2 text-gray-300 font-manrope text-sm lg:text-base">
+                  <div>
+                    <p>10 AM - 3 PM Daily</p>
+                    <p className="text-xs opacity-75">Sant Parmanand Hospital, Civil Lines</p>
+                  </div>
+                  <div className="mt-3">
+                    <p>5 PM - 8 PM Daily</p>
+                    <p className="text-xs opacity-75">North Delhi Chest Center</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div>
+                <h4 className="text-base lg:text-lg font-semibold mb-4 lg:mb-6 font-manrope">Contact Us</h4>
+                <p className="text-gray-300 font-manrope text-sm lg:text-base">
+                  Contact information will be available once configured.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -101,7 +120,9 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-manrope text-sm lg:text-base">MEDICAL ADDRESS</h5>
               </div>
               <p className="text-white/90 font-manrope text-sm lg:text-base">
-                North Delhi Chest Centre, 321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009
+                {isDrMann 
+                  ? 'North Delhi Chest Centre, 321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009'
+                  : 'Address not configured'}
               </p>
             </div>
 
@@ -112,7 +133,7 @@ const Footer = () => {
                 <h5 className="font-semibold text-white font-manrope text-sm lg:text-base">EMAIL ADDRESS</h5>
               </div>
               <p className="text-white/90 font-manrope text-sm lg:text-base">
-                psmann58@yahoo.com
+                {isDrMann ? 'psmann58@yahoo.com' : 'Email not configured'}
               </p>
             </div>
 
@@ -122,11 +143,15 @@ const Footer = () => {
                 <Phone className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                 <h5 className="font-semibold text-white font-manrope text-sm lg:text-base">EMERGENCY CALL</h5>
               </div>
-              <div className="text-white/90 font-manrope text-sm lg:text-base space-y-1">
-                <a href="tel:+919810589799" className="block hover:text-lung-green transition-colors">+91-9810589799</a>
-                <a href="tel:+919810588799" className="block hover:text-lung-green transition-colors">+91-9810588799</a>
-                <a href="tel:+91011-65101829" className="block hover:text-lung-green transition-colors">+91-011-65101829</a>
-              </div>
+              {isDrMann ? (
+                <div className="text-white/90 font-manrope text-sm lg:text-base space-y-1">
+                  <a href="tel:+919810589799" className="block hover:text-lung-green transition-colors">+91-9810589799</a>
+                  <a href="tel:+919810588799" className="block hover:text-lung-green transition-colors">+91-9810588799</a>
+                  <a href="tel:+91011-65101829" className="block hover:text-lung-green transition-colors">+91-011-65101829</a>
+                </div>
+              ) : (
+                <p className="text-white/90 font-manrope text-sm lg:text-base">Phone not configured</p>
+              )}
             </div>
           </div>
         </div>
@@ -136,7 +161,7 @@ const Footer = () => {
       <div className="border-t border-gray-700 py-4 lg:py-6 px-4">
         <div className="max-w-7xl mx-auto flex justify-center items-center">
           <p className="text-gray-400 text-xs lg:text-sm font-manrope text-center">
-            Copyright © 2023-25 All Rights Reserved | Delhi Chest Physician | Made by{' '}
+            Copyright © 2023-25 All Rights Reserved | {clinicName} | Made by{' '}
             <a 
               href="https://brandingidiots.com/" 
               target="_blank" 
