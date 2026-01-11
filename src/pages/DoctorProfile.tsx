@@ -2,21 +2,48 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Star, Users, Award, CheckCircle, Calendar, Heart, Briefcase, GraduationCap, Grid3X3, MapPin, Phone, Mail, CreditCard, Shield } from "lucide-react";
+import { Star, Users, Award, CheckCircle, Calendar, Heart, Briefcase, GraduationCap, Grid3X3, MapPin, Phone, Mail, CreditCard, Shield, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import drMannImage from "@/assets/dr-mann-passport.jpg";
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
 import { useCustomAuth } from '@/contexts/CustomAuthContext';
+import { useTenantContent } from '@/hooks/useTenantContent';
 
 const DoctorProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const { tenantInfo } = useCustomAuth();
+  const { content, isDrMannTenant, hasContent } = useTenantContent();
   const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
   const [doctorData, setDoctorData] = useState<any | null>(null);
-  const profileImage = doctorData ? `/tenants/${tenantCode}/doctors/${doctorData.id}.jpg` : `/tenants/${tenantCode}/dr-mann-passport.jpg`;
-  const displayName = doctorData?.name || tenantInfo?.name || 'Dr. Paramjeet Singh Mann';
-  const bioText = doctorData?.bio || `Dr. Paramjeet Singh Mann is a highly distinguished chest physician and pulmonologist with over 40 years of exceptional experience in respiratory medicine, sleep medicine, and critical care. He holds an M.D. in Tuberculosis and Chest Diseases from the prestigious Vallabhbhai Patel Chest Institute, Delhi University (WHO listed and Medical Council of India recognized). Dr. Mann has received numerous accolades including the Fellowship of the American College of Chest Physicians (FCCP) in 2009, the Rajshiri Dr. Ram Kishore Memorial Medal for topping the MD examination in 1988, and the Best Doctor Award in Oman in 1998. His extensive clinical expertise spans diagnosis and treatment of COPD, asthma, tuberculosis, pneumonia, sleep disorders, and all respiratory conditions, ensuring the highest standard of patient care.`;
+  
+  // Determine display values based on tenant
+  const profileImage = isDrMannTenant 
+    ? drMannImage 
+    : (content.doctorImageUrl || null);
+  
+  const displayName = isDrMannTenant 
+    ? 'Dr. Paramjeet Singh Mann' 
+    : (content.doctorName || 'Doctor Name');
+  
+  const specialization = isDrMannTenant 
+    ? 'MD (Tuberculosis & Chest Diseases), FCCP | Chest Physician & Pulmonologist'
+    : (content.qualifications ? `${content.qualifications} | ${content.specialization || 'Specialist'}` : content.specialization || 'Medical Specialist');
+  
+  const experience = isDrMannTenant ? '40+' : (content.experience || 'N/A');
+  
+  const bioText = isDrMannTenant 
+    ? `Dr. Paramjeet Singh Mann is a highly distinguished chest physician and pulmonologist with over 40 years of exceptional experience in respiratory medicine, sleep medicine, and critical care. He holds an M.D. in Tuberculosis and Chest Diseases from the prestigious Vallabhbhai Patel Chest Institute, Delhi University (WHO listed and Medical Council of India recognized). Dr. Mann has received numerous accolades including the Fellowship of the American College of Chest Physicians (FCCP) in 2009, the Rajshiri Dr. Ram Kishore Memorial Medal for topping the MD examination in 1988, and the Best Doctor Award in Oman in 1998. His extensive clinical expertise spans diagnosis and treatment of COPD, asthma, tuberculosis, pneumonia, sleep disorders, and all respiratory conditions, ensuring the highest standard of patient care.`
+    : (content.bio || 'Professional biography not configured yet. Please update in Website Settings.');
+
+  // Contact info
+  const contactInfo = {
+    clinicName: isDrMannTenant ? 'North Delhi Chest Centre' : (content.siteName || 'Clinic'),
+    address: isDrMannTenant ? '321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009' : (content.address ? `${content.address}, ${content.city || ''}-${content.pincode || ''}` : 'Address not configured'),
+    phone: isDrMannTenant ? '+91-9810589799' : (content.phone || 'Not configured'),
+    altPhone: isDrMannTenant ? '+91-9810588799, +91-011-65101829' : (content.altPhone || ''),
+    email: isDrMannTenant ? 'psmann58@yahoo.com' : (content.email || 'Not configured'),
+  };
 
   useEffect(() => {
     const loadDoctors = async () => {
@@ -57,19 +84,22 @@ const DoctorProfile = () => {
           <div className="flex flex-col lg:flex-row items-center gap-8">
             <div className="flex flex-col items-center gap-4">
               <div className="w-48 h-48 rounded-full bg-white p-2">
-                <img 
-                  src={profileImage} 
-                  alt={displayName} 
-                  onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
-                  className="w-full h-full rounded-full object-cover object-top"
-                />
+                {profileImage ? (
+                  <img 
+                    src={profileImage} 
+                    alt={displayName} 
+                    onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
+                    className="w-full h-full rounded-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="w-full h-full rounded-full bg-muted flex items-center justify-center">
+                    <User className="h-20 w-20 text-muted-foreground" />
+                  </div>
+                )}
               </div>
               <div className="flex gap-2">
                 <span className="bg-lung-green text-white px-4 py-1.5 rounded-full text-sm font-medium">
-                  Pulmonologist
-                </span>
-                <span className="bg-lung-blue-dark text-white px-4 py-1.5 rounded-full text-sm font-medium">
-                  Respiratory Medicine
+                  {content.specialization || 'Specialist'}
                 </span>
               </div>
             </div>
@@ -79,18 +109,20 @@ const DoctorProfile = () => {
                 {displayName}
               </h1>
               <p className="text-white/90 text-lg mb-6 font-livvic">
-                MD (Tuberculosis & Chest Diseases), FCCP | Chest Physician & Pulmonologist
+                {specialization}
               </p>
               
               <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 text-white/80">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-5 w-5" />
-                  <span>40+ Years Experience</span>
+                  <span>{experience} Years Experience</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Award className="h-5 w-5" />
-                  <span>FCCP, USA</span>
-                </div>
+                {isDrMannTenant && (
+                  <div className="flex items-center gap-2">
+                    <Award className="h-5 w-5" />
+                    <span>FCCP, USA</span>
+                  </div>
+                )}
               </div>
               
               <div className="flex items-center gap-2 mb-6">

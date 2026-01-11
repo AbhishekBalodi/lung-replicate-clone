@@ -8,28 +8,35 @@ import SEOHead from "@/components/SEOHead";
 import FloatingCTA from "@/components/FloatingCTA";
 import Qualifications from "@/components/Qualifications";
 import QuickStats from "@/components/QuickStats";
+import { useTenantContent } from "@/hooks/useTenantContent";
 
 const Index = () => {
-  // Single source of truth for the clinic location (same as Contact page)
-  const MAP_EMBED_SRC =
+  const { content, isDrMannTenant } = useTenantContent();
+
+  // Dr. Mann's default map
+  const DR_MANN_MAP =
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3500.8596070160745!2d77.2063281!3d28.7101888!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfde33ddc19cd%3A0xea30c606efbfc496!2sNorth%20Delhi%20Chest%20Centre%20and%20Quit%20Smoking%20Centre%20and%20Vaccination%20Centre!5e0!3m2!1sen!2sin!4v1730464800000!5m2!1sen!2sin";
-                  
-  // (Alternatively, you can use your long Google “Place” URL here.)
+
+  // Use tenant's map if configured, otherwise Dr. Mann's for that tenant, or undefined for others
+  const mapSrc = isDrMannTenant 
+    ? DR_MANN_MAP 
+    : (content.mapEmbedUrl || undefined);
 
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "MedicalBusiness",
-    "name": "Delhi Chest Physician - Best Chest Physician in Delhi",
-    "description":
-      "Leading chest physician & pulmonologist in Delhi providing expert treatment for COPD, Asthma, TB, Pneumonia, Sleep Apnea & all respiratory diseases",
+    "name": content.siteName || (isDrMannTenant ? "Delhi Chest Physician - Best Chest Physician in Delhi" : "Medical Practice"),
+    "description": content.description || (isDrMannTenant 
+      ? "Leading chest physician & pulmonologist in Delhi providing expert treatment for COPD, Asthma, TB, Pneumonia, Sleep Apnea & all respiratory diseases"
+      : "Professional medical services"),
     "url": "https://www.yoursite.com",
-    "telephone": "+91-555-123-4567",
+    "telephone": content.phone || (isDrMannTenant ? "+91-555-123-4567" : ""),
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "123 Main Street, Medical District",
-      "addressLocality": "Delhi",
-      "addressRegion": "DL",
-      "postalCode": "110001",
+      "streetAddress": content.address || (isDrMannTenant ? "123 Main Street, Medical District" : ""),
+      "addressLocality": content.city || (isDrMannTenant ? "Delhi" : ""),
+      "addressRegion": content.state || (isDrMannTenant ? "DL" : ""),
+      "postalCode": content.pincode || (isDrMannTenant ? "110001" : ""),
       "addressCountry": "IN",
     },
     "geo": {
@@ -65,8 +72,8 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <SEOHead
-        title="Best Chest Physician in Delhi | Pulmonologist | Lung Specialist"
-        description="Leading chest physician & pulmonologist in Delhi. Expert treatment for COPD, Asthma, TB, Pneumonia, Sleep Apnea & all respiratory diseases. Book appointment today!"
+        title={content.siteName || (isDrMannTenant ? "Best Chest Physician in Delhi | Pulmonologist | Lung Specialist" : "Medical Practice")}
+        description={content.description || (isDrMannTenant ? "Leading chest physician & pulmonologist in Delhi. Expert treatment for COPD, Asthma, TB, Pneumonia, Sleep Apnea & all respiratory diseases. Book appointment today!" : "Professional medical services. Book an appointment today.")}
         keywords="chest physician delhi, pulmonologist delhi, lung specialist delhi, asthma doctor delhi, COPD treatment delhi, sleep study delhi, bronchoscopy delhi"
         canonicalUrl="https://www.yoursite.com/"
         structuredData={structuredData}
@@ -82,8 +89,8 @@ const Index = () => {
         <AppointmentBooking />
         <Services />
 
-        {/* Pass the exact same map src used on the Contact page */}
-        <Contact mapSrc={MAP_EMBED_SRC} />
+        {/* Pass the tenant-aware map src */}
+        <Contact mapSrc={mapSrc} />
 
         <Footer />
       </div>

@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MapPin, Mail, Phone, ChevronRight, Send } from "lucide-react";
+import { MapPin, Mail, Phone, ChevronRight, Send, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTenantContent } from "@/hooks/useTenantContent";
 
 type ContactProps = {
   mapSrc?: string; // optional prop to pass custom Google Map link
@@ -16,6 +17,7 @@ type ContactProps = {
 
 const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
   const { toast } = useToast();
+  const { content, isDrMannTenant, hasContent } = useTenantContent();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -23,6 +25,39 @@ const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
     subject: "",
     message: ""
   });
+
+  // Dr. Mann's default data
+  const drMannData = {
+    address: "North Delhi Chest Centre,\n321, Main Road, Bhai Parmanand Colony,\nNear Dr. Mukherjee Nagar,\nDelhi-110009",
+    shortAddress: "321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009",
+    email: "psmann58@yahoo.com",
+    phone: "+91-9810589799",
+    altPhone: "+91-9810588799",
+    landline: "+91-011-65101829",
+    clinicName: "North Delhi Chest Centre",
+    mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3500.8596070160745!2d77.2063281!3d28.7101888!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfde33ddc19cd%3A0xea30c606efbfc496!2sNorth%20Delhi%20Chest%20Centre%20and%20Quit%20Smoking%20Centre%20and%20Vaccination%20Centre!5e0!3m2!1sen!2sin!4v1730464800000!5m2!1sen!2sin"
+  };
+
+  // Determine display data based on tenant
+  const displayData = {
+    clinicName: isDrMannTenant ? drMannData.clinicName : (content.siteName || "Clinic Name"),
+    address: isDrMannTenant 
+      ? drMannData.address 
+      : (content.address 
+          ? `${content.address}${content.city ? `,\n${content.city}` : ""}${content.state ? `, ${content.state}` : ""}${content.pincode ? `-${content.pincode}` : ""}`
+          : "Address not configured"),
+    shortAddress: isDrMannTenant 
+      ? drMannData.shortAddress 
+      : (content.address 
+          ? `${content.address}${content.city ? `, ${content.city}` : ""}${content.pincode ? `-${content.pincode}` : ""}`
+          : "Address not configured"),
+    email: isDrMannTenant ? drMannData.email : (content.email || "email@example.com"),
+    phone: isDrMannTenant ? drMannData.phone : (content.phone || "+91-XXXXXXXXXX"),
+    altPhone: isDrMannTenant ? drMannData.altPhone : (content.altPhone || ""),
+    landline: isDrMannTenant ? drMannData.landline : "",
+    mapUrl: mapSrc || (isDrMannTenant ? drMannData.mapUrl : content.mapEmbedUrl),
+    isConfigured: isDrMannTenant || hasContent
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,11 +163,8 @@ const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
                 <MapPin className="h-6 w-6 lg:h-8 lg:w-8 text-white" />
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">Visit Us</h3>
-              <p className="text-muted-foreground font-livvic leading-relaxed text-sm lg:text-base">
-                North Delhi Chest Centre,<br />
-                321, Main Road, Bhai Parmanand Colony,<br />
-                Near Dr. Mukherjee Nagar,<br />
-                Delhi-110009
+              <p className="text-muted-foreground font-livvic leading-relaxed text-sm lg:text-base whitespace-pre-line">
+                {displayData.address}
               </p>
             </Card>
 
@@ -143,7 +175,7 @@ const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">Email Us</h3>
               <p className="text-muted-foreground font-livvic text-sm lg:text-base">
-                psmann58@yahoo.com
+                {displayData.email}
               </p>
             </Card>
 
@@ -154,8 +186,12 @@ const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
               </div>
               <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-3 lg:mb-4 font-lexend">Call Us</h3>
               <div className="text-muted-foreground font-livvic text-sm lg:text-base">
-                <div>Mobile: <a href="tel:+919810589799" className="hover:text-lung-blue transition-colors">+91-9810589799</a>, <a href="tel:+919810588799" className="hover:text-lung-blue transition-colors">+91-9810588799</a></div>
-                <div>Phone: <a href="tel:+91011-65101829" className="hover:text-lung-blue transition-colors">+91-011-65101829</a></div>
+                <div>Mobile: <a href={`tel:${displayData.phone}`} className="hover:text-lung-blue transition-colors">{displayData.phone}</a>
+                  {displayData.altPhone && <>, <a href={`tel:${displayData.altPhone}`} className="hover:text-lung-blue transition-colors">{displayData.altPhone}</a></>}
+                </div>
+                {displayData.landline && (
+                  <div>Phone: <a href={`tel:${displayData.landline}`} className="hover:text-lung-blue transition-colors">{displayData.landline}</a></div>
+                )}
               </div>
             </Card>
           </div>
@@ -165,33 +201,47 @@ const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
             {/* Map */}
             <div className="relative">
               <div className="bg-gray-200 rounded-lg overflow-hidden h-64 sm:h-80 lg:h-96">
-                <iframe
-                 src={mapSrc ?? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3500.8596070160745!2d77.2063281!3d28.7101888!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390cfde33ddc19cd%3A0xea30c606efbfc496!2sNorth%20Delhi%20Chest%20Centre%20and%20Quit%20Smoking%20Centre%20and%20Vaccination%20Centre!5e0!3m2!1sen!2sin!4v1730464800000!5m2!1sen!2sin"}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Clinic Location"
-                />
+                {displayData.mapUrl ? (
+                  <iframe
+                    src={displayData.mapUrl}
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title="Clinic Location"
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-muted text-muted-foreground">
+                    <MapPin className="h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-lg font-medium">Location Map</p>
+                    <p className="text-sm">Map not configured yet</p>
+                  </div>
+                )}
               </div>
               
               {/* Map Info Card */}
-              <Card className="absolute top-3 left-3 lg:top-4 lg:left-4 p-3 lg:p-4 bg-white shadow-strong max-w-xs">
-                <h4 className="font-bold text-foreground mb-1 font-lexend text-sm lg:text-base">North Delhi Chest Centre</h4>
-                <p className="text-xs lg:text-sm text-muted-foreground mb-2 font-livvic">
-                  321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009
-                </p>
-                <div className="flex items-center gap-1 mb-2">
-                  <span className="text-yellow-500 text-sm">★★★★★</span>
-                  <span className="text-xs lg:text-sm text-muted-foreground">4.9</span>
-                  <span className="text-xs lg:text-sm text-lung-blue">2,150 reviews</span>
-                </div>
-                <Button variant="link" className="text-lung-blue p-0 h-auto text-xs lg:text-sm font-livvic">
-                  View larger map
-                </Button>
-              </Card>
+              {displayData.mapUrl && (
+                <Card className="absolute top-3 left-3 lg:top-4 lg:left-4 p-3 lg:p-4 bg-white shadow-strong max-w-xs">
+                  <h4 className="font-bold text-foreground mb-1 font-lexend text-sm lg:text-base">{displayData.clinicName}</h4>
+                  <p className="text-xs lg:text-sm text-muted-foreground mb-2 font-livvic">
+                    {displayData.shortAddress}
+                  </p>
+                  {isDrMannTenant && (
+                    <>
+                      <div className="flex items-center gap-1 mb-2">
+                        <span className="text-yellow-500 text-sm">★★★★★</span>
+                        <span className="text-xs lg:text-sm text-muted-foreground">4.9</span>
+                        <span className="text-xs lg:text-sm text-lung-blue">2,150 reviews</span>
+                      </div>
+                      <Button variant="link" className="text-lung-blue p-0 h-auto text-xs lg:text-sm font-livvic">
+                        View larger map
+                      </Button>
+                    </>
+                  )}
+                </Card>
+              )}
             </div>
 
             {/* Contact Form */}
@@ -280,7 +330,10 @@ const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
             For urgent matters or immediate medical support, don't hesitate to reach out to us directly. Our 
             team is available to help you with any questions or concerns.
           </p>
-          <Button className="bg-lung-green hover:bg-lung-green-light text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base">
+          <Button 
+            className="bg-lung-green hover:bg-lung-green-light text-white px-6 lg:px-8 py-2 lg:py-3 text-sm lg:text-base"
+            onClick={() => window.location.href = `tel:${displayData.phone}`}
+          >
             <Phone className="h-4 w-4 mr-2" />
             Call Now
           </Button>
