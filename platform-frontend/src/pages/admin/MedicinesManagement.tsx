@@ -40,6 +40,7 @@ type PrescribedMedicine = {
   created_at?: string | null;
 };
 
+import api from '@/lib/api';
 const API_ROOT =
   (import.meta as any)?.env?.VITE_API_URL
     ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, "")}/api`
@@ -84,7 +85,7 @@ export default function MedicinesManagement() {
   /** ---- Catalog: load & add (via Express/MySQL) ---- */
   const loadMedicinesCatalog = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/medicines/catalog`);
+      const res = await api.apiGet(`${API_ROOT}/medicines/catalog`);
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || "Failed to load catalog");
       setMedicinesCatalog(js.items || []);
@@ -99,11 +100,7 @@ export default function MedicinesManagement() {
       return;
     }
     try {
-      const res = await fetch(`${API_ROOT}/medicines/catalog`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newMedicine),
-      });
+      const res = await api.apiPost(`${API_ROOT}/medicines/catalog`, newMedicine);
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || "Failed to add medicine");
       toast.success("Medicine added to catalog");
@@ -117,7 +114,7 @@ export default function MedicinesManagement() {
   /** ---- Patients: search & select (via Express) ---- */
   const loadPatients = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/patients`);
+      const res = await api.apiGet(`${API_ROOT}/patients`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to load patients");
       setPatients(Array.isArray(data) ? data : data.items || []);
@@ -132,7 +129,7 @@ export default function MedicinesManagement() {
       return;
     }
     try {
-      const res = await fetch(`${API_ROOT}/patients?q=${encodeURIComponent(searchTerm.trim())}`);
+      const res = await api.apiGet(`${API_ROOT}/patients?q=${encodeURIComponent(searchTerm.trim())}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Search failed");
       const list: Patient[] = Array.isArray(data) ? data : data.items || [];
@@ -156,7 +153,7 @@ export default function MedicinesManagement() {
 
     // Load meds for patient
     try {
-      const res = await fetch(`${API_ROOT}/patients/${p.id}`);
+      const res = await api.apiGet(`${API_ROOT}/patients/${p.id}`);
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || "Failed to load patient meds");
       setPrescribedMedicines(js.medicines || []);
@@ -177,20 +174,16 @@ export default function MedicinesManagement() {
       return;
     }
     try {
-      const res = await fetch(`${API_ROOT}/medicines`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          patient_id: selectedPatient.id,
-          full_name: selectedPatient.full_name,
-          email: selectedPatient.email,
-          phone: selectedPatient.phone,
-          medicine_name: prescription.medicine_name,
-          dosage: prescription.dosage,
-          frequency: prescription.frequency,
-          duration: prescription.duration,
-          instructions: prescription.instructions,
-        }),
+      const res = await api.apiPost(`${API_ROOT}/medicines`, {
+        patient_id: selectedPatient.id,
+        full_name: selectedPatient.full_name,
+        email: selectedPatient.email,
+        phone: selectedPatient.phone,
+        medicine_name: prescription.medicine_name,
+        dosage: prescription.dosage,
+        frequency: prescription.frequency,
+        duration: prescription.duration,
+        instructions: prescription.instructions,
       });
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || "Failed to prescribe");

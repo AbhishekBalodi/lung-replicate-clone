@@ -66,7 +66,7 @@ export default function LabTestsContent() {
 
   const loadLabCatalog = async () => {
     try {
-      const res = await fetch("/api/lab-tests/catalog");
+      const res = await apiFetch("/api/lab-tests/catalog", { method: "GET" });
       const data = await res.json();
       setLabCatalog(data);
     } catch (e: any) {
@@ -81,7 +81,7 @@ export default function LabTestsContent() {
     }
 
     try {
-      const res = await fetch("/api/lab-tests/catalog", {
+      const res = await apiFetch("/api/lab-tests/catalog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newLabTest),
@@ -158,7 +158,7 @@ export default function LabTestsContent() {
         lab_catalogue_id: prescription.lab_catalogue_id || null,
       };
 
-      const res = await fetch("/api/lab-tests", {
+      const res = await apiFetch("/api/lab-tests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

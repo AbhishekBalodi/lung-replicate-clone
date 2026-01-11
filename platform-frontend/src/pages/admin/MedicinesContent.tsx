@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
+import api from '@/lib/api';
 
 type Med = { id:number; name:string; form:string; strength:string; default_frequency:string; duration:string; route:string; };
 
@@ -15,7 +16,7 @@ export default function MedicinesContent(){
   const [items, setItems] = useState<Med[]>([]);
 
   async function load(){
-    const res = await fetch(import.meta.env.VITE_API_URL + "/api/medicines");
+    const res = await api.apiGet('/api/medicines');
     const js = await res.json();
     setItems(js.items || []);
   }
@@ -23,11 +24,7 @@ export default function MedicinesContent(){
 
   async function add(){
     const payload = { name, form, strength, default_frequency: defaultFrequency, duration, route };
-    const res = await fetch(import.meta.env.VITE_API_URL + "/api/medicines", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    const res = await api.apiPost('/api/medicines', payload);
     if(!res.ok){ alert("Failed to add"); return; }
     setName(""); setForm(""); setStrength(""); setDefaultFrequency(""); setDuration(""); setRoute("");
     load();

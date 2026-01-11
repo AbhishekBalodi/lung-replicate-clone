@@ -1,5 +1,10 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { supabase } from '@/integrations/supabase/client';
+
+/* ============================================================
+   🔹 TYPES
+   ============================================================ */
 
 interface CustomUser {
   id: number | null;
@@ -24,23 +29,36 @@ interface Tenant {
   type: 'hospital' | 'doctor';
 }
 
+/** ✅ FIX: strict union return type */
+type AuthResult =
+  | { user: CustomUser; error: null }
+  | { user?: undefined; error: { message: string } };
+
 interface CustomAuthContextType {
   user: CustomUser | null;
   tenant: Tenant | null;
   tenantInfo: Tenant | null;
-  loginAsAdmin: (email: string, password: string) => Promise<{ user?: CustomUser; error: any }>;
-  loginAsSuperAdmin: (email: string, password: string) => Promise<{ user?: CustomUser; error: any }>;
-  loginAsPatient: (email: string, phone: string) => Promise<{ user?: CustomUser; error: any }>;
-  logout: () => void;
+
+  loginAsAdmin: (email: string, password: string) => Promise<AuthResult>;
+  loginAsSuperAdmin: (email: string, password: string) => Promise<AuthResult>;
+  loginAsPatient: (email: string, phone: string) => Promise<AuthResult>;
+
+  logout: () => Promise<void>;
   loading: boolean;
+
   isSuperAdmin: boolean;
   isAdmin: boolean;
   isPatient: boolean;
   isHospitalTenant: boolean;
+
   fetchTenantInfo: () => Promise<void>;
 }
 
 const CustomAuthContext = createContext<CustomAuthContextType | undefined>(undefined);
+
+/* ============================================================
+   🔹 PROVIDER
+   ============================================================ */
 
 export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<CustomUser | null>(null);
@@ -48,251 +66,148 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenantInfo, setTenantInfo] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const isLegacyDrMannSite = () => {
+    if (typeof window === 'undefined') return false;
+    const hostname = window.location.hostname.toLowerCase();
+    return hostname.includes('delhichestphysician') || hostname.includes('drmann');
+  };
+
   const getApiBaseUrl = () => {
-    return import.meta.env.VITE_API_BASE_URL || '';
+    // DEV: use same-origin '/api' via Vite proxy so cookies appear on localhost:8080
+    if (import.meta.env.DEV) return '';
+    if (isLegacyDrMannSite()) return '';
+    const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+    if (!envUrl) return '';
+    return envUrl.replace(/\/+$/, '');
   };
 
   const getHeaders = () => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     const tenantCode = getDevTenantCode();
-    if (tenantCode) {
-      headers['X-Tenant-Code'] = tenantCode;
-    }
+    if (tenantCode) headers['X-Tenant-Code'] = tenantCode;
     return headers;
   };
 
-  // Fetch tenant info on mount (for login page to know if it's a hospital)
+  /* ============================================================
+     🔹 TENANT INFO
+     ============================================================ */
   const fetchTenantInfo = async () => {
+    if (isLegacyDrMannSite()) {
+      setTenantInfo({
+        id: 1,
+        code: 'drmann',
+        name: 'Dr. Mann Clinic',
+        type: 'doctor'
+      });
+      return;
+    }
+
     try {
+      const baseUrl = getApiBaseUrl();
       const tenantCode = getDevTenantCode();
-      const response = await fetch(
-        `${getApiBaseUrl()}/api/platform/auth/tenant-info${tenantCode ? `?tenantCode=${tenantCode}` : ''}`,
-        { headers: getHeaders() }
-      );
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.tenant) {
-          setTenantInfo({
-            id: data.tenant.id,
-            code: data.tenant.code,
-            name: data.tenant.name,
-            type: data.tenant.type
-          });
-        }
+      // In development we allow relative requests (baseUrl may be empty), so build URL accordingly
+      const url = `${baseUrl || ''}/api/platform/auth/tenant-info${tenantCode ? `?tenantCode=${tenantCode}` : ''}`;
+      const res = await fetch(url, { headers: getHeaders(), credentials: 'include' });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.tenant) setTenantInfo(data.tenant);
       }
-    } catch (error) {
-      console.error('Error fetching tenant info:', error);
+    } catch {
+      // silent
     }
   };
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const storedUser = localStorage.getItem('customUser');
-    const storedTenant = localStorage.getItem('customTenant');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem('customUser');
-      }
-    }
-    if (storedTenant) {
-      try {
-        setTenant(JSON.parse(storedTenant));
-      } catch (e) {
-        localStorage.removeItem('customTenant');
-      }
-    }
-    
-    // Fetch tenant info for login page
     fetchTenantInfo();
     setLoading(false);
   }, []);
 
-  // Re-fetch tenant info when tenant code changes
-  useEffect(() => {
-    const handleStorageChange = () => {
-      fetchTenantInfo();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  /* ============================================================
+     🔹 LOGIN FUNCTIONS
+     ============================================================ */
 
-  const loginAsAdmin = async (email: string, password: string) => {
-    try {
-      const tenantCode = getDevTenantCode();
-      
-      const response = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ 
-          email, 
-          password, 
-          loginType: 'admin',
-          tenantCode: tenantCode || undefined
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: { message: data.error || 'Login failed' } };
-      }
-
-      // For admin login (doctor in hospital), check if role is 'admin' specifically
-      if (data.user.role !== 'admin' && data.user.role !== 'super_admin') {
-        return { error: { message: 'Invalid admin credentials' } };
-      }
-
-      // If hospital tenant and user is super_admin, reject (should use Super Admin tab)
-      if (data.tenant?.type === 'hospital' && data.user.role === 'super_admin') {
-        return { error: { message: 'Please use the Super Admin tab to login' } };
+  const loginAsAdmin = async (email: string, password: string): Promise<AuthResult> => {
+    if (isLegacyDrMannSite()) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error || !data.user) {
+        return { user: undefined, error: { message: error?.message || 'Login failed' } };
       }
 
       const userData: CustomUser = {
-        id: data.user.id,
-        email: data.user.email,
-        phone: data.user.phone || '',
-        name: data.user.name,
-        role: data.user.role,
-        doctorId: data.user.doctorId,
-        doctorInfo: data.user.doctorInfo,
-        tenantType: data.tenant?.type
+        id: null,
+        email: data.user.email || email,
+        phone: '',
+        name: data.user.user_metadata?.full_name || 'Admin',
+        role: 'admin',
+        tenantType: 'doctor'
       };
-      
-      const tenantData: Tenant | null = data.tenant ? {
-        id: data.tenant.id,
-        code: data.tenant.code,
-        name: data.tenant.name,
-        type: data.tenant.type
-      } : null;
 
       setUser(userData);
-      setTenant(tenantData);
-      localStorage.setItem('customUser', JSON.stringify(userData));
-      if (tenantData) {
-        localStorage.setItem('customTenant', JSON.stringify(tenantData));
-      }
       return { user: userData, error: null };
-    } catch (error: any) {
-      return { error: { message: error.message || 'Network error' } };
     }
-  };
 
-  const loginAsSuperAdmin = async (email: string, password: string) => {
     try {
       const tenantCode = getDevTenantCode();
-      
-      const response = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ 
-          email, 
-          password, 
-          loginType: 'admin',
-          tenantCode: tenantCode || undefined
-        })
+        credentials: 'include',
+        body: JSON.stringify({ email, password, tenantCode, loginType: 'admin' })
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: { message: data.error || 'Login failed' } };
+      const data = await res.json();
+      if (!res.ok) {
+        return { user: undefined, error: { message: data.error || 'Login failed' } };
       }
 
-      // Super Admin login requires super_admin role
-      if (data.user.role !== 'super_admin') {
-        return { error: { message: 'Invalid Super Admin credentials' } };
-      }
-
-      const userData: CustomUser = {
-        id: data.user.id,
-        email: data.user.email,
-        phone: data.user.phone || '',
-        name: data.user.name,
-        role: data.user.role,
-        doctorId: data.user.doctorId,
-        doctorInfo: data.user.doctorInfo,
-        tenantType: data.tenant?.type
-      };
-      
-      const tenantData: Tenant | null = data.tenant ? {
-        id: data.tenant.id,
-        code: data.tenant.code,
-        name: data.tenant.name,
-        type: data.tenant.type
-      } : null;
-
-      setUser(userData);
-      setTenant(tenantData);
-      localStorage.setItem('customUser', JSON.stringify(userData));
-      if (tenantData) {
-        localStorage.setItem('customTenant', JSON.stringify(tenantData));
-      }
-      return { user: userData, error: null };
-    } catch (error: any) {
-      return { error: { message: error.message || 'Network error' } };
+      setUser(data.user);
+      setTenant(data.tenant || null);
+      return { user: data.user, error: null };
+    } catch (e: any) {
+      return { user: undefined, error: { message: e.message || 'Network error' } };
     }
   };
 
-  const loginAsPatient = async (email: string, phone: string) => {
+  const loginAsSuperAdmin = async (email: string, password: string): Promise<AuthResult> => {
+    const result = await loginAsAdmin(email, password);
+    if (result.user && result.user.role !== 'super_admin') {
+      return { user: undefined, error: { message: 'Invalid Super Admin credentials' } };
+    }
+    return result;
+  };
+
+  const loginAsPatient = async (email: string, phone: string): Promise<AuthResult> => {
     try {
       const tenantCode = getDevTenantCode();
-      
-      const response = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
         method: 'POST',
         headers: getHeaders(),
-        body: JSON.stringify({ 
-          email, 
-          phone, 
-          loginType: 'patient',
-          tenantCode: tenantCode || undefined
-        })
+        credentials: 'include',
+        body: JSON.stringify({ email, phone, tenantCode, loginType: 'patient' })
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { error: { message: data.error || 'Login failed' } };
+      const data = await res.json();
+      if (!res.ok) {
+        return { user: undefined, error: { message: data.error || 'Login failed' } };
       }
 
-      const userData: CustomUser = {
-        id: data.user.id,
-        email: data.user.email,
-        phone: data.user.phone || '',
-        name: data.user.name,
-        role: data.user.role,
-        doctorId: data.user.doctorId,
-        tenantType: data.tenant?.type
-      };
-      
-      const tenantData: Tenant | null = data.tenant ? {
-        id: data.tenant.id,
-        code: data.tenant.code,
-        name: data.tenant.name,
-        type: data.tenant.type
-      } : null;
-
-      setUser(userData);
-      setTenant(tenantData);
-      localStorage.setItem('customUser', JSON.stringify(userData));
-      if (tenantData) {
-        localStorage.setItem('customTenant', JSON.stringify(tenantData));
-      }
-      return { user: userData, error: null };
-    } catch (error: any) {
-      return { error: { message: error.message || 'Network error' } };
+      setUser(data.user);
+      setTenant(data.tenant || null);
+      return { user: data.user, error: null };
+    } catch (e: any) {
+      return { user: undefined, error: { message: e.message || 'Network error' } };
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setUser(null);
     setTenant(null);
-    localStorage.removeItem('customUser');
-    localStorage.removeItem('customTenant');
   };
+
+  /* ============================================================
+     🔹 FLAGS
+     ============================================================ */
 
   const isSuperAdmin = user?.role === 'super_admin';
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
@@ -300,30 +215,30 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   const isHospitalTenant = tenant?.type === 'hospital' || tenantInfo?.type === 'hospital';
 
   return (
-    <CustomAuthContext.Provider value={{ 
-      user, 
-      tenant,
-      tenantInfo,
-      loginAsAdmin, 
-      loginAsSuperAdmin,
-      loginAsPatient, 
-      logout, 
-      loading,
-      isSuperAdmin,
-      isAdmin,
-      isPatient,
-      isHospitalTenant,
-      fetchTenantInfo
-    }}>
+    <CustomAuthContext.Provider
+      value={{
+        user,
+        tenant,
+        tenantInfo,
+        loginAsAdmin,
+        loginAsSuperAdmin,
+        loginAsPatient,
+        logout,
+        loading,
+        isSuperAdmin,
+        isAdmin,
+        isPatient,
+        isHospitalTenant,
+        fetchTenantInfo
+      }}
+    >
       {children}
     </CustomAuthContext.Provider>
   );
 };
 
 export const useCustomAuth = () => {
-  const context = useContext(CustomAuthContext);
-  if (context === undefined) {
-    throw new Error('useCustomAuth must be used within a CustomAuthProvider');
-  }
-  return context;
+  const ctx = useContext(CustomAuthContext);
+  if (!ctx) throw new Error('useCustomAuth must be used within CustomAuthProvider');
+  return ctx;
 };

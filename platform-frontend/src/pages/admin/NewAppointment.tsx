@@ -8,7 +8,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { ArrowLeft, CheckCircle, User, CalendarDays } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
-import { getDevTenantCode } from '@/components/DevTenantSwitcher';
 import { format } from "date-fns";
 import {
   Dialog,
@@ -17,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import api from '@/lib/api';
 import drMannImage from "@/assets/dr-mann-passport.jpg";
 
 // Generate time slots for the allowed periods (15-min intervals)
@@ -65,7 +65,7 @@ const ALL_TIME_SLOTS = generateTimeSlots();
 export default function NewAppointment() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, tenantInfo, loading } = useCustomAuth();
+  const { user, loading } = useCustomAuth();
   
   const [currentStep, setCurrentStep] = useState(1);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -83,8 +83,8 @@ export default function NewAppointment() {
 
   const timeSlotsRef = useRef<HTMLDivElement | null>(null);
 
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
-
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = tenantInfo?.code || 'doctor_mann';
   const doctor = {
     name: tenantInfo?.name || "Dr. Paramjeet Singh Mann",
     specialty: "Pulmonologist",
@@ -125,7 +125,7 @@ export default function NewAppointment() {
     setLoadingSlots(true);
     try {
       const dateStr = format(date, 'yyyy-MM-dd');
-      const response = await fetch(`/api/appointment?date=${dateStr}`);
+      const response = await api.apiGet(`/api/appointment?date=${dateStr}`);
       const data = await response.json();
       
       if (data.success && Array.isArray(data.data)) {
@@ -204,21 +204,15 @@ export default function NewAppointment() {
     }
 
     try {
-      const response = await fetch(`/api/appointment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          full_name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          appointment_date: format(formData.date, 'yyyy-MM-dd'),
-          appointment_time: formData.time,
-          selected_doctor: doctor.name,
-          message: formData.message || '',
-          reports_uploaded: false
-        }),
+      const response = await api.apiPost(`/api/appointment`, {
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        appointment_date: format(formData.date, 'yyyy-MM-dd'),
+        appointment_time: formData.time,
+        selected_doctor: doctor.name,
+        message: formData.message || '',
+        reports_uploaded: false
       });
 
       const result = await response.json();
