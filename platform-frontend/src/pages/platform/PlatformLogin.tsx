@@ -7,14 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2, Shield, Building2, User, Crown } from 'lucide-react';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const getApiBaseUrl = () => {
-  if (import.meta.env.DEV) {
-    return 'http://localhost:5050';
-  }
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
+  // Use same-origin /api in dev so cookies + proxy work reliably
+  if (import.meta.env.DEV) return '';
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
   return '';
 };
 
@@ -23,6 +21,8 @@ type TenantLoginType = 'super_admin' | 'admin';
 
 const PlatformLogin = () => {
   const navigate = useNavigate();
+  const { loginAsAdmin, loginAsSuperAdmin } = useCustomAuth();
+
   const [loginMode, setLoginMode] = useState<LoginMode>('tenant');
   const [tenantLoginType, setTenantLoginType] = useState<TenantLoginType>('super_admin');
   const [email, setEmail] = useState('');
@@ -51,9 +51,7 @@ const PlatformLogin = () => {
       localStorage.setItem('platformUser', JSON.stringify(data.user));
       toast.success('Login successful');
       navigate('/platform-dashboard');
-
     } catch (error: any) {
-      console.error('Login error:', error);
       toast.error(error.message || 'Login failed');
     } finally {
       setIsLoading(false);
@@ -62,53 +60,29 @@ const PlatformLogin = () => {
 
   const handleTenantLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    if (!tenantCode.trim()) {
+    const code = tenantCode.trim();
+    if (!code) {
       toast.error('Please enter your Tenant Code');
-      setIsLoading(false);
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      const response = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'X-Tenant-Code': tenantCode.trim()
-        },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          email, 
-          password, 
-          tenantCode: tenantCode.trim(),
-          loginType: tenantLoginType 
-        }),
-      });
+      // IMPORTANT: dashboards read tenant context via DevTenantSwitcher -> localStorage key
+      localStorage.setItem('dev_tenant_code', code);
 
-      const data = await response.json();
+      const result =
+        tenantLoginType === 'super_admin'
+          ? await loginAsSuperAdmin(email, password)
+          : await loginAsAdmin(email, password);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
-      }
+      if (result.error) throw new Error(result.error.message);
 
-      // Store tenant user session
-      localStorage.setItem('customUser', JSON.stringify(data.user));
-      localStorage.setItem('tenantInfo', JSON.stringify(data.tenant));
-      // Keep dashboard API calls consistent (they read dev_tenant_code via DevTenantSwitcher)
-      localStorage.setItem('dev_tenant_code', tenantCode.trim());
-      
       toast.success('Login successful');
-      
-      // Redirect based on role
-      if (tenantLoginType === 'super_admin') {
-        navigate('/super-admin');
-      } else {
-        navigate('/dashboard');
-      }
-
+      navigate(tenantLoginType === 'super_admin' ? '/super-admin' : '/dashboard');
     } catch (error: any) {
-      console.error('Tenant login error:', error);
       toast.error(error.message || 'Login failed');
     } finally {
       setIsLoading(false);
