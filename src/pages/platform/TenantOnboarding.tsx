@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { Building2, User, Globe, ArrowRight, ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { Building2, User, Globe, ArrowRight, ArrowLeft, Check, Loader2, Layout, ExternalLink } from 'lucide-react';
 
 const getApiBaseUrl = () => {
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -37,11 +37,21 @@ const onboardingSchema = z.object({
   adminPasswordConfirm: z.string(),
   adminPhone: z.string().max(20).optional(),
   
-  // Step 4: Custom Domain
+  // Step 4: Deployment Mode & Custom Domain
+  deploymentMode: z.enum(['full_website', 'dashboard_only']),
   customDomain: z.string().max(255).optional(),
 }).refine((data) => data.adminPassword === data.adminPasswordConfirm, {
   message: "Passwords don't match",
   path: ["adminPasswordConfirm"],
+}).refine((data) => {
+  // If full_website mode is selected, customDomain is required
+  if (data.deploymentMode === 'full_website' && !data.customDomain) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Domain is required for full website deployment",
+  path: ["customDomain"],
 });
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
@@ -65,18 +75,20 @@ const TenantOnboarding = () => {
       adminPassword: '',
       adminPasswordConfirm: '',
       adminPhone: '',
+      deploymentMode: 'full_website',
       customDomain: '',
     },
   });
 
   const { register, handleSubmit, watch, formState: { errors }, setValue } = form;
   const tenantType = watch('type');
+  const deploymentMode = watch('deploymentMode');
 
   const steps = [
     { number: 1, title: 'Type', description: 'Choose your account type' },
     { number: 2, title: 'Business', description: 'Your business details' },
     { number: 3, title: 'Admin', description: 'Create admin account' },
-    { number: 4, title: 'Domain', description: 'Custom domain setup' },
+    { number: 4, title: 'Deployment', description: 'Choose deployment mode' },
   ];
 
   const nextStep = () => {
@@ -108,7 +120,8 @@ const TenantOnboarding = () => {
           adminEmail: data.adminEmail,
           adminPassword: data.adminPassword,
           adminPhone: data.adminPhone,
-          customDomain: data.customDomain || undefined,
+          deploymentMode: data.deploymentMode,
+          customDomain: data.deploymentMode === 'full_website' ? data.customDomain : undefined,
         }),
       });
 
@@ -149,6 +162,8 @@ const TenantOnboarding = () => {
                 <span>{registrationResult.tenant.name}</span>
                 <span className="text-muted-foreground">Type:</span>
                 <span className="capitalize">{registrationResult.tenant.type}</span>
+                <span className="text-muted-foreground">Deployment Mode:</span>
+                <span className="capitalize">{registrationResult.tenant.deploymentMode === 'dashboard_only' ? 'Dashboard Only' : 'Full Website'}</span>
                 <span className="text-muted-foreground">Status:</span>
                 <span className="text-green-600 capitalize">{registrationResult.tenant.status}</span>
               </div>
@@ -165,6 +180,25 @@ const TenantOnboarding = () => {
                   <p><strong>Host:</strong> _saas-verify.{registrationResult.domain.domain}</p>
                   <p><strong>Value:</strong> {registrationResult.domain.verificationToken}</p>
                 </div>
+              </div>
+            )}
+
+            {/* Dashboard Only specific info */}
+            {registrationResult.tenant.deploymentMode === 'dashboard_only' && (
+              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
+                  <ExternalLink className="w-4 h-4" />
+                  Connect Your Existing Website
+                </h4>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Add a login button on your website that links to:
+                </p>
+                <div className="bg-white dark:bg-background rounded p-3 font-mono text-sm break-all">
+                  <code>{window.location.origin}/login</code>
+                </div>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Your staff can use their registered credentials to access the dashboard.
+                </p>
               </div>
             )}
 
@@ -411,48 +445,115 @@ const TenantOnboarding = () => {
               </div>
             )}
 
-            {/* Step 4: Custom Domain */}
+            {/* Step 4: Deployment Mode */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <h3 className="text-lg font-semibold">Custom Domain (Optional)</h3>
+                <h3 className="text-lg font-semibold">Choose Deployment Mode</h3>
                 <p className="text-sm text-muted-foreground">
-                  Connect your own domain to have your website accessible at your custom URL
+                  Select how you want to use our platform
                 </p>
                 
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg">
-                    <Globe className="w-8 h-8 text-primary" />
-                    <div>
-                      <p className="font-medium">Your Custom Domain</p>
-                      <p className="text-sm text-muted-foreground">e.g., www.mydoctorwebsite.com</p>
+                <RadioGroup
+                  value={deploymentMode}
+                  onValueChange={(value) => setValue('deploymentMode', value as 'full_website' | 'dashboard_only')}
+                  className="grid grid-cols-1 gap-4"
+                >
+                  <Label 
+                    htmlFor="mode-full" 
+                    className={`cursor-pointer border-2 rounded-lg p-6 transition-all hover:border-primary ${
+                      deploymentMode === 'full_website' ? 'border-primary bg-primary/5' : 'border-muted'
+                    }`}
+                  >
+                    <RadioGroupItem value="full_website" id="mode-full" className="sr-only" />
+                    <div className="flex items-start gap-4">
+                      <Globe className="w-10 h-10 text-primary flex-shrink-0 mt-1" />
+                      <div className="flex-1">
+                        <p className="font-semibold">Full Website + Dashboard</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          We deploy a complete medical website on your domain along with the admin dashboard. 
+                          Perfect if you don't have an existing website.
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Website</span>
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Patient Portal</span>
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Admin Dashboard</span>
+                          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">Appointment Booking</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Label>
+
+                  <Label 
+                    htmlFor="mode-dashboard" 
+                    className={`cursor-pointer border-2 rounded-lg p-6 transition-all hover:border-primary ${
+                      deploymentMode === 'dashboard_only' ? 'border-primary bg-primary/5' : 'border-muted'
+                    }`}
+                  >
+                    <RadioGroupItem value="dashboard_only" id="mode-dashboard" className="sr-only" />
+                    <div className="flex items-start gap-4">
+                      <Layout className="w-10 h-10 text-primary flex-shrink-0 mt-1" />
+                      <div className="flex-1">
+                        <p className="font-semibold">Dashboard Only</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Already have a website? Just use our dashboards! Log in on our platform to access 
+                          patient management, appointments, billing, and more. Link a login button from your existing website to our platform.
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-1 rounded">Admin Dashboard</span>
+                          <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-1 rounded">Patient Management</span>
+                          <span className="text-xs bg-secondary/50 text-secondary-foreground px-2 py-1 rounded">Billing & Reports</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Label>
+                </RadioGroup>
+                {errors.deploymentMode && <p className="text-sm text-destructive">{errors.deploymentMode.message}</p>}
+
+                {/* Show domain input only for full_website mode */}
+                {deploymentMode === 'full_website' && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <Label htmlFor="customDomain">Your Domain Name *</Label>
+                      <Input 
+                        id="customDomain" 
+                        placeholder="www.yourwebsite.com" 
+                        {...register('customDomain')}
+                      />
+                      {errors.customDomain && <p className="text-sm text-destructive">{errors.customDomain.message}</p>}
+                    </div>
+
+                    <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
+                      <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                        How domain verification works:
+                      </p>
+                      <ol className="list-decimal list-inside space-y-1 text-blue-700 dark:text-blue-300">
+                        <li>Enter your domain name above</li>
+                        <li>After registration, you'll receive DNS records to add</li>
+                        <li>Add the TXT record to your domain's DNS settings</li>
+                        <li>Click verify in your dashboard - your site goes live!</li>
+                      </ol>
                     </div>
                   </div>
+                )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="customDomain">Domain Name</Label>
-                    <Input 
-                      id="customDomain" 
-                      placeholder="www.yourwebsite.com" 
-                      {...register('customDomain')}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Leave empty to skip for now. You can add a custom domain later from settings.
+                {/* Show info for dashboard_only mode */}
+                {deploymentMode === 'dashboard_only' && (
+                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-sm">
+                    <p className="font-medium text-green-800 dark:text-green-200 mb-2 flex items-center gap-2">
+                      <ExternalLink className="w-4 h-4" />
+                      How to connect your existing website:
                     </p>
-                    {errors.customDomain && <p className="text-sm text-destructive">{errors.customDomain.message}</p>}
-                  </div>
-
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 text-sm">
-                    <p className="font-medium text-blue-800 dark:text-blue-200 mb-2">
-                      How domain verification works:
-                    </p>
-                    <ol className="list-decimal list-inside space-y-1 text-blue-700 dark:text-blue-300">
-                      <li>Enter your domain name above</li>
-                      <li>After registration, you'll receive DNS records to add</li>
-                      <li>Add the TXT record to your domain's DNS settings</li>
-                      <li>Click verify in your dashboard - your site goes live!</li>
+                    <ol className="list-decimal list-inside space-y-1 text-green-700 dark:text-green-300">
+                      <li>Complete registration to get your credentials</li>
+                      <li>Add a "Login" button on your existing website</li>
+                      <li>Link it to our platform login page</li>
+                      <li>Your staff can log in and use all dashboard features</li>
                     </ol>
+                    <p className="mt-3 text-green-700 dark:text-green-300">
+                      <strong>Login URL:</strong> <code className="bg-white dark:bg-background px-2 py-1 rounded">{window.location.origin}/login</code>
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             )}
 
