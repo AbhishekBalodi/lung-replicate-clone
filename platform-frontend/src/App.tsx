@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CustomAuthProvider } from "./contexts/CustomAuthContext";
 import { AppointmentProvider } from "./contexts/AppointmentContext";
@@ -69,6 +69,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/qualifications" element={<Qualifications />} />
             <Route path="/about" element={<DoctorProfile />} />
+            <Route path="/doctors" element={<Navigate to="/about" replace />} />
             <Route path="/doctors/:doctorName" element={<DoctorProfile />} />
             <Route path="/services" element={<Services />} />
             <Route path="/treatments" element={<Treatments />} />
