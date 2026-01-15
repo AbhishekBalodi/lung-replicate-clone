@@ -93,6 +93,20 @@ import MessagingIntegrations from "@/pages/admin/MessagingIntegrations";
 import WebsiteSettings from "@/pages/admin/WebsiteSettings";
 import ThemeTemplates from "@/pages/admin/ThemeTemplates";
 
+/* EMR & Clinical Pages */
+import EMRDiagnosisNotes from "@/pages/admin/EMRDiagnosisNotes";
+import EMRTreatmentPlans from "@/pages/admin/EMRTreatmentPlans";
+import EMRProgressNotes from "@/pages/admin/EMRProgressNotes";
+import EMRDocuments from "@/pages/admin/EMRDocuments";
+import FollowUps from "@/pages/admin/FollowUps";
+import CarePlans from "@/pages/admin/CarePlans";
+import Telemedicine from "@/pages/admin/Telemedicine";
+import DoctorSchedule from "@/pages/admin/DoctorSchedule";
+import TasksNotifications from "@/pages/admin/TasksNotifications";
+import DoctorAnalytics from "@/pages/admin/DoctorAnalytics";
+import Communication from "@/pages/admin/Communication";
+import EmergencyAlerts from "@/pages/admin/EmergencyAlerts";
+import DoctorProfile from "@/pages/admin/DoctorProfile";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -207,6 +221,37 @@ const App = () => (
             <Route path="/admin/config/messaging" element={<MessagingIntegrations />} />
             <Route path="/admin/config/website" element={<WebsiteSettings />} />
             <Route path="/admin/config/theme-templates" element={<ThemeTemplates />} />
+
+            {/* EMR Routes */}
+            <Route path="/admin/emr/diagnosis" element={<EMRDiagnosisNotes />} />
+            <Route path="/admin/emr/treatment-plans" element={<EMRTreatmentPlans />} />
+            <Route path="/admin/emr/progress-notes" element={<EMRProgressNotes />} />
+            <Route path="/admin/emr/documents" element={<EMRDocuments />} />
+            
+            {/* Follow-Ups & Care Plans */}
+            <Route path="/admin/follow-ups" element={<FollowUps />} />
+            <Route path="/admin/care-plans" element={<CarePlans />} />
+            
+            {/* Telemedicine */}
+            <Route path="/admin/telemedicine" element={<Telemedicine />} />
+            
+            {/* Schedule */}
+            <Route path="/admin/schedule" element={<DoctorSchedule />} />
+            
+            {/* Tasks & Notifications */}
+            <Route path="/admin/tasks" element={<TasksNotifications />} />
+            
+            {/* Analytics */}
+            <Route path="/admin/analytics" element={<DoctorAnalytics />} />
+            
+            {/* Communication */}
+            <Route path="/admin/communication" element={<Communication />} />
+            
+            {/* Emergency */}
+            <Route path="/admin/emergency" element={<EmergencyAlerts />} />
+            
+            {/* Doctor Profile */}
+            <Route path="/admin/profile" element={<DoctorProfile />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
