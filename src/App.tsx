@@ -106,7 +106,7 @@ import TasksNotifications from "@/pages/admin/TasksNotifications";
 import DoctorAnalytics from "@/pages/admin/DoctorAnalytics";
 import Communication from "@/pages/admin/Communication";
 import EmergencyAlerts from "@/pages/admin/EmergencyAlerts";
-import DoctorProfile from "@/pages/admin/DoctorProfile";
+import DoctorProfileSettings from "@/pages/admin/DoctorProfile";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -251,7 +251,7 @@ const App = () => (
             <Route path="/admin/emergency" element={<EmergencyAlerts />} />
             
             {/* Doctor Profile */}
-            <Route path="/admin/profile" element={<DoctorProfile />} />
+            <Route path="/admin/profile" element={<DoctorProfileSettings />} />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
