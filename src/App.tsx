@@ -107,6 +107,26 @@ import DoctorAnalytics from "@/pages/admin/DoctorAnalytics";
 import Communication from "@/pages/admin/Communication";
 import EmergencyAlerts from "@/pages/admin/EmergencyAlerts";
 import DoctorProfileSettings from "@/pages/admin/DoctorProfile";
+
+/* Patient Dashboard Pages */
+import PatientHome from "@/pages/patient/PatientHome";
+import PatientAppointments from "@/pages/patient/PatientAppointments";
+import PatientBookAppointment from "@/pages/patient/PatientBookAppointment";
+import PatientAppointmentHistory from "@/pages/patient/PatientAppointmentHistory";
+import PatientMedicalRecords from "@/pages/patient/PatientMedicalRecords";
+import PatientPrescriptions from "@/pages/patient/PatientPrescriptions";
+import PatientLabReports from "@/pages/patient/PatientLabReports";
+import PatientBilling from "@/pages/patient/PatientBilling";
+import PatientHealthTimeline from "@/pages/patient/PatientHealthTimeline";
+import PatientMessages from "@/pages/patient/PatientMessages";
+import PatientNotifications from "@/pages/patient/PatientNotifications";
+import PatientProfile from "@/pages/patient/PatientProfile";
+import PatientTelemedicine from "@/pages/patient/PatientTelemedicine";
+import PatientFeedback from "@/pages/patient/PatientFeedback";
+import PatientSettings from "@/pages/patient/PatientSettings";
+import PatientUploadReports from "@/pages/patient/PatientUploadReports";
+import PatientSupport from "@/pages/patient/PatientSupport";
+
 const queryClient = new QueryClient();
 
 const App = () => (
