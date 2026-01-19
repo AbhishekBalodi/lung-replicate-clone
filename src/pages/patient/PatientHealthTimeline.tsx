@@ -1,49 +1,85 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Pill, FlaskConical, Stethoscope, Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimelineEvent {
   id: string;
   date: string;
-  type: "visit" | "test" | "prescription" | "procedure";
+  type: "visit" | "prescription" | "test";
   title: string;
   description: string;
-  doctor?: string;
 }
 
 const PatientHealthTimeline = () => {
-  const [events] = useState<TimelineEvent[]>([
-    { id: "1", date: "2026-01-12", type: "test", title: "Lab Tests Ordered", description: "CBC, Blood Glucose, HbA1c, Lipid Profile" },
-    { id: "2", date: "2026-01-10", type: "visit", title: "Cardiology Consultation", description: "Regular checkup, ECG normal, BP controlled", doctor: "Dr. Smith" },
-    { id: "3", date: "2026-01-10", type: "prescription", title: "Medications Prescribed", description: "Amlodipine 5mg, Metformin 500mg" },
-    { id: "4", date: "2026-01-05", type: "visit", title: "Orthopedic Follow-up", description: "Knee pain improved with physiotherapy", doctor: "Dr. Patel" },
-    { id: "5", date: "2025-12-28", type: "visit", title: "General Medicine Consultation", description: "Flu symptoms, prescribed antibiotics", doctor: "Dr. Johnson" },
-    { id: "6", date: "2025-12-20", type: "test", title: "Vitamin D Test", description: "Result: 18 ng/mL (Low)" },
-    { id: "7", date: "2025-11-15", type: "procedure", title: "ECG", description: "Routine ECG - Normal sinus rhythm" },
-    { id: "8", date: "2025-06-15", type: "procedure", title: "Appendectomy", description: "Laparoscopic appendix removal - Successful" },
-  ]);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [healthTrends] = useState([
-    { metric: "Blood Pressure", current: "125/82", previous: "135/88", trend: "improved", unit: "mmHg" },
-    { metric: "Blood Sugar (Fasting)", current: "110", previous: "120", trend: "improved", unit: "mg/dL" },
-    { metric: "Weight", current: "72", previous: "74", trend: "improved", unit: "kg" },
-    { metric: "BMI", current: "24.2", previous: "24.8", trend: "improved", unit: "" },
-    { metric: "Vitamin D", current: "18", previous: "15", trend: "improving", unit: "ng/mL" },
-  ]);
+  useEffect(() => {
+    fetchTimelineData();
+  }, []);
+
+  const fetchTimelineData = async () => {
+    try {
+      setLoading(true);
+      const timelineEvents: TimelineEvent[] = [];
+
+      // Fetch visits
+      const { data: visits } = await supabase
+        .from('patient_visits')
+        .select('*')
+        .order('visit_date', { ascending: false });
+
+      if (visits) {
+        visits.forEach(visit => {
+          timelineEvents.push({
+            id: `visit-${visit.id}`,
+            date: visit.visit_date || '',
+            type: 'visit',
+            title: 'Medical Visit',
+            description: visit.diagnosis || visit.symptoms || 'Consultation'
+          });
+        });
+      }
+
+      // Fetch prescriptions
+      const { data: prescriptions } = await supabase
+        .from('prescribed_medicines')
+        .select('*')
+        .order('prescribed_date', { ascending: false });
+
+      if (prescriptions) {
+        prescriptions.forEach(rx => {
+          timelineEvents.push({
+            id: `rx-${rx.id}`,
+            date: rx.prescribed_date || '',
+            type: 'prescription',
+            title: 'Medication Prescribed',
+            description: `${rx.medicine_name} - ${rx.dosage || ''} ${rx.frequency || ''}`
+          });
+        });
+      }
+
+      // Sort by date
+      timelineEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setEvents(timelineEvents);
+    } catch (error) {
+      console.error('Error fetching timeline:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getEventIcon = (type: string) => {
     switch (type) {
       case "visit":
         return <Stethoscope className="h-4 w-4" />;
-      case "test":
-        return <FlaskConical className="h-4 w-4" />;
       case "prescription":
         return <Pill className="h-4 w-4" />;
-      case "procedure":
-        return <Activity className="h-4 w-4" />;
+      case "test":
+        return <FlaskConical className="h-4 w-4" />;
       default:
         return <Calendar className="h-4 w-4" />;
     }
@@ -53,47 +89,51 @@ const PatientHealthTimeline = () => {
     switch (type) {
       case "visit":
         return "bg-blue-100 text-blue-700 border-blue-200";
-      case "test":
-        return "bg-purple-100 text-purple-700 border-purple-200";
       case "prescription":
         return "bg-green-100 text-green-700 border-green-200";
-      case "procedure":
-        return "bg-orange-100 text-orange-700 border-orange-200";
+      case "test":
+        return "bg-purple-100 text-purple-700 border-purple-200";
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
-  const getTrendIcon = (trend: string) => {
-    if (trend === "improved" || trend === "improving") {
-      return <TrendingUp className="h-4 w-4 text-green-600" />;
-    } else if (trend === "declined") {
-      return <TrendingDown className="h-4 w-4 text-red-600" />;
-    }
-    return <Minus className="h-4 w-4 text-gray-400" />;
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Loading health timeline...</p>
+      </div>
+    );
+  }
 
   return (
-    <PatientConsoleShell>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">Health Timeline & History</h1>
-          <p className="text-muted-foreground">Chronological view of your health journey</p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Health Timeline & History</h1>
+        <p className="text-muted-foreground">Chronological view of your health journey</p>
+      </div>
 
-        <Tabs defaultValue="timeline">
-          <TabsList>
-            <TabsTrigger value="timeline">Timeline</TabsTrigger>
-            <TabsTrigger value="trends">Health Trends</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="timeline">
+        <TabsList>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="trends">Health Trends</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="timeline" className="mt-6">
+        <TabsContent value="timeline" className="mt-6">
+          {events.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No health events recorded yet</p>
+              </CardContent>
+            </Card>
+          ) : (
             <div className="relative">
               {/* Timeline line */}
               <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-muted" />
               
               <div className="space-y-4">
-                {events.map((event, index) => (
+                {events.map((event) => (
                   <div key={event.id} className="relative pl-10">
                     {/* Timeline dot */}
                     <div className={`absolute left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center ${getEventColor(event.type)}`}>
@@ -109,16 +149,13 @@ const PatientHealthTimeline = () => {
                               <Badge variant="outline" className="text-xs capitalize">{event.type}</Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">{event.description}</p>
-                            {event.doctor && (
-                              <p className="text-sm text-muted-foreground">By {event.doctor}</p>
-                            )}
                           </div>
                           <div className="text-sm text-muted-foreground whitespace-nowrap">
-                            {new Date(event.date).toLocaleDateString('en-US', { 
+                            {event.date ? new Date(event.date).toLocaleDateString('en-US', { 
                               month: 'short', 
                               day: 'numeric',
                               year: 'numeric'
-                            })}
+                            }) : 'Date not recorded'}
                           </div>
                         </div>
                       </CardContent>
@@ -127,52 +164,19 @@ const PatientHealthTimeline = () => {
                 ))}
               </div>
             </div>
-          </TabsContent>
+          )}
+        </TabsContent>
 
-          <TabsContent value="trends" className="mt-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              {healthTrends.map((trend, index) => (
-                <Card key={index}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{trend.metric}</p>
-                        <p className="text-2xl font-bold">
-                          {trend.current}
-                          {trend.unit && <span className="text-sm font-normal text-muted-foreground ml-1">{trend.unit}</span>}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Previous: {trend.previous} {trend.unit}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {getTrendIcon(trend.trend)}
-                        <Badge variant={trend.trend === "improved" || trend.trend === "improving" ? "default" : "secondary"}>
-                          {trend.trend}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="text-lg">Health Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Your overall health metrics show positive trends. Blood pressure and blood sugar levels have improved 
-                  over the past few months. Continue with your current medication and lifestyle modifications. 
-                  Vitamin D levels are still low - ensure you're taking the prescribed supplements regularly.
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </PatientConsoleShell>
+        <TabsContent value="trends" className="mt-6">
+          <Card>
+            <CardContent className="py-10 text-center">
+              <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Health trends will be available once more data is recorded</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

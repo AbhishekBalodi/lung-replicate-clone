@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, MessageSquare, AlertTriangle, CheckCircle, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 interface Doctor {
   id: string;
@@ -82,7 +82,7 @@ const PatientFeedback = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Feedback & Ratings</h1>
@@ -195,8 +195,7 @@ const PatientFeedback = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 

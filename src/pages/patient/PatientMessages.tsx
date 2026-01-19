@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MessageSquare, Send, User, Clock, Paperclip } from "lucide-react";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 interface Message {
   id: string;
@@ -51,7 +51,7 @@ const PatientMessages = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Messages</h1>
@@ -166,8 +166,7 @@ const PatientMessages = () => {
             )}
           </Card>
         </div>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 

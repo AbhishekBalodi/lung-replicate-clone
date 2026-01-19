@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { HelpCircle, MessageSquare, Phone, Mail, Clock, CheckCircle, AlertCircle, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 interface SupportTicket {
   id: string;
@@ -63,7 +63,7 @@ const PatientSupport = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -211,8 +211,7 @@ const PatientSupport = () => {
             )}
           </CardContent>
         </Card>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 
