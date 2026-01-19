@@ -79,7 +79,7 @@ import DoctorRevenueReport from "@/pages/admin/DoctorRevenueReport";
 import DepartmentRevenueReport from "@/pages/admin/DepartmentRevenueReport";
 
 /* Feedback & Quality Control */
-import PatientFeedback from "@/pages/admin/PatientFeedback";
+//import PatientFeedback from "@/pages/admin/PatientFeedback";
 import DoctorRatings from "@/pages/admin/DoctorRatings";
 import ComplaintsManagement from "@/pages/admin/ComplaintsManagement";
 import ServiceQualityScore from "@/pages/admin/ServiceQualityScore";

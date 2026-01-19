@@ -180,11 +180,15 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   const loginAsPatient = async (email: string, phone: string): Promise<AuthResult> => {
     try {
       const tenantCode = getDevTenantCode();
-      const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
         method: 'POST',
         headers: getHeaders(),
         credentials: 'include',
-        body: JSON.stringify({ email, phone, tenantCode, loginType: 'patient' })
+        body: JSON.stringify({
+           email,
+          password: phone,
+          loginType: 'patient' 
+            })
       });
 
       const data = await res.json();
@@ -193,7 +197,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setUser(data.user);
-      setTenant(data.tenant || null);
+      //setTenant(data.tenant || null);
       return { user: data.user, error: null };
     } catch (e: any) {
       return { user: undefined, error: { message: e.message || 'Network error' } };
@@ -201,6 +205,10 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
     setUser(null);
     setTenant(null);
   };

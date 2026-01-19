@@ -6,9 +6,12 @@ const router = Router();
 
 /**
  * POST /api/auth/login
- * body: { email, password, loginType: 'admin' | 'patient' }
- * 
- * For multi-tenant: Admin credentials come from tenant_users table in platform DB
+ * body: { email, password, loginType }
+ *
+ * loginType:
+ *  - admin
+ *  - super_admin
+ *  - patient
  */
 router.post('/login', async (req, res) => {
   const { email, password, loginType } = req.body;
@@ -18,155 +21,156 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const pool = getPool(req);
+    const tenantPool = getPool(req);
 
+    /* ============================================================
+       🔐 ADMIN LOGIN (TENANT USERS)
+       ============================================================ */
     if (loginType === 'admin') {
-      // Check if we have a tenant context
-      if (req.tenant) {
-        // Multi-tenant mode: Check tenant_users table
-        const [users] = await platformPool.execute(
-          `SELECT tu.*, t.name as tenant_name 
-           FROM tenant_users tu 
-           JOIN tenants t ON tu.tenant_id = t.id 
-           WHERE tu.email = ? AND tu.tenant_id = ? AND tu.status = 'active'`,
-          [email.trim(), req.tenant.id]
-        );
+      if (!req.tenant) {
+        return res.status(400).json({ error: 'Tenant context missing' });
+      }
 
-        if (users.length === 0) {
-          return res.status(401).json({ error: 'Invalid admin credentials' });
-        }
+      const [users] = await platformPool.execute(
+        `SELECT tu.*, t.name AS tenant_name
+         FROM tenant_users tu
+         JOIN tenants t ON tu.tenant_id = t.id
+         WHERE tu.email = ? AND tu.tenant_id = ? AND tu.status = 'active'
+         LIMIT 1`,
+        [email.trim(), req.tenant.id]
+      );
 
-        const user = users[0];
-        
-        // Password check
-        const bcrypt = await import('bcryptjs');
-        const isValid = await bcrypt.compare(password, user.password_hash);
-        
-        if (!isValid) {
-          return res.status(401).json({ error: 'Invalid admin credentials' });
-        }
+      if (!users.length) {
+        return res.status(401).json({ error: 'Invalid admin credentials' });
+      }
 
-        /* ============================================================
-           ✅ SESSION PERSISTENCE (ADDED)
-           ============================================================ */
-        req.session.user = {
+      const user = users[0];
+      const bcrypt = await import('bcryptjs');
+      const valid = await bcrypt.compare(password, user.password_hash);
+
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid admin credentials' });
+      }
+
+      req.session.user = {
+        id: user.id,
+        email: user.email,
+        name: user.full_name || 'Admin',
+        role: user.role,
+        userType: 'admin',
+        tenantId: req.tenant.id,
+        tenantName: user.tenant_name,
+      };
+
+      return res.json({
+        success: true,
+        userType: 'admin',
+        user: {
           id: user.id,
           email: user.email,
           name: user.full_name || 'Admin',
           role: user.role,
-          userType: 'admin',
           tenantId: req.tenant.id,
-          tenantName: user.tenant_name
-        };
+          tenantName: user.tenant_name,
+        },
+      });
+    }
 
-        return res.json({
-          success: true,
-          userType: 'admin',
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.full_name || 'Admin',
-            role: user.role,
-            tenantId: req.tenant.id,
-            tenantName: user.tenant_name
-          }
-        });
-      } else {
-        // Fallback for development without tenant context (Doctor Mann)
-        const ADMIN_EMAIL = 'abhishekbalodi729@gmail.com';
-        const ADMIN_PASSWORD = '9560720890';
-
-        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-
-          /* ============================================================
-             ✅ SESSION PERSISTENCE (ADDED - DEV MODE)
-             ============================================================ */
-          req.session.user = {
-            email: ADMIN_EMAIL,
-            name: 'Admin',
-            role: 'admin',
-            userType: 'admin',
-            tenantId: null
-          };
-
-          return res.json({
-            success: true,
-            userType: 'admin',
-            user: {
-              email: ADMIN_EMAIL,
-              name: 'Admin',
-              role: 'admin'
-            }
-          });
-        } else {
-          return res.status(401).json({ error: 'Invalid admin credentials' });
-        }
-      }
-    } else if (loginType === 'patient') {
-      // Patient login - check appointments table (email + phone as password)
-      const [rows] = await pool.execute(
-        'SELECT * FROM appointments WHERE email = ? AND phone = ? LIMIT 1',
-        [email.trim(), password.trim()]
+    /* ============================================================
+       👑 SUPER ADMIN LOGIN (PLATFORM)
+       ============================================================ */
+    if (loginType === 'super_admin') {
+      const [rows] = await platformPool.execute(
+        `SELECT * FROM platform_users WHERE email = ? AND status = 'active' LIMIT 1`,
+        [email.trim()]
       );
 
-      if (rows.length === 0) {
-        return res.status(401).json({ error: 'Invalid patient credentials. Please use your email and phone number.' });
+      if (!rows.length) {
+        return res.status(401).json({ error: 'Invalid super admin credentials' });
       }
 
-      const patient = rows[0];
+      const user = rows[0];
+      const bcrypt = await import('bcryptjs');
+      const valid = await bcrypt.compare(password, user.password_hash);
 
-      // Get patient ID from patients table
-      const [patientRows] = await pool.execute(
-        'SELECT id FROM patients WHERE email = ? AND phone = ? LIMIT 1',
-        [email.trim(), password.trim()]
-      );
-
-      let patientId = null;
-      if (patientRows.length > 0) {
-        patientId = patientRows[0].id;
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid super admin credentials' });
       }
 
-      /* ============================================================
-         ✅ SESSION PERSISTENCE (ADDED - PATIENT)
-         ============================================================ */
       req.session.user = {
-        id: patientId,
+        id: user.id,
+        email: user.email,
+        name: user.full_name || 'Super Admin',
+        role: 'super_admin',
+        userType: 'super_admin',
+      };
+
+      return res.json({
+        success: true,
+        userType: 'super_admin',
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.full_name || 'Super Admin',
+          role: 'super_admin',
+        },
+      });
+    }
+
+    /* ============================================================
+       🧑‍⚕️ PATIENT LOGIN (EMAIL + PHONE)
+       ============================================================ */
+    if (loginType === 'patient') {
+      const [patients] = await tenantPool.execute(
+        `SELECT * FROM patients 
+         WHERE email = ? AND phone = ?
+         LIMIT 1`,
+        [email.trim(), password.trim()]
+      );
+
+      if (!patients.length) {
+        return res.status(401).json({
+          error: 'Invalid patient credentials. Use the email and phone number used during appointment booking.',
+        });
+      }
+
+      const patient = patients[0];
+
+      req.session.user = {
+        id: patient.id,
         email: patient.email,
         phone: patient.phone,
         name: patient.full_name,
         role: 'patient',
         userType: 'patient',
-        tenantId: req.tenant?.id || null
+        tenantId: req.tenant?.id || null,
       };
 
       return res.json({
         success: true,
         userType: 'patient',
         user: {
-          id: patientId,
+          id: patient.id,
           email: patient.email,
           phone: patient.phone,
           name: patient.full_name,
-          role: 'patient'
-        }
+          role: 'patient',
+        },
       });
-    } else {
-      return res.status(400).json({ error: 'Invalid login type' });
     }
-  } catch (error) {
-    console.error('Login error:', error);
-    return res.status(500).json({ error: 'Login failed' });
+
+    return res.status(400).json({ error: 'Invalid login type' });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ error: 'Login failed' });
   }
 });
 
 /* ============================================================
-   ✅ OPTIONAL: LOGOUT ROUTE (ADDED, SAFE)
+   🚪 LOGOUT
    ============================================================ */
 router.post('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      return res.status(500).json({ error: 'Logout failed' });
-    }
+  req.session.destroy(() => {
     res.clearCookie('saas.sid');
     res.json({ success: true });
   });

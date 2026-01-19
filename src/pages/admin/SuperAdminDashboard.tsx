@@ -762,73 +762,7 @@ const SuperAdminDashboard = () => {
    DYNAMIC KPI CARDS (CALCULATED FROM DATA)
 ================================ */}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-            {/* Total Revenue */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Total Revenue</span>
-                  <span className="text-green-500">₹</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">
-                  ₹{allInvoices.reduce((sum, inv) => sum + ((inv.total_amount as number) || 0), 0).toLocaleString()}
-                </p>
-                <p className="text-sm text-green-400 mt-1">
-                  From {allInvoices.length} invoices
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Appointments */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Appointments</span>
-                  <Calendar className="h-4 w-4 text-blue-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{appointments.length}</p>
-                <p className="text-sm text-blue-400 mt-1">
-                  {todayAppointments.length} today
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Patients */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Patients</span>
-                  <Users className="h-4 w-4 text-orange-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{allPatients.length}</p>
-                <p className="text-sm text-orange-400 mt-1">
-                  {newPatients} new this week
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Staff */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Staff</span>
-                  <Users className="h-4 w-4 text-purple-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{totalStaff}</p>
-                <p className="text-sm text-purple-400 mt-1">
-                  +{newStaffThisMonth} new this month
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          
 
           {/* ===============================
    PERFORMANCE METRICS GRAPHS
