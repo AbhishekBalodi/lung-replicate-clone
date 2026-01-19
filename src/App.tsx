@@ -126,6 +126,7 @@ import PatientFeedback from "@/pages/patient/PatientFeedback";
 import PatientSettings from "@/pages/patient/PatientSettings";
 import PatientUploadReports from "@/pages/patient/PatientUploadReports";
 import PatientSupport from "@/pages/patient/PatientSupport";
+import PatientConsoleShell from "@/layouts/PatientConsoleShell";
 
 const queryClient = new QueryClient();
 
@@ -155,7 +156,43 @@ const App = () => (
             
             <Route path="/login" element={<CustomAuth />} />
             <Route path="/dashboard" element={<Dashboard />} />
-           <Route path="/patient-dashboard" element={<PatientDashboard />} />
+            {/* Legacy patient-dashboard redirects to new patient dashboard */}
+            <Route path="/patient-dashboard" element={<Navigate to="/patient/dashboard" replace />} />
+            
+            {/* Patient Dashboard Routes */}
+            <Route path="/patient/dashboard" element={<PatientConsoleShell><PatientHome /></PatientConsoleShell>} />
+            <Route path="/patient/appointments" element={<PatientConsoleShell><PatientAppointments /></PatientConsoleShell>} />
+            <Route path="/patient/appointments/book" element={<PatientConsoleShell><PatientBookAppointment /></PatientConsoleShell>} />
+            <Route path="/patient/appointments/history" element={<PatientConsoleShell><PatientAppointmentHistory /></PatientConsoleShell>} />
+            <Route path="/patient/records" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+            <Route path="/patient/records/visits" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+            <Route path="/patient/records/diagnoses" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+            <Route path="/patient/records/doctor-notes" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+            <Route path="/patient/records/discharge" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+            <Route path="/patient/records/documents" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+            <Route path="/patient/prescriptions" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+            <Route path="/patient/prescriptions/current" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+            <Route path="/patient/prescriptions/history" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+            <Route path="/patient/prescriptions/refill" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+            <Route path="/patient/lab-reports" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+            <Route path="/patient/lab-reports/pending" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+            <Route path="/patient/lab-reports/completed" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+            <Route path="/patient/lab-reports/radiology" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+            <Route path="/patient/billing" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+            <Route path="/patient/billing/invoices" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+            <Route path="/patient/billing/payments" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+            <Route path="/patient/billing/insurance" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+            <Route path="/patient/timeline" element={<PatientConsoleShell><PatientHealthTimeline /></PatientConsoleShell>} />
+            <Route path="/patient/messages" element={<PatientConsoleShell><PatientMessages /></PatientConsoleShell>} />
+            <Route path="/patient/upload-reports" element={<PatientConsoleShell><PatientUploadReports /></PatientConsoleShell>} />
+            <Route path="/patient/support" element={<PatientConsoleShell><PatientSupport /></PatientConsoleShell>} />
+            <Route path="/patient/notifications" element={<PatientConsoleShell><PatientNotifications /></PatientConsoleShell>} />
+            <Route path="/patient/profile" element={<PatientConsoleShell><PatientProfile /></PatientConsoleShell>} />
+            <Route path="/patient/family" element={<PatientConsoleShell><PatientProfile /></PatientConsoleShell>} />
+            <Route path="/patient/telemedicine" element={<PatientConsoleShell><PatientTelemedicine /></PatientConsoleShell>} />
+            <Route path="/patient/feedback" element={<PatientConsoleShell><PatientFeedback /></PatientConsoleShell>} />
+            <Route path="/patient/settings" element={<PatientConsoleShell><PatientSettings /></PatientConsoleShell>} />
+            
             <Route path="/super-admin" element={<SuperAdminDashboard />} />
 
             <Route path="/appointments" element={<AppointmentsPage />} />
