@@ -36,8 +36,7 @@ interface Appointment {
   phone: string;
   appointment_date: string;
   appointment_time: string;
-  doctor_id: number;
-  doctor_name: string;
+  selected_doctor: string;
   message: string | null;
   status?: string | null;
   created_at?: string | null;
@@ -70,7 +69,7 @@ export default function AppointmentsPage() {
      FILTER STATE
   ================================ */
   const [activeTab, setActiveTab] = useState("all");
-  const [selectedDoctor, setSelectedDoctor] = useState<number | "all">("all");
+  const [selectedDoctor, setSelectedDoctor] = useState<string>("all");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -81,11 +80,11 @@ export default function AppointmentsPage() {
      UNIQUE DOCTORS
   ================================ */
   const uniqueDoctors = useMemo(() => {
-    const map = new Map<number, string>();
+    const doctors = new Set<string>();
     appointments.forEach((a) => {
-      map.set(a.doctor_id, a.doctor_name);
+      if (a.selected_doctor) doctors.add(a.selected_doctor);
     });
-    return Array.from(map.entries()); // [id, name]
+    return Array.from(doctors); // array of doctor names
   }, [appointments]);
 
   /* ===============================
@@ -140,11 +139,11 @@ export default function AppointmentsPage() {
           a.full_name.toLowerCase().includes(searchQuery) ||
           a.email.toLowerCase().includes(searchQuery) ||
           a.phone.toLowerCase().includes(searchQuery) ||
-          a.doctor_name.toLowerCase().includes(searchQuery);
+          (a.selected_doctor || '').toLowerCase().includes(searchQuery);
         if (!matches) return false;
       }
 
-      if (selectedDoctor !== "all" && a.doctor_id !== selectedDoctor) {
+      if (selectedDoctor !== "all" && a.selected_doctor !== selectedDoctor) {
         return false;
       }
 
@@ -221,19 +220,17 @@ export default function AppointmentsPage() {
 
               {/* Doctor */}
               <Select
-                value={selectedDoctor === "all" ? "all" : String(selectedDoctor)}
-                onValueChange={(v) =>
-                  setSelectedDoctor(v === "all" ? "all" : Number(v))
-                }
+                value={selectedDoctor}
+                onValueChange={(v) => setSelectedDoctor(v)}
               >
                 <SelectTrigger className="w-[180px] bg-white">
                   <SelectValue placeholder="Doctor" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Doctors</SelectItem>
-                  {uniqueDoctors.map(([id, name]) => (
-                    <SelectItem key={id} value={String(id)}>
-                      {name}
+                  {uniqueDoctors.map((doctorName) => (
+                    <SelectItem key={doctorName} value={doctorName}>
+                      {doctorName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -302,7 +299,7 @@ export default function AppointmentsPage() {
                 </div>
 
                 <div className="font-medium">{a.full_name}</div>
-                <div>{a.doctor_name}</div>
+                <div>{a.selected_doctor || '-'}</div>
                 <div>{getStatusBadge(a.status)}</div>
                 <div className="col-span-2 text-sm text-slate-500 truncate">
                   {a.message || "-"}
