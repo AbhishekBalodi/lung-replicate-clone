@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Bell, Calendar, Pill, FlaskConical, CreditCard, Clock, CheckCircle, Trash2 } from "lucide-react";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 interface Notification {
   id: string;
@@ -58,7 +58,7 @@ const PatientNotifications = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -136,8 +136,7 @@ const PatientNotifications = () => {
             ))
           )}
         </div>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 

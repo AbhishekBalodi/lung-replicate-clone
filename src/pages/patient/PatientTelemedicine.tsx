@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Video, Calendar, Clock, User, MessageSquare, Upload, Phone } from "lucide-react";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 interface TeleconsultSession {
   id: string;
@@ -25,7 +25,7 @@ const PatientTelemedicine = () => {
   const pastSessions = sessions.filter(s => s.status === "completed");
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Telemedicine</h1>
@@ -164,8 +164,7 @@ const PatientTelemedicine = () => {
             )}
           </CardContent>
         </Card>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 

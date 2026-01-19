@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Phone, Mail, MapPin, Calendar, Shield, Users, AlertCircle, Edit, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 const PatientProfile = () => {
   const { toast } = useToast();
@@ -43,7 +43,7 @@ const PatientProfile = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -227,8 +227,7 @@ const PatientProfile = () => {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 

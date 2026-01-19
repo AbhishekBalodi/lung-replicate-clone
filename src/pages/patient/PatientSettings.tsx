@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Settings, Lock, Bell, Globe, Shield, Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 const PatientSettings = () => {
   const { toast } = useToast();
@@ -55,7 +55,7 @@ const PatientSettings = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Settings & Security</h1>
@@ -249,8 +249,7 @@ const PatientSettings = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 

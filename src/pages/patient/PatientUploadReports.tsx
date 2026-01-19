@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, FileText, X, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+
 
 interface UploadedDocument {
   id: string;
@@ -59,7 +59,7 @@ const PatientUploadReports = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="space-y-6">
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Upload Reports</h1>
@@ -183,8 +183,7 @@ const PatientUploadReports = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 

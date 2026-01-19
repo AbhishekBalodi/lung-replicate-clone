@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, User, Building2, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+import { supabase } from "@/integrations/supabase/client";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
 
 const PatientBookAppointment = () => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const PatientBookAppointment = () => {
   };
 
   return (
-    <PatientConsoleShell>
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Book New Appointment</h1>
@@ -215,8 +216,7 @@ const PatientBookAppointment = () => {
             </CardContent>
           </Card>
         )}
-      </div>
-    </PatientConsoleShell>
+    </div>
   );
 };
 
