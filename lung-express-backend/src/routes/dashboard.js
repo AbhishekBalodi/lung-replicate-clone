@@ -44,6 +44,18 @@ import { getRevenueOverview, getRevenueTrend, getBillingDashboard, getInsuranceC
 // Patient dashboard APIs
 import { getPatientHome, getPatientAppointments, getPatientMedicalRecords, getPatientPrescriptions, getPatientLabReports, getPatientBilling, getPatientTimeline } from '../lib/patient.dashboard.js';
 
+// Telemedicine APIs
+import { getTelemedicineSummary, getTelemedicineSessions, addTelemedicineSession, updateTelemedicineSession } from '../lib/admin.telemedicine.js';
+
+// Schedule APIs
+import { getScheduleSlots, addScheduleSlot, updateScheduleSlot, deleteScheduleSlot, toggleSlotActive, getLeaveRequests, addLeaveRequest, updateLeaveRequest, getScheduleSettings, saveScheduleSettings } from '../lib/admin.schedule.js';
+
+// Tasks APIs
+import { getTasksSummary, getTasksList, addTask, completeTask, deleteTask, getNotificationsSummary, getNotificationsList, markNotificationRead, markAllNotificationsRead, dismissNotification } from '../lib/admin.tasks.js';
+
+// Analytics APIs
+import { getDoctorAnalyticsSummary, getMonthlyTrends, getAppointmentStatusDistribution, getRatingBreakdown } from '../lib/admin.analytics.js';
+
 const router = express.Router();
 
 /* ============================================================
@@ -236,5 +248,49 @@ router.get('/patient/prescriptions', getPatientPrescriptions);
 router.get('/patient/lab-reports', getPatientLabReports);
 router.get('/patient/billing', getPatientBilling);
 router.get('/patient/timeline', getPatientTimeline);
+
+/* ============================================================
+   TELEMEDICINE
+   ============================================================ */
+router.get('/telemedicine/summary', getTelemedicineSummary);
+router.get('/telemedicine/sessions', getTelemedicineSessions);
+router.post('/telemedicine/sessions', addTelemedicineSession);
+router.put('/telemedicine/sessions/:id', updateTelemedicineSession);
+
+/* ============================================================
+   SCHEDULE & AVAILABILITY
+   ============================================================ */
+router.get('/schedule/slots', getScheduleSlots);
+router.post('/schedule/slots', addScheduleSlot);
+router.put('/schedule/slots/:id', updateScheduleSlot);
+router.delete('/schedule/slots/:id', deleteScheduleSlot);
+router.put('/schedule/slots/:id/toggle', toggleSlotActive);
+router.get('/schedule/leaves', getLeaveRequests);
+router.post('/schedule/leaves', addLeaveRequest);
+router.put('/schedule/leaves/:id', updateLeaveRequest);
+router.get('/schedule/settings', getScheduleSettings);
+router.post('/schedule/settings', saveScheduleSettings);
+
+/* ============================================================
+   TASKS & NOTIFICATIONS
+   ============================================================ */
+router.get('/tasks/summary', getTasksSummary);
+router.get('/tasks', getTasksList);
+router.post('/tasks', addTask);
+router.put('/tasks/:id/complete', completeTask);
+router.delete('/tasks/:id', deleteTask);
+router.get('/notifications/summary', getNotificationsSummary);
+router.get('/notifications', getNotificationsList);
+router.put('/notifications/:id/read', markNotificationRead);
+router.post('/notifications/read-all', markAllNotificationsRead);
+router.delete('/notifications/:id', dismissNotification);
+
+/* ============================================================
+   DOCTOR ANALYTICS
+   ============================================================ */
+router.get('/analytics/summary', getDoctorAnalyticsSummary);
+router.get('/analytics/trends', getMonthlyTrends);
+router.get('/analytics/status-distribution', getAppointmentStatusDistribution);
+router.get('/analytics/ratings', getRatingBreakdown);
 
 export default router;
