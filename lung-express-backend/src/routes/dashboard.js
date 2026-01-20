@@ -3,24 +3,46 @@ import { getSuperAdminDashboard } from '../lib/superadmin.dashboard.kpi.js';
 import { getSuperAdminDashboardCharts } from '../lib/superadmin.dashboard.charts.js';
 
 // Admin dashboard APIs
-import { getRoomsSummary, getRoomsList, getRoomAllotments } from '../lib/admin.rooms.js';
-import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups } from '../lib/admin.blood-bank.js';
-import { getStaffSummary, getStaffList } from '../lib/admin.staff.js';
+import { getRoomsSummary, getRoomsList, getRoomAllotments, addRoom, addRoomAllotment } from '../lib/admin.rooms.js';
+import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups, addBloodDonor } from '../lib/admin.blood-bank.js';
+import { getStaffSummary, getStaffList, addStaff } from '../lib/admin.staff.js';
 import { getFeedbackSummary, getFeedbackList } from '../lib/admin.feedback.js';
 import { getBillingSummary, getRevenueByMonth, getRevenueByDoctor } from '../lib/admin.billing.js';
 import { getAppointmentsSummary, getAppointmentsByDoctor, getAppointmentsByMonth } from '../lib/admin.appointments.js';
 import { getPatientsSummary, getPatientsByMonth, getPatientsByDoctor } from '../lib/admin.patients.js';
 
+// Ambulance APIs
+import { getAmbulanceCallsSummary, getAmbulanceCallsList, addAmbulanceCall, updateAmbulanceCallStatus, getAmbulanceFleetList, addAmbulance, updateAmbulance, getAmbulanceDetails } from '../lib/admin.ambulance.js';
+
+// Pharmacy APIs
+import { getPharmacyMedicinesList, addPharmacyMedicine, updatePharmacyMedicine, deletePharmacyMedicine, getPharmacyInventory, getPharmacyInventorySummary, addPharmacyInventory, updatePharmacyInventory } from '../lib/admin.pharmacy.js';
+
+// Invoices & Payments APIs
+import { getInvoicesSummary, getInvoicesList, getInvoiceById, createInvoice, updateInvoiceStatus, getPaymentsHistory, addPayment, getPaymentMethods } from '../lib/admin.invoices.js';
+
+// EMR APIs
+import { getDiagnosisNotes, addDiagnosisNote, updateDiagnosisNote, deleteDiagnosisNote, getTreatmentPlans, addTreatmentPlan, updateTreatmentPlan, getProgressNotes, addProgressNote, getMedicalDocuments, addMedicalDocument, deleteMedicalDocument } from '../lib/admin.emr.js';
+
+// Follow-ups & Care Plans APIs
+import { getFollowUpsSummary, getFollowUpsList, addFollowUp, updateFollowUp, markFollowUpComplete, getCarePlans, addCarePlan, updateCarePlan } from '../lib/admin.followups.js';
+
+// Compliance & Security APIs
+import { getAuditLogsSummary, getAuditLogs, addAuditLog, getAccessControlList, updateRolePermissions, getDataAccessLogs, logDataAccess } from '../lib/admin.compliance.js';
+
+// Reports APIs
+import { getDailyReport, getMonthlyReport, getDoctorRevenueReport, getDepartmentRevenueReport, getLabRevenueReport } from '../lib/admin.reports.js';
+
+// Notifications APIs
+import { getSystemAlerts, getSystemAlertsSummary, createSystemAlert, dismissAlert, getNotificationSettings, updateNotificationSetting, saveNotificationSettings } from '../lib/admin.notifications.js';
+
+// Hospital Management APIs
+import { getHospitalProfile, updateHospitalProfile, getDepartments, addDepartment, updateDepartment, deleteDepartment, getInfrastructure, addFacility, addEquipment } from '../lib/admin.hospital.js';
+
+// Financial Management APIs
+import { getRevenueOverview, getRevenueTrend, getBillingDashboard, getInsuranceClaims, getInsuranceClaimsSummary, addInsuranceClaim, updateInsuranceClaimStatus } from '../lib/admin.financial.js';
+
 // Patient dashboard APIs
-import {
-  getPatientHome,
-  getPatientAppointments,
-  getPatientMedicalRecords,
-  getPatientPrescriptions,
-  getPatientLabReports,
-  getPatientBilling,
-  getPatientTimeline
-} from '../lib/patient.dashboard.js';
+import { getPatientHome, getPatientAppointments, getPatientMedicalRecords, getPatientPrescriptions, getPatientLabReports, getPatientBilling, getPatientTimeline } from '../lib/patient.dashboard.js';
 
 const router = express.Router();
 
@@ -36,6 +58,8 @@ router.get('/superadmin/charts', getSuperAdminDashboardCharts);
 router.get('/rooms/summary', getRoomsSummary);
 router.get('/rooms/list', getRoomsList);
 router.get('/rooms/allotments', getRoomAllotments);
+router.post('/rooms', addRoom);
+router.post('/rooms/allotments', addRoomAllotment);
 
 /* ============================================================
    BLOOD BANK MANAGEMENT
@@ -44,13 +68,134 @@ router.get('/blood-bank/summary', getBloodBankSummary);
 router.get('/blood-bank/stock', getBloodStock);
 router.post('/blood-bank/stock', addBloodStock);
 router.get('/blood-bank/donors', getBloodDonors);
+router.post('/blood-bank/donors', addBloodDonor);
 router.get('/blood-bank/blood-groups', getBloodGroups);
+
+/* ============================================================
+   AMBULANCE MANAGEMENT
+   ============================================================ */
+router.get('/ambulance/summary', getAmbulanceCallsSummary);
+router.get('/ambulance/calls', getAmbulanceCallsList);
+router.post('/ambulance/calls', addAmbulanceCall);
+router.put('/ambulance/calls/:id/status', updateAmbulanceCallStatus);
+router.get('/ambulance/fleet', getAmbulanceFleetList);
+router.post('/ambulance/fleet', addAmbulance);
+router.put('/ambulance/fleet/:id', updateAmbulance);
+router.get('/ambulance/fleet/:id', getAmbulanceDetails);
 
 /* ============================================================
    STAFF MANAGEMENT
    ============================================================ */
 router.get('/staff/summary', getStaffSummary);
 router.get('/staff/list', getStaffList);
+router.post('/staff', addStaff);
+
+/* ============================================================
+   PHARMACY MANAGEMENT
+   ============================================================ */
+router.get('/pharmacy/medicines', getPharmacyMedicinesList);
+router.post('/pharmacy/medicines', addPharmacyMedicine);
+router.put('/pharmacy/medicines/:id', updatePharmacyMedicine);
+router.delete('/pharmacy/medicines/:id', deletePharmacyMedicine);
+router.get('/pharmacy/inventory', getPharmacyInventory);
+router.get('/pharmacy/inventory/summary', getPharmacyInventorySummary);
+router.post('/pharmacy/inventory', addPharmacyInventory);
+router.put('/pharmacy/inventory/:id', updatePharmacyInventory);
+
+/* ============================================================
+   INVOICES & PAYMENTS
+   ============================================================ */
+router.get('/invoices/summary', getInvoicesSummary);
+router.get('/invoices', getInvoicesList);
+router.get('/invoices/:id', getInvoiceById);
+router.post('/invoices', createInvoice);
+router.put('/invoices/:id/status', updateInvoiceStatus);
+router.get('/payments/history', getPaymentsHistory);
+router.post('/payments', addPayment);
+router.get('/payments/methods', getPaymentMethods);
+
+/* ============================================================
+   EMR - ELECTRONIC MEDICAL RECORDS
+   ============================================================ */
+router.get('/emr/diagnosis-notes', getDiagnosisNotes);
+router.post('/emr/diagnosis-notes', addDiagnosisNote);
+router.put('/emr/diagnosis-notes/:id', updateDiagnosisNote);
+router.delete('/emr/diagnosis-notes/:id', deleteDiagnosisNote);
+router.get('/emr/treatment-plans', getTreatmentPlans);
+router.post('/emr/treatment-plans', addTreatmentPlan);
+router.put('/emr/treatment-plans/:id', updateTreatmentPlan);
+router.get('/emr/progress-notes', getProgressNotes);
+router.post('/emr/progress-notes', addProgressNote);
+router.get('/emr/documents', getMedicalDocuments);
+router.post('/emr/documents', addMedicalDocument);
+router.delete('/emr/documents/:id', deleteMedicalDocument);
+
+/* ============================================================
+   FOLLOW-UPS & CARE PLANS
+   ============================================================ */
+router.get('/follow-ups/summary', getFollowUpsSummary);
+router.get('/follow-ups', getFollowUpsList);
+router.post('/follow-ups', addFollowUp);
+router.put('/follow-ups/:id', updateFollowUp);
+router.put('/follow-ups/:id/complete', markFollowUpComplete);
+router.get('/care-plans', getCarePlans);
+router.post('/care-plans', addCarePlan);
+router.put('/care-plans/:id', updateCarePlan);
+
+/* ============================================================
+   COMPLIANCE & SECURITY
+   ============================================================ */
+router.get('/audit-logs/summary', getAuditLogsSummary);
+router.get('/audit-logs', getAuditLogs);
+router.post('/audit-logs', addAuditLog);
+router.get('/access-control', getAccessControlList);
+router.put('/access-control/roles/:id/permissions', updateRolePermissions);
+router.get('/data-access-logs', getDataAccessLogs);
+router.post('/data-access-logs', logDataAccess);
+
+/* ============================================================
+   REPORTS
+   ============================================================ */
+router.get('/reports/daily', getDailyReport);
+router.get('/reports/monthly', getMonthlyReport);
+router.get('/reports/doctor-revenue', getDoctorRevenueReport);
+router.get('/reports/department-revenue', getDepartmentRevenueReport);
+router.get('/reports/lab-revenue', getLabRevenueReport);
+
+/* ============================================================
+   NOTIFICATIONS & ALERTS
+   ============================================================ */
+router.get('/system-alerts/summary', getSystemAlertsSummary);
+router.get('/system-alerts', getSystemAlerts);
+router.post('/system-alerts', createSystemAlert);
+router.put('/system-alerts/:id/dismiss', dismissAlert);
+router.get('/notification-settings', getNotificationSettings);
+router.put('/notification-settings/:id', updateNotificationSetting);
+router.post('/notification-settings', saveNotificationSettings);
+
+/* ============================================================
+   HOSPITAL MANAGEMENT
+   ============================================================ */
+router.get('/hospital/profile', getHospitalProfile);
+router.put('/hospital/profile', updateHospitalProfile);
+router.get('/hospital/departments', getDepartments);
+router.post('/hospital/departments', addDepartment);
+router.put('/hospital/departments/:id', updateDepartment);
+router.delete('/hospital/departments/:id', deleteDepartment);
+router.get('/hospital/infrastructure', getInfrastructure);
+router.post('/hospital/facilities', addFacility);
+router.post('/hospital/equipment', addEquipment);
+
+/* ============================================================
+   FINANCIAL MANAGEMENT
+   ============================================================ */
+router.get('/financial/revenue-overview', getRevenueOverview);
+router.get('/financial/revenue-trend', getRevenueTrend);
+router.get('/financial/billing-dashboard', getBillingDashboard);
+router.get('/financial/insurance-claims', getInsuranceClaims);
+router.get('/financial/insurance-claims/summary', getInsuranceClaimsSummary);
+router.post('/financial/insurance-claims', addInsuranceClaim);
+router.put('/financial/insurance-claims/:id/status', updateInsuranceClaimStatus);
 
 /* ============================================================
    FEEDBACK MANAGEMENT
@@ -81,7 +226,6 @@ router.get('/patients/by-doctor', getPatientsByDoctor);
 
 /* ============================================================
    PATIENT DASHBOARD ROUTES
-   (For logged-in patients to view their own data)
    ============================================================ */
 router.get('/patient/home', getPatientHome);
 router.get('/patient/appointments', getPatientAppointments);
