@@ -5,6 +5,59 @@ import { getTenantPool } from './tenant-db.js';
    ============================================================ */
 
 /**
+ * POST /api/dashboard/blood-bank/stock
+ * Add new blood unit to stock
+ */
+export async function addBloodStock(req, res) {
+  try {
+    const db = getTenantPool(req);
+    const { blood_group_id, units, collection_date, expiry_date, location, donor_id, source, notes } = req.body;
+
+    if (!blood_group_id || !units) {
+      return res.status(400).json({ error: 'Blood group and units are required' });
+    }
+
+    const [result] = await db.query(`
+      INSERT INTO blood_stock (blood_group_id, units, collection_date, expiry_date, location, donor_id, source, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      blood_group_id,
+      units,
+      collection_date || new Date().toISOString().split('T')[0],
+      expiry_date || null,
+      location || 'Refrigerator 1',
+      donor_id || null,
+      source || 'donation',
+      notes || null
+    ]);
+
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (error) {
+    console.error('❌ Add blood stock error:', error);
+    res.status(500).json({ error: 'Failed to add blood stock' });
+  }
+}
+
+/**
+ * GET /api/dashboard/blood-bank/blood-groups
+ * Get all blood groups for dropdowns
+ */
+export async function getBloodGroups(req, res) {
+  try {
+    const db = getTenantPool(req);
+    const [groups] = await db.query(`
+      SELECT id, group_name, rh_factor, CONCAT(group_name, rh_factor) AS blood_type
+      FROM blood_groups
+      ORDER BY group_name, rh_factor
+    `);
+    res.json({ groups });
+  } catch (error) {
+    console.error('❌ Blood groups error:', error);
+    res.status(500).json({ error: 'Failed to load blood groups' });
+  }
+}
+
+/**
  * GET /api/dashboard/blood-bank/summary
  * Returns blood bank statistics
  */
@@ -63,24 +116,32 @@ export async function getBloodBankSummary(req, res) {
 export async function getBloodStock(req, res) {
   try {
     const db = getTenantPool(req);
-    const { bloodType, status } = req.query;
+    const { bloodType, status, search } = req.query;
 
     let query = `
       SELECT 
         bs.id,
+        CONCAT('BS-', LPAD(bs.id, 3, '0')) AS stock_id,
         CONCAT(bg.group_name, bg.rh_factor) AS blood_type,
         bs.units,
         bs.batch_number,
+        bs.collection_date,
         bs.expiry_date,
         bs.source,
-        bs.created_at AS collection_date,
+        bs.location,
+        bs.status AS stock_status,
+        bs.notes,
+        bd.name AS donor_name,
+        bd.id AS donor_id,
         CASE 
           WHEN bs.expiry_date < CURDATE() THEN 'Expired'
           WHEN bs.expiry_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 'Expiring Soon'
+          WHEN bs.status = 'reserved' THEN 'Reserved'
           ELSE 'Available'
-        END AS status
+        END AS display_status
       FROM blood_stock bs
       JOIN blood_groups bg ON bs.blood_group_id = bg.id
+      LEFT JOIN blood_donors bd ON bs.donor_id = bd.id
       WHERE 1=1
     `;
     const params = [];
@@ -94,6 +155,15 @@ export async function getBloodStock(req, res) {
       query += ` AND bs.expiry_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) AND bs.expiry_date >= CURDATE()`;
     } else if (status === 'expired') {
       query += ` AND bs.expiry_date < CURDATE()`;
+    } else if (status === 'available') {
+      query += ` AND bs.status = 'available' AND bs.expiry_date > CURDATE()`;
+    } else if (status === 'reserved') {
+      query += ` AND bs.status = 'reserved'`;
+    }
+
+    if (search) {
+      query += ` AND (CONCAT('BS-', LPAD(bs.id, 3, '0')) LIKE ? OR bd.name LIKE ? OR bs.location LIKE ?)`;
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     query += ` ORDER BY bs.expiry_date ASC`;

@@ -4,7 +4,7 @@ import { getSuperAdminDashboardCharts } from '../lib/superadmin.dashboard.charts
 
 // Admin dashboard APIs
 import { getRoomsSummary, getRoomsList, getRoomAllotments } from '../lib/admin.rooms.js';
-import { getBloodBankSummary, getBloodStock, getBloodDonors } from '../lib/admin.blood-bank.js';
+import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups } from '../lib/admin.blood-bank.js';
 import { getStaffSummary, getStaffList } from '../lib/admin.staff.js';
 import { getFeedbackSummary, getFeedbackList } from '../lib/admin.feedback.js';
 import { getBillingSummary, getRevenueByMonth, getRevenueByDoctor } from '../lib/admin.billing.js';
@@ -42,7 +42,9 @@ router.get('/rooms/allotments', getRoomAllotments);
    ============================================================ */
 router.get('/blood-bank/summary', getBloodBankSummary);
 router.get('/blood-bank/stock', getBloodStock);
+router.post('/blood-bank/stock', addBloodStock);
 router.get('/blood-bank/donors', getBloodDonors);
+router.get('/blood-bank/blood-groups', getBloodGroups);
 
 /* ============================================================
    STAFF MANAGEMENT
