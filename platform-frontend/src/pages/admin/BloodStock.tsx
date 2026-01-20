@@ -9,71 +9,87 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import api from '@/lib/api';
-import { Search, RefreshCw, Download, Plus, AlertCircle, Calendar, Filter, MoreHorizontal } from 'lucide-react';
+import { Search, RefreshCw, Download, Plus, AlertCircle, Loader2, MoreHorizontal } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 type BloodStockItem = {
-  id: string;
+  id: number;
   blood_type: string;
   units: number;
   collection_date: string;
   expiry_date: string;
-  status: 'Available' | 'Reserved' | 'Expiring Soon';
-  location: string;
-  donor: string;
+  status: string;
+  batch_number: string;
+  source: string;
 };
 
-const mockBloodStock: BloodStockItem[] = [
-  { id: 'BS-001', blood_type: 'A+', units: 12, collection_date: '2023-04-15', expiry_date: '2023-05-15', status: 'Available', location: 'Refrigerator 1', donor: 'John Smith' },
-  { id: 'BS-002', blood_type: 'O-', units: 5, collection_date: '2023-04-16', expiry_date: '2023-05-16', status: 'Reserved', location: 'Refrigerator 2', donor: 'Emily Johnson' },
-  { id: 'BS-003', blood_type: 'B+', units: 8, collection_date: '2023-04-10', expiry_date: '2023-05-10', status: 'Expiring Soon', location: 'Refrigerator 1', donor: 'Michael Brown' },
-  { id: 'BS-004', blood_type: 'AB+', units: 3, collection_date: '2023-04-12', expiry_date: '2023-05-12', status: 'Available', location: 'Refrigerator 3', donor: 'Sarah Davis' },
-  { id: 'BS-005', blood_type: 'A-', units: 4, collection_date: '2023-04-14', expiry_date: '2023-05-14', status: 'Available', location: 'Refrigerator 2', donor: 'Robert Wilson' },
-  { id: 'BS-006', blood_type: 'O+', units: 15, collection_date: '2023-04-18', expiry_date: '2023-05-18', status: 'Available', location: 'Refrigerator 1', donor: 'Jennifer Lee' },
-  { id: 'BS-007', blood_type: 'B-', units: 2, collection_date: '2023-04-08', expiry_date: '2023-05-08', status: 'Expiring Soon', location: 'Refrigerator 3', donor: 'David Martinez' },
-  { id: 'BS-008', blood_type: 'AB-', units: 1, collection_date: '2023-04-11', expiry_date: '2023-05-11', status: 'Reserved', location: 'Refrigerator 2', donor: 'Lisa Anderson' },
-];
-
-const bloodTypeDistribution = [
-  { type: 'A+', units: 12, color: 'bg-green-500' },
-  { type: 'A-', units: 4, color: 'bg-amber-500' },
-  { type: 'B+', units: 8, color: 'bg-blue-500' },
-  { type: 'B-', units: 2, color: 'bg-red-500' },
-  { type: 'AB+', units: 3, color: 'bg-amber-400' },
-  { type: 'AB-', units: 1, color: 'bg-orange-500' },
-  { type: 'O+', units: 15, color: 'bg-emerald-500' },
-  { type: 'O-', units: 5, color: 'bg-slate-500' },
-];
+type StockByGroup = {
+  blood_type: string;
+  units: number;
+};
 
 export default function BloodStock() {
-  const [items, setItems] = useState<BloodStockItem[]>(mockBloodStock);
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState({
+    totalUnits: 0,
+    expiringSoon: 0,
+    criticalTypes: 0,
+    totalDonors: 0,
+    stockByGroup: [] as StockByGroup[]
+  });
+  const [items, setItems] = useState<BloodStockItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('all');
 
-  const totalUnits = bloodTypeDistribution.reduce((sum, bt) => sum + bt.units, 0);
-  const expiringUnits = items.filter(i => i.status === 'Expiring Soon').reduce((sum, i) => sum + i.units, 0);
-  const criticalTypes = bloodTypeDistribution.filter(bt => bt.units <= 2).length;
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch summary
+      const summaryRes = await api.apiGet('/api/dashboard/blood-bank/summary');
+      const summaryData = await summaryRes.json();
+      if (summaryRes.ok) {
+        setSummary(summaryData);
+      }
+
+      // Fetch stock list
+      let url = '/api/dashboard/blood-bank/stock?';
+      if (bloodTypeFilter !== 'all') url += `bloodType=${encodeURIComponent(bloodTypeFilter)}&`;
+      if (activeTab === 'expiring') url += 'status=expiring';
+      
+      const stockRes = await api.apiGet(url);
+      const stockData = await stockRes.json();
+      if (stockRes.ok) {
+        setItems(stockData.stock || []);
+      }
+    } catch (err) {
+      console.error('Error loading blood stock:', err);
+      toast.error('Failed to load blood stock data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [bloodTypeFilter, activeTab]);
 
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.donor.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = bloodTypeFilter === 'all' || item.blood_type === bloodTypeFilter;
-    const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+    const matchesSearch = item.blood_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          item.batch_number?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab = activeTab === 'all' || 
                        (activeTab === 'available' && item.status === 'Available') ||
-                       (activeTab === 'reserved' && item.status === 'Reserved') ||
                        (activeTab === 'expiring' && item.status === 'Expiring Soon');
-    return matchesSearch && matchesType && matchesStatus && matchesTab;
+    return matchesSearch && matchesTab;
   });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'Available':
         return <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Available</Badge>;
-      case 'Reserved':
-        return <Badge className="bg-slate-500/10 text-slate-600 border-slate-500/20">Reserved</Badge>;
+      case 'Expired':
+        return <Badge className="bg-red-500/10 text-red-600 border-red-500/20">Expired</Badge>;
       case 'Expiring Soon':
         return <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20">Expiring Soon</Badge>;
       default:
@@ -95,6 +111,16 @@ export default function BloodStock() {
     return <Badge className={colors[type] || 'bg-slate-100'}>{type}</Badge>;
   };
 
+  if (loading) {
+    return (
+      <ConsoleShell>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </ConsoleShell>
+    );
+  }
+
   return (
     <ConsoleShell>
       <div className="space-y-6">
@@ -111,7 +137,7 @@ export default function BloodStock() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Blood Units</p>
-                  <p className="text-3xl font-bold mt-2">{totalUnits}</p>
+                  <p className="text-3xl font-bold mt-2">{summary.totalUnits}</p>
                   <p className="text-xs text-muted-foreground mt-1">Units available across all blood types</p>
                 </div>
                 <Plus className="h-5 w-5 text-red-500" />
@@ -125,14 +151,13 @@ export default function BloodStock() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Blood Type Distribution</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
-                    {bloodTypeDistribution.map((bt) => (
-                      <Badge key={bt.type} variant="secondary" className="text-xs">
-                        {bt.type}: {bt.units}
+                    {summary.stockByGroup.map((bt) => (
+                      <Badge key={bt.blood_type} variant="secondary" className="text-xs">
+                        {bt.blood_type}: {bt.units}
                       </Badge>
                     ))}
                   </div>
                 </div>
-                <Plus className="h-5 w-5 text-red-500" />
               </div>
             </CardContent>
           </Card>
@@ -142,7 +167,7 @@ export default function BloodStock() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Expiring Soon</p>
-                  <p className="text-3xl font-bold mt-2">{expiringUnits}</p>
+                  <p className="text-3xl font-bold mt-2">{summary.expiringSoon}</p>
                   <p className="text-xs text-muted-foreground mt-1">Units expiring within the next 7 days</p>
                 </div>
                 <AlertCircle className="h-5 w-5 text-amber-500" />
@@ -155,7 +180,7 @@ export default function BloodStock() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Critical Levels</p>
-                  <p className="text-3xl font-bold mt-2">{criticalTypes}</p>
+                  <p className="text-3xl font-bold mt-2">{summary.criticalTypes}</p>
                   <p className="text-xs text-muted-foreground mt-1">Blood types with critically low inventory</p>
                 </div>
                 <AlertCircle className="h-5 w-5 text-red-500" />
@@ -172,12 +197,12 @@ export default function BloodStock() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {bloodTypeDistribution.map((bt) => (
-                <div key={bt.type} className="flex items-center gap-4">
-                  <span className="w-10 font-medium text-sm">{bt.type}</span>
+              {summary.stockByGroup.map((bt) => (
+                <div key={bt.blood_type} className="flex items-center gap-4">
+                  <span className="w-10 font-medium text-sm">{bt.blood_type}</span>
                   <div className="flex-1">
                     <Progress 
-                      value={(bt.units / 20) * 100} 
+                      value={(Number(bt.units) / 20) * 100} 
                       className="h-3"
                     />
                   </div>
@@ -206,31 +231,14 @@ export default function BloodStock() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Types</SelectItem>
-                {bloodTypeDistribution.map(bt => (
-                  <SelectItem key={bt.type} value={bt.type}>{bt.type}</SelectItem>
+                {summary.stockByGroup.map(bt => (
+                  <SelectItem key={bt.blood_type} value={bt.blood_type}>{bt.blood_type}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Available">Available</SelectItem>
-                <SelectItem value="Reserved">Reserved</SelectItem>
-                <SelectItem value="Expiring Soon">Expiring Soon</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon">
-              <Calendar className="h-4 w-4" />
-            </Button>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={loadData}>
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
@@ -251,7 +259,6 @@ export default function BloodStock() {
             <TabsList className="m-4">
               <TabsTrigger value="all">All Units</TabsTrigger>
               <TabsTrigger value="available">Available</TabsTrigger>
-              <TabsTrigger value="reserved">Reserved</TabsTrigger>
               <TabsTrigger value="expiring">Expiring Soon</TabsTrigger>
             </TabsList>
             <TabsContent value={activeTab} className="mt-0">
@@ -264,33 +271,39 @@ export default function BloodStock() {
                     <TableHead>Collection Date</TableHead>
                     <TableHead>Expiry Date</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Donor</TableHead>
+                    <TableHead>Batch #</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="font-medium text-primary">{item.id}</TableCell>
-                      <TableCell>{getBloodTypeBadge(item.blood_type)}</TableCell>
-                      <TableCell>{item.units}</TableCell>
-                      <TableCell>{item.collection_date}</TableCell>
-                      <TableCell>{item.expiry_date}</TableCell>
-                      <TableCell>{getStatusBadge(item.status)}</TableCell>
-                      <TableCell>{item.location}</TableCell>
-                      <TableCell className="text-primary">{item.donor}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                  {filteredItems.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                        No blood stock records found
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : (
+                    filteredItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium text-primary">BS-{item.id.toString().padStart(3, '0')}</TableCell>
+                        <TableCell>{getBloodTypeBadge(item.blood_type)}</TableCell>
+                        <TableCell>{item.units}</TableCell>
+                        <TableCell>{item.collection_date ? new Date(item.collection_date).toLocaleDateString() : '—'}</TableCell>
+                        <TableCell>{item.expiry_date ? new Date(item.expiry_date).toLocaleDateString() : '—'}</TableCell>
+                        <TableCell>{getStatusBadge(item.status)}</TableCell>
+                        <TableCell>{item.batch_number || '—'}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
               <div className="p-4 flex items-center justify-between border-t">
-                <p className="text-sm text-muted-foreground">Showing 1-{filteredItems.length} of {items.length} units</p>
+                <p className="text-sm text-muted-foreground">Showing {filteredItems.length} units</p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" disabled>Previous</Button>
                   <Button variant="outline" size="sm">Next</Button>
