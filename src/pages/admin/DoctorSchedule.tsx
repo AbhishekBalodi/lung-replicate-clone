@@ -1,66 +1,179 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, Plus, Edit, Trash2, Save, AlertCircle, Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
+import { toast } from "sonner";
 
 interface TimeSlot {
   id: number;
   day: string;
-  startTime: string;
-  endTime: string;
-  slotDuration: number;
-  isActive: boolean;
+  start_time: string;
+  end_time: string;
+  slot_duration: number;
+  is_active: boolean;
 }
 
 interface LeaveRequest {
   id: number;
-  startDate: string;
-  endDate: string;
+  start_date: string;
+  end_date: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
 }
 
+interface ScheduleSettings {
+  default_slot_duration: number;
+  buffer_time: number;
+  booking_window_days: number;
+  cancellation_hours: number;
+}
+
 const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-const mockSchedule: TimeSlot[] = [
-  { id: 1, day: "Monday", startTime: "09:00", endTime: "13:00", slotDuration: 15, isActive: true },
-  { id: 2, day: "Monday", startTime: "17:00", endTime: "20:00", slotDuration: 15, isActive: true },
-  { id: 3, day: "Tuesday", startTime: "09:00", endTime: "13:00", slotDuration: 15, isActive: true },
-  { id: 4, day: "Wednesday", startTime: "09:00", endTime: "13:00", slotDuration: 15, isActive: true },
-  { id: 5, day: "Thursday", startTime: "09:00", endTime: "13:00", slotDuration: 15, isActive: true },
-  { id: 6, day: "Friday", startTime: "09:00", endTime: "13:00", slotDuration: 15, isActive: true },
-  { id: 7, day: "Saturday", startTime: "10:00", endTime: "14:00", slotDuration: 20, isActive: true },
-  { id: 8, day: "Sunday", startTime: "10:00", endTime: "12:00", slotDuration: 20, isActive: false },
-];
-
-const mockLeaves: LeaveRequest[] = [
-  { id: 1, startDate: "2026-01-20", endDate: "2026-01-22", reason: "Personal leave", status: "approved" },
-  { id: 2, startDate: "2026-02-14", endDate: "2026-02-14", reason: "Conference", status: "pending" },
-];
-
 export default function DoctorSchedule() {
-  const [schedule, setSchedule] = useState<TimeSlot[]>(mockSchedule);
-  const [leaves, setLeaves] = useState<LeaveRequest[]>(mockLeaves);
+  const [schedule, setSchedule] = useState<TimeSlot[]>([]);
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [settings, setSettings] = useState<ScheduleSettings>({
+    default_slot_duration: 15,
+    buffer_time: 5,
+    booking_window_days: 30,
+    cancellation_hours: 24
+  });
   const [emergencyMode, setEmergencyMode] = useState(false);
-  const [defaultSlotDuration, setDefaultSlotDuration] = useState("15");
+  const [loading, setLoading] = useState(true);
+  const [isSlotDialogOpen, setIsSlotDialogOpen] = useState(false);
+  const [isLeaveDialogOpen, setIsLeaveDialogOpen] = useState(false);
+  const [slotForm, setSlotForm] = useState({ day: "Monday", start_time: "09:00", end_time: "17:00", slot_duration: 15 });
+  const [leaveForm, setLeaveForm] = useState({ start_date: "", end_date: "", reason: "" });
 
-  const toggleSlotActive = (id: number) => {
-    setSchedule(schedule.map(slot =>
-      slot.id === id ? { ...slot, isActive: !slot.isActive } : slot
-    ));
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [slotsRes, leavesRes, settingsRes] = await Promise.all([
+        apiGet("/api/dashboard/schedule/slots"),
+        apiGet("/api/dashboard/schedule/leaves"),
+        apiGet("/api/dashboard/schedule/settings")
+      ]);
+
+      if (slotsRes.ok) {
+        const data = await slotsRes.json();
+        setSchedule(data.slots || []);
+      }
+
+      if (leavesRes.ok) {
+        const data = await leavesRes.json();
+        setLeaves(data.leaves || []);
+      }
+
+      if (settingsRes.ok) {
+        const data = await settingsRes.json();
+        if (data.settings) setSettings(data.settings);
+      }
+    } catch (error) {
+      console.error("Error fetching schedule data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleAddSlot = async () => {
+    try {
+      const res = await apiPost("/api/dashboard/schedule/slots", slotForm);
+      if (res.ok) {
+        const data = await res.json();
+        toast.success("Slot added successfully");
+        setIsSlotDialogOpen(false);
+        if (data.slot) {
+          setSchedule(prev => [...prev, data.slot]);
+        } else {
+          fetchData();
+        }
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to add slot");
+      }
+    } catch (error) {
+      toast.error("Failed to add slot");
+    }
+  };
+
+  const handleAddLeave = async () => {
+    if (!leaveForm.start_date || !leaveForm.end_date) {
+      toast.error("Start and end dates are required");
+      return;
+    }
+    try {
+      const res = await apiPost("/api/dashboard/schedule/leaves", leaveForm);
+      if (res.ok) {
+        const data = await res.json();
+        toast.success("Leave request submitted");
+        setIsLeaveDialogOpen(false);
+        setLeaveForm({ start_date: "", end_date: "", reason: "" });
+        if (data.leave) {
+          setLeaves(prev => [...prev, data.leave]);
+        } else {
+          fetchData();
+        }
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to submit leave");
+      }
+    } catch (error) {
+      toast.error("Failed to submit leave request");
+    }
+  };
+
+  const toggleSlotActive = async (id: number) => {
+    try {
+      const res = await apiPut(`/api/dashboard/schedule/slots/${id}/toggle`, {});
+      if (res.ok) {
+        setSchedule(prev => prev.map(slot =>
+          slot.id === id ? { ...slot, is_active: !slot.is_active } : slot
+        ));
+      }
+    } catch (error) {
+      toast.error("Failed to toggle slot");
+    }
+  };
+
+  const deleteSlot = async (id: number) => {
+    if (!confirm("Delete this time slot?")) return;
+    try {
+      const res = await apiDelete(`/api/dashboard/schedule/slots/${id}`);
+      if (res.ok) {
+        toast.success("Slot deleted");
+        setSchedule(prev => prev.filter(s => s.id !== id));
+      }
+    } catch (error) {
+      toast.error("Failed to delete slot");
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      const res = await apiPost("/api/dashboard/schedule/settings", settings);
+      if (res.ok) {
+        toast.success("Settings saved");
+      } else {
+        toast.error("Failed to save settings");
+      }
+    } catch (error) {
+      toast.error("Failed to save settings");
+    }
   };
 
   const getScheduleByDay = (day: string) => schedule.filter(slot => slot.day === day);
@@ -92,7 +205,7 @@ export default function DoctorSchedule() {
                 onCheckedChange={setEmergencyMode}
               />
             </div>
-            <Button className="bg-emerald-600 hover:bg-emerald-700">
+            <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={handleSaveSettings}>
               <Save className="h-4 w-4 mr-2" />
               Save Changes
             </Button>
@@ -107,60 +220,95 @@ export default function DoctorSchedule() {
           </TabsList>
 
           <TabsContent value="weekly" className="mt-4">
-            <div className="grid gap-4">
-              {daysOfWeek.map((day) => {
-                const daySlots = getScheduleByDay(day);
-                return (
-                  <Card key={day}>
-                    <CardHeader className="py-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base">{day}</CardTitle>
-                        <Button variant="outline" size="sm">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add Slot
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      {daySlots.length > 0 ? (
-                        <div className="flex flex-wrap gap-3">
-                          {daySlots.map((slot) => (
-                            <div
-                              key={slot.id}
-                              className={`flex items-center gap-3 p-3 rounded-lg border ${
-                                slot.isActive ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'
-                              }`}
-                            >
-                              <div className="flex items-center gap-2">
-                                <Clock className={`h-4 w-4 ${slot.isActive ? 'text-emerald-600' : 'text-gray-400'}`} />
-                                <span className="font-medium">{slot.startTime} - {slot.endTime}</span>
+            {loading ? (
+              <Card><CardContent className="py-8 text-center text-muted-foreground">Loading...</CardContent></Card>
+            ) : (
+              <div className="grid gap-4">
+                {daysOfWeek.map((day) => {
+                  const daySlots = getScheduleByDay(day);
+                  return (
+                    <Card key={day}>
+                      <CardHeader className="py-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base">{day}</CardTitle>
+                          <Dialog open={isSlotDialogOpen && slotForm.day === day} onOpenChange={(open) => { setIsSlotDialogOpen(open); if (open) setSlotForm({ ...slotForm, day }); }}>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm" onClick={() => setSlotForm({ ...slotForm, day })}>
+                                <Plus className="h-4 w-4 mr-1" />
+                                Add Slot
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Add Time Slot for {slotForm.day}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4 mt-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <Label>Start Time</Label>
+                                    <Input type="time" value={slotForm.start_time} onChange={(e) => setSlotForm({ ...slotForm, start_time: e.target.value })} />
+                                  </div>
+                                  <div>
+                                    <Label>End Time</Label>
+                                    <Input type="time" value={slotForm.end_time} onChange={(e) => setSlotForm({ ...slotForm, end_time: e.target.value })} />
+                                  </div>
+                                </div>
+                                <div>
+                                  <Label>Slot Duration (minutes)</Label>
+                                  <Select value={slotForm.slot_duration.toString()} onValueChange={(v) => setSlotForm({ ...slotForm, slot_duration: parseInt(v) })}>
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="10">10 minutes</SelectItem>
+                                      <SelectItem value="15">15 minutes</SelectItem>
+                                      <SelectItem value="20">20 minutes</SelectItem>
+                                      <SelectItem value="30">30 minutes</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <Button onClick={handleAddSlot} className="w-full">Add Slot</Button>
                               </div>
-                              <Badge variant="outline" className="text-xs">
-                                {slot.slotDuration} min slots
-                              </Badge>
-                              <Switch
-                                checked={slot.isActive}
-                                onCheckedChange={() => toggleSlotActive(slot.id)}
-                              />
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ))}
+                            </DialogContent>
+                          </Dialog>
                         </div>
-                      ) : (
-                        <div className="text-sm text-muted-foreground py-2">
-                          No slots configured. Click "Add Slot" to set availability.
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        {daySlots.length > 0 ? (
+                          <div className="flex flex-wrap gap-3">
+                            {daySlots.map((slot) => (
+                              <div
+                                key={slot.id}
+                                className={`flex items-center gap-3 p-3 rounded-lg border ${
+                                  slot.is_active ? 'bg-emerald-50 border-emerald-200' : 'bg-gray-50 border-gray-200'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <Clock className={`h-4 w-4 ${slot.is_active ? 'text-emerald-600' : 'text-gray-400'}`} />
+                                  <span className="font-medium">{slot.start_time} - {slot.end_time}</span>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  {slot.slot_duration} min slots
+                                </Badge>
+                                <Switch
+                                  checked={slot.is_active}
+                                  onCheckedChange={() => toggleSlotActive(slot.id)}
+                                />
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteSlot(slot.id)}>
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-sm text-muted-foreground py-2">
+                            No slots configured. Click "Add Slot" to set availability.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="leaves" className="mt-4">
@@ -171,41 +319,64 @@ export default function DoctorSchedule() {
                     <CardTitle>Leave Requests</CardTitle>
                     <CardDescription>Manage your time off and unavailability</CardDescription>
                   </div>
-                  <Button className="bg-emerald-600 hover:bg-emerald-700">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Request Leave
-                  </Button>
+                  <Dialog open={isLeaveDialogOpen} onOpenChange={setIsLeaveDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-emerald-600 hover:bg-emerald-700">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Request Leave
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Request Leave</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label>Start Date</Label>
+                            <Input type="date" value={leaveForm.start_date} onChange={(e) => setLeaveForm({ ...leaveForm, start_date: e.target.value })} />
+                          </div>
+                          <div>
+                            <Label>End Date</Label>
+                            <Input type="date" value={leaveForm.end_date} onChange={(e) => setLeaveForm({ ...leaveForm, end_date: e.target.value })} />
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Reason</Label>
+                          <Textarea value={leaveForm.reason} onChange={(e) => setLeaveForm({ ...leaveForm, reason: e.target.value })} placeholder="Reason for leave..." />
+                        </div>
+                        <Button onClick={handleAddLeave} className="w-full">Submit Request</Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {leaves.map((leave) => (
-                    <div key={leave.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <Calendar className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            {new Date(leave.startDate).toLocaleDateString()} 
-                            {leave.startDate !== leave.endDate && ` - ${new Date(leave.endDate).toLocaleDateString()}`}
+                  {leaves.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-4">No leave requests</p>
+                  ) : (
+                    leaves.map((leave) => (
+                      <div key={leave.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                            <Calendar className="h-5 w-5 text-blue-600" />
                           </div>
-                          <div className="text-sm text-muted-foreground">{leave.reason}</div>
+                          <div>
+                            <div className="font-medium">
+                              {new Date(leave.start_date).toLocaleDateString()} 
+                              {leave.start_date !== leave.end_date && ` - ${new Date(leave.end_date).toLocaleDateString()}`}
+                            </div>
+                            <div className="text-sm text-muted-foreground">{leave.reason}</div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(leave.status)}>
                           {leave.status === "approved" && <Check className="h-3 w-3 mr-1" />}
                           {leave.status.charAt(0).toUpperCase() + leave.status.slice(1)}
                         </Badge>
-                        {leave.status === "pending" && (
-                          <Button variant="ghost" size="sm" className="text-destructive">
-                            Cancel
-                          </Button>
-                        )}
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -219,10 +390,8 @@ export default function DoctorSchedule() {
                   <CardDescription>Default duration for appointment slots</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Select value={defaultSlotDuration} onValueChange={setDefaultSlotDuration}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={settings.default_slot_duration.toString()} onValueChange={(v) => setSettings({ ...settings, default_slot_duration: parseInt(v) })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="10">10 minutes</SelectItem>
                       <SelectItem value="15">15 minutes</SelectItem>
@@ -241,10 +410,8 @@ export default function DoctorSchedule() {
                   <CardDescription>Time between consecutive appointments</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Select defaultValue="5">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={settings.buffer_time.toString()} onValueChange={(v) => setSettings({ ...settings, buffer_time: parseInt(v) })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="0">No buffer</SelectItem>
                       <SelectItem value="5">5 minutes</SelectItem>
@@ -261,10 +428,8 @@ export default function DoctorSchedule() {
                   <CardDescription>How far in advance can patients book</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Select defaultValue="30">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={settings.booking_window_days.toString()} onValueChange={(v) => setSettings({ ...settings, booking_window_days: parseInt(v) })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="7">1 week</SelectItem>
                       <SelectItem value="14">2 weeks</SelectItem>
@@ -282,10 +447,8 @@ export default function DoctorSchedule() {
                   <CardDescription>Minimum notice for cancellations</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Select defaultValue="24">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={settings.cancellation_hours.toString()} onValueChange={(v) => setSettings({ ...settings, cancellation_hours: parseInt(v) })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="0">No restriction</SelectItem>
                       <SelectItem value="2">2 hours</SelectItem>
