@@ -818,6 +818,117 @@ CREATE TABLE IF NOT EXISTS staff (
 -- ============================================
 -- SEED DEFAULT DATA
 -- ============================================
+-- TELEMEDICINE SESSIONS
+-- ============================================
+CREATE TABLE IF NOT EXISTS telemedicine_sessions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_id INT,
+  patient_name VARCHAR(255),
+  doctor_id INT,
+  type ENUM('video', 'chat', 'phone') DEFAULT 'video',
+  scheduled_time DATETIME NOT NULL,
+  duration VARCHAR(50) DEFAULT '30 min',
+  status ENUM('scheduled', 'in-progress', 'completed', 'cancelled') DEFAULT 'scheduled',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL,
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL,
+  INDEX idx_telemedicine_status (status),
+  INDEX idx_telemedicine_scheduled (scheduled_time)
+);
+
+-- ============================================
+-- DOCTOR SCHEDULE
+-- ============================================
+CREATE TABLE IF NOT EXISTS doctor_schedule (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT,
+  day ENUM('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday') NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  slot_duration INT DEFAULT 15,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE,
+  INDEX idx_schedule_doctor (doctor_id),
+  INDEX idx_schedule_day (day)
+);
+
+-- ============================================
+-- LEAVE REQUESTS
+-- ============================================
+CREATE TABLE IF NOT EXISTS leave_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT,
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  reason TEXT,
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE,
+  INDEX idx_leave_doctor (doctor_id),
+  INDEX idx_leave_status (status)
+);
+
+-- ============================================
+-- SCHEDULE SETTINGS
+-- ============================================
+CREATE TABLE IF NOT EXISTS schedule_settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT UNIQUE,
+  default_slot_duration INT DEFAULT 15,
+  buffer_time INT DEFAULT 5,
+  booking_window_days INT DEFAULT 30,
+  cancellation_hours INT DEFAULT 24,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE
+);
+
+-- ============================================
+-- TASKS
+-- ============================================
+CREATE TABLE IF NOT EXISTS tasks (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  doctor_id INT,
+  patient_id INT,
+  type ENUM('report', 'follow-up', 'emergency', 'lab', 'general') DEFAULT 'general',
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  due_date DATE,
+  priority ENUM('high', 'medium', 'low') DEFAULT 'medium',
+  status ENUM('pending', 'completed') DEFAULT 'pending',
+  completed_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE,
+  FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL,
+  INDEX idx_tasks_doctor (doctor_id),
+  INDEX idx_tasks_status (status),
+  INDEX idx_tasks_priority (priority)
+);
+
+-- ============================================
+-- NOTIFICATIONS
+-- ============================================
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT,
+  type ENUM('info', 'warning', 'success', 'error') DEFAULT 'info',
+  title VARCHAR(255) NOT NULL,
+  message TEXT,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_notifications_user (user_id),
+  INDEX idx_notifications_read (is_read)
+);
+
+-- ============================================
+-- SEED DATA
+-- ============================================
 
 -- Seed notification settings
 INSERT IGNORE INTO notification_settings (category, setting_key, setting_name, enabled, email_enabled, sms_enabled) VALUES
@@ -835,3 +946,13 @@ INSERT IGNORE INTO access_roles (name, description) VALUES
 ('admin', 'Doctor/Admin access'),
 ('staff', 'Staff access'),
 ('patient', 'Patient access');
+
+-- Seed default schedule for doctors
+INSERT IGNORE INTO doctor_schedule (doctor_id, day, start_time, end_time, slot_duration, is_active) VALUES
+(1, 'Monday', '09:00:00', '13:00:00', 15, TRUE),
+(1, 'Monday', '17:00:00', '20:00:00', 15, TRUE),
+(1, 'Tuesday', '09:00:00', '13:00:00', 15, TRUE),
+(1, 'Wednesday', '09:00:00', '13:00:00', 15, TRUE),
+(1, 'Thursday', '09:00:00', '13:00:00', 15, TRUE),
+(1, 'Friday', '09:00:00', '13:00:00', 15, TRUE),
+(1, 'Saturday', '10:00:00', '14:00:00', 20, TRUE);
