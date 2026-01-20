@@ -1,23 +1,88 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FlaskConical, Download, Calendar, TrendingUp, TrendingDown, Minus, AlertCircle } from "lucide-react";
+import { FlaskConical, Download, Calendar, RefreshCw, AlertCircle, User } from "lucide-react";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
+import { apiGet } from "@/lib/api";
+import { toast } from "sonner";
+
+interface LabReport {
+  id: number;
+  test_name: string;
+  status: string;
+  result: string | null;
+  notes: string | null;
+  prescribed_date: string;
+  completed_date: string | null;
+  doctor_name: string;
+  category: string | null;
+  sample_type: string | null;
+}
 
 const PatientLabReports = () => {
-  // Note: Lab reports would typically come from a lab_results table
-  // For now, showing placeholder as no lab_results table exists
-  const [reports] = useState<any[]>([]);
+  const { user } = useCustomAuth();
+  const [loading, setLoading] = useState(true);
+  const [reports, setReports] = useState<LabReport[]>([]);
 
-  const pendingReports = reports.filter(r => r.status !== "report-ready");
-  const completedReports = reports.filter(r => r.status === "report-ready");
+  const fetchReports = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await apiGet(`/api/dashboard/patient/lab-reports?email=${encodeURIComponent(user?.email || '')}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReports(data.labReports || []);
+      }
+    } catch (error) {
+      console.error('Error fetching lab reports:', error);
+      toast.error('Failed to load lab reports');
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.email]);
+
+  useEffect(() => {
+    if (user?.email) {
+      fetchReports();
+    }
+  }, [user?.email, fetchReports]);
+
+  const pendingReports = reports.filter(r => r.status !== 'completed' && r.status !== 'report-ready');
+  const completedReports = reports.filter(r => r.status === 'completed' || r.status === 'report-ready');
+
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed':
+      case 'report-ready':
+        return <Badge className="bg-green-500">Completed</Badge>;
+      case 'pending':
+        return <Badge variant="outline">Pending</Badge>;
+      case 'in-progress':
+        return <Badge variant="default">In Progress</Badge>;
+      default:
+        return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-muted-foreground">Loading lab reports...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Lab & Diagnostic Reports</h1>
-        <p className="text-muted-foreground">View your test results (Read-Only)</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Lab & Diagnostic Reports</h1>
+          <p className="text-muted-foreground">View your test results (Read-Only)</p>
+        </div>
+        <Button variant="outline" size="icon" onClick={fetchReports}>
+          <RefreshCw className="h-4 w-4" />
+        </Button>
       </div>
 
       <Tabs defaultValue="completed">
@@ -45,12 +110,29 @@ const PatientLabReports = () => {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <FlaskConical className="h-5 w-5 text-purple-600" />
-                        <span className="font-semibold">{report.testName}</span>
+                        <span className="font-semibold">{report.test_name}</span>
+                        {getStatusBadge(report.status)}
                       </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{new Date(report.date).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {new Date(report.completed_date || report.prescribed_date).toLocaleDateString()}
+                        </span>
+                        {report.doctor_name && (
+                          <span className="flex items-center gap-1">
+                            <User className="h-4 w-4" />
+                            {report.doctor_name}
+                          </span>
+                        )}
                       </div>
+                      {report.result && (
+                        <p className="text-sm">
+                          <span className="font-medium">Result:</span> {report.result}
+                        </p>
+                      )}
+                      {report.category && (
+                        <Badge variant="outline">{report.category}</Badge>
+                      )}
                     </div>
                     <Button variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-1" />
@@ -78,12 +160,20 @@ const PatientLabReports = () => {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <FlaskConical className="h-5 w-5 text-purple-600" />
-                        <span className="font-semibold">{report.testName}</span>
-                        <Badge variant="outline">Pending</Badge>
+                        <span className="font-semibold">{report.test_name}</span>
+                        {getStatusBadge(report.status)}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>Ordered on {new Date(report.date).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          Ordered on {new Date(report.prescribed_date).toLocaleDateString()}
+                        </span>
+                        {report.doctor_name && (
+                          <span className="flex items-center gap-1">
+                            <User className="h-4 w-4" />
+                            {report.doctor_name}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <AlertCircle className="h-5 w-5 text-orange-500" />
@@ -101,7 +191,7 @@ const PatientLabReports = () => {
           <CardTitle className="text-sm">Understanding Your Results</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-6 text-sm">
+          <div className="flex flex-wrap gap-6 text-sm">
             <div className="flex items-center gap-2">
               <Badge className="bg-green-500">Normal</Badge>
               <span className="text-muted-foreground">Within normal range</span>
