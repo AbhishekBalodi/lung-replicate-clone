@@ -234,6 +234,12 @@ const SuperAdminDashboard = () => {
   
   // Rooms state
   const [allRooms, setAllRooms] = useState<Room[]>([]);
+
+  // Backend-driven charts (Super Admin)
+const [superAdminCharts, setSuperAdminCharts] = useState<any>(null);
+const [chartsLoading, setChartsLoading] = useState(false);
+const [chartsError, setChartsError] = useState<string | null>(null);
+
   
   // Invoices state
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
@@ -281,6 +287,31 @@ const SuperAdminDashboard = () => {
       setDoctorsLoading(false);
     }
   }, []);
+
+  // fetch super admin charts
+  const fetchSuperAdminCharts = useCallback(async () => {
+  try {
+    setChartsLoading(true);
+    setChartsError(null);
+
+    const res = await apiFetch('/api/dashboard/superadmin/charts', {
+      method: 'GET'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data?.error || 'Failed to load charts');
+    }
+
+    setSuperAdminCharts(data);
+  } catch (err: any) {
+    setChartsError(err.message || 'Charts API error');
+  } finally {
+    setChartsLoading(false);
+  }
+}, []);
+
 
   // Fetch all appointments (from all doctors in the hospital)
   const fetchAppointments = useCallback(async () => {
@@ -365,6 +396,11 @@ const SuperAdminDashboard = () => {
     fetchAllRooms();
     fetchAllInvoices();
   }, [fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices]);
+
+  useEffect(() => {
+  fetchSuperAdminCharts();
+}, [fetchSuperAdminCharts]);
+
 
   const resetForm = () => {
     setFormData({
@@ -768,12 +804,25 @@ const SuperAdminDashboard = () => {
    PERFORMANCE METRICS GRAPHS
 ================================ */}
           <div className="mt-6">
-            <SuperAdminGraphs
-              appointments={appointments}
-              patients={allPatients}
-              invoices={allInvoices}
-              doctors={doctors}
-            />
+            {chartsLoading ? (
+  <div className="flex items-center justify-center h-[350px]">
+    <div className="animate-spin h-6 w-6 border-2 border-emerald-600 border-t-transparent rounded-full" />
+  </div>
+) : chartsError ? (
+  <div className="text-red-500 text-sm">
+    Failed to load charts data
+  </div>
+) : (
+  <SuperAdminGraphs
+    appointments={appointments}
+    patients={allPatients}
+    invoices={allInvoices}
+    doctors={doctors}
+    backendCharts={superAdminCharts}
+  />
+)}
+
+
           </div>
 
 

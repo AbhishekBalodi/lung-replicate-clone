@@ -4,9 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, User, Building2, CheckCircle } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  User,
+  Building2,
+  CheckCircle,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
@@ -20,7 +32,7 @@ const PatientBookAppointment = () => {
     doctor: "",
     date: "",
     time: "",
-    reason: ""
+    reason: "",
   });
 
   const departments = [
@@ -29,7 +41,7 @@ const PatientBookAppointment = () => {
     "Orthopedics",
     "Dermatology",
     "Pediatrics",
-    "Gynecology"
+    "Gynecology",
   ];
 
   const doctors = [
@@ -40,13 +52,22 @@ const PatientBookAppointment = () => {
   ];
 
   const timeSlots = [
-    "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM",
-    "11:00 AM", "11:30 AM", "02:00 PM", "02:30 PM",
-    "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"
+    "09:00 AM",
+    "09:30 AM",
+    "10:00 AM",
+    "10:30 AM",
+    "11:00 AM",
+    "11:30 AM",
+    "02:00 PM",
+    "02:30 PM",
+    "03:00 PM",
+    "03:30 PM",
+    "04:00 PM",
+    "04:30 PM",
   ];
 
-  const filteredDoctors = formData.department 
-    ? doctors.filter(d => d.department === formData.department)
+  const filteredDoctors = formData.department
+    ? doctors.filter((d) => d.department === formData.department)
     : doctors;
 
   const handleSubmit = () => {
@@ -61,25 +82,41 @@ const PatientBookAppointment = () => {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Book New Appointment</h1>
-          <p className="text-muted-foreground">Schedule your visit in a few simple steps</p>
+          <h1 className="text-2xl font-bold">
+            Book New Appointment
+          </h1>
+          <p className="text-muted-foreground">
+            Schedule your visit in a few simple steps
+          </p>
         </div>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center gap-4">
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center gap-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step >= s ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground"
-              }`}>
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  step >= s
+                    ? "bg-blue-600 text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
                 {s}
               </div>
-              {s < 3 && <div className={`w-12 h-1 ${step > s ? "bg-blue-600" : "bg-muted"}`} />}
+              {s < 3 && (
+                <div
+                  className={`w-12 h-1 ${
+                    step > s
+                      ? "bg-blue-600"
+                      : "bg-muted"
+                  }`}
+                />
+              )}
             </div>
           ))}
         </div>
 
-        {/* Step 1: Select Department & Doctor */}
+        {/* Step 1 */}
         {step === 1 && (
           <Card>
             <CardHeader>
@@ -91,13 +128,27 @@ const PatientBookAppointment = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Department</Label>
-                <Select value={formData.department} onValueChange={(v) => setFormData({ ...formData, department: v, doctor: "" })}>
+                <Select
+                  value={formData.department}
+                  onValueChange={(v) =>
+                    setFormData({
+                      ...formData,
+                      department: v,
+                      doctor: "",
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {departments.map(dept => (
-                      <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem
+                        key={dept}
+                        value={dept}
+                      >
+                        {dept}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -105,22 +156,38 @@ const PatientBookAppointment = () => {
 
               <div className="space-y-2">
                 <Label>Doctor</Label>
-                <Select value={formData.doctor} onValueChange={(v) => setFormData({ ...formData, doctor: v })}>
+                <Select
+                  value={formData.doctor}
+                  onValueChange={(v) =>
+                    setFormData({
+                      ...formData,
+                      doctor: v,
+                    })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select doctor" />
                   </SelectTrigger>
                   <SelectContent>
-                    {filteredDoctors.map(doc => (
-                      <SelectItem key={doc.id} value={doc.id}>{doc.name}</SelectItem>
+                    {filteredDoctors.map((doc) => (
+                      <SelectItem
+                        key={doc.id}
+                        value={doc.id}
+                      >
+                        {doc.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <Button 
-                className="w-full" 
+              <Button
+                className="w-full"
                 onClick={() => setStep(2)}
-                disabled={!formData.department || !formData.doctor}
+                disabled={
+                  !formData.department ||
+                  !formData.doctor
+                }
               >
                 Continue
               </Button>
@@ -128,7 +195,7 @@ const PatientBookAppointment = () => {
           </Card>
         )}
 
-        {/* Step 2: Select Date & Time */}
+        {/* Step 2 */}
         {step === 2 && (
           <Card>
             <CardHeader>
@@ -140,23 +207,39 @@ const PatientBookAppointment = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Date</Label>
-                <Input 
-                  type="date" 
+                <Input
+                  type="date"
                   value={formData.date}
-                  min={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  min={new Date()
+                    .toISOString()
+                    .split("T")[0]}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      date: e.target.value,
+                    })
+                  }
                 />
               </div>
 
               <div className="space-y-2">
                 <Label>Available Time Slots</Label>
                 <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map(slot => (
+                  {timeSlots.map((slot) => (
                     <Button
                       key={slot}
-                      variant={formData.time === slot ? "default" : "outline"}
+                      variant={
+                        formData.time === slot
+                          ? "default"
+                          : "outline"
+                      }
                       size="sm"
-                      onClick={() => setFormData({ ...formData, time: slot })}
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          time: slot,
+                        })
+                      }
                     >
                       {slot}
                     </Button>
@@ -165,11 +248,19 @@ const PatientBookAppointment = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-                <Button 
-                  className="flex-1" 
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(1)}
+                >
+                  Back
+                </Button>
+                <Button
+                  className="flex-1"
                   onClick={() => setStep(3)}
-                  disabled={!formData.date || !formData.time}
+                  disabled={
+                    !formData.date ||
+                    !formData.time
+                  }
                 >
                   Continue
                 </Button>
@@ -178,7 +269,7 @@ const PatientBookAppointment = () => {
           </Card>
         )}
 
-        {/* Step 3: Confirm */}
+        {/* Step 3 */}
         {step === 3 && (
           <Card>
             <CardHeader>
@@ -189,33 +280,78 @@ const PatientBookAppointment = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Reason for Visit (Optional)</Label>
-                <Textarea 
-                  placeholder="Describe your symptoms or reason for consultation..."
+                <Label>
+                  Reason for Visit (Optional)
+                </Label>
+                <Textarea
+                  placeholder="Describe your symptoms..."
                   value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      reason: e.target.value,
+                    })
+                  }
                 />
               </div>
 
               <div className="bg-muted p-4 rounded-lg space-y-2">
-                <h3 className="font-medium">Appointment Summary</h3>
+                <h3 className="font-medium">
+                  Appointment Summary
+                </h3>
                 <div className="text-sm space-y-1">
-                  <p><span className="text-muted-foreground">Department:</span> {formData.department}</p>
-                  <p><span className="text-muted-foreground">Doctor:</span> {doctors.find(d => d.id === formData.doctor)?.name}</p>
-                  <p><span className="text-muted-foreground">Date:</span> {new Date(formData.date).toLocaleDateString()}</p>
-                  <p><span className="text-muted-foreground">Time:</span> {formData.time}</p>
+                  <p>
+                    <span className="text-muted-foreground">
+                      Department:
+                    </span>{" "}
+                    {formData.department}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">
+                      Doctor:
+                    </span>{" "}
+                    {
+                      doctors.find(
+                        (d) =>
+                          d.id === formData.doctor
+                      )?.name
+                    }
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">
+                      Date:
+                    </span>{" "}
+                    {new Date(
+                      formData.date
+                    ).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">
+                      Time:
+                    </span>{" "}
+                    {formData.time}
+                  </p>
                 </div>
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
-                <Button className="flex-1" onClick={handleSubmit}>
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(2)}
+                >
+                  Back
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleSubmit}
+                >
                   Confirm Booking
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
+      </div>
     </div>
   );
 };

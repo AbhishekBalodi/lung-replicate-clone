@@ -4,10 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Upload, FileText, X, CheckCircle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 
 interface UploadedDocument {
   id: string;
@@ -24,9 +29,27 @@ const PatientUploadReports = () => {
   const [notes, setNotes] = useState("");
 
   const [uploadedDocuments] = useState<UploadedDocument[]>([
-    { id: "1", name: "Blood_Test_Report.pdf", type: "Lab Report", uploadedAt: "2026-01-10", status: "reviewed" },
-    { id: "2", name: "X-Ray_Chest.jpg", type: "Imaging", uploadedAt: "2026-01-05", status: "reviewed" },
-    { id: "3", name: "Previous_Prescription.pdf", type: "Prescription", uploadedAt: "2026-01-02", status: "pending" },
+    {
+      id: "1",
+      name: "Blood_Test_Report.pdf",
+      type: "Lab Report",
+      uploadedAt: "2026-01-10",
+      status: "reviewed",
+    },
+    {
+      id: "2",
+      name: "X-Ray_Chest.jpg",
+      type: "Imaging",
+      uploadedAt: "2026-01-05",
+      status: "reviewed",
+    },
+    {
+      id: "3",
+      name: "Previous_Prescription.pdf",
+      type: "Prescription",
+      uploadedAt: "2026-01-02",
+      status: "pending",
+    },
   ]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,7 +63,7 @@ const PatientUploadReports = () => {
       toast({
         title: "Missing Information",
         description: "Please select a file and document type",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -49,6 +72,7 @@ const PatientUploadReports = () => {
       title: "Document Uploaded",
       description: "Your document has been uploaded successfully.",
     });
+
     setSelectedFile(null);
     setDocumentType("");
     setNotes("");
@@ -63,7 +87,9 @@ const PatientUploadReports = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Upload Reports</h1>
-          <p className="text-muted-foreground">Share medical documents with your healthcare providers</p>
+          <p className="text-muted-foreground">
+            Share medical documents with your healthcare providers
+          </p>
         </div>
 
         {/* Upload Form */}
@@ -83,10 +109,18 @@ const PatientUploadReports = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="lab-report">Lab Report</SelectItem>
-                  <SelectItem value="imaging">Imaging (X-Ray, MRI, CT)</SelectItem>
-                  <SelectItem value="prescription">Previous Prescription</SelectItem>
-                  <SelectItem value="discharge">Discharge Summary</SelectItem>
-                  <SelectItem value="insurance">Insurance Document</SelectItem>
+                  <SelectItem value="imaging">
+                    Imaging (X-Ray, MRI, CT)
+                  </SelectItem>
+                  <SelectItem value="prescription">
+                    Previous Prescription
+                  </SelectItem>
+                  <SelectItem value="discharge">
+                    Discharge Summary
+                  </SelectItem>
+                  <SelectItem value="insurance">
+                    Insurance Document
+                  </SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -96,8 +130,8 @@ const PatientUploadReports = () => {
               <Label>Select File</Label>
               {!selectedFile ? (
                 <div className="border-2 border-dashed rounded-lg p-8 text-center">
-                  <Input 
-                    type="file" 
+                  <Input
+                    type="file"
                     onChange={handleFileSelect}
                     className="hidden"
                     id="file-upload"
@@ -133,14 +167,17 @@ const PatientUploadReports = () => {
 
             <div className="space-y-2">
               <Label>Notes (Optional)</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Add any notes about this document..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div>
 
-            <Button onClick={handleUpload} disabled={!selectedFile || !documentType}>
+            <Button
+              onClick={handleUpload}
+              disabled={!selectedFile || !documentType}
+            >
               <Upload className="h-4 w-4 mr-2" />
               Upload Document
             </Button>
@@ -154,14 +191,18 @@ const PatientUploadReports = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {uploadedDocuments.map(doc => (
-                <div key={doc.id} className="flex items-center justify-between p-4 border rounded-lg">
+              {uploadedDocuments.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <FileText className="h-8 w-8 text-blue-600" />
                     <div>
                       <p className="font-medium">{doc.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {doc.type} • Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
+                        {doc.type} • Uploaded on{" "}
+                        {new Date(doc.uploadedAt).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -183,6 +224,7 @@ const PatientUploadReports = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
     </div>
   );
 };

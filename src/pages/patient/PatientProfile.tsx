@@ -5,14 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Phone, Mail, MapPin, Calendar, Shield, Users, AlertCircle, Edit, Save } from "lucide-react";
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Shield,
+  Users,
+  AlertCircle,
+  Edit,
+  Save,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 
 const PatientProfile = () => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const [profile, setProfile] = useState({
     fullName: "John Doe",
     email: "john.doe@email.com",
@@ -20,13 +30,13 @@ const PatientProfile = () => {
     dateOfBirth: "1990-05-15",
     gender: "Male",
     bloodGroup: "O+",
-    address: "123 Main Street, City, State - 560001"
+    address: "123 Main Street, City, State - 560001",
   });
 
   const [emergencyContact, setEmergencyContact] = useState({
     name: "Jane Doe",
     relationship: "Spouse",
-    phone: "+91 9876543211"
+    phone: "+91 9876543211",
   });
 
   const [familyMembers] = useState([
@@ -48,9 +58,11 @@ const PatientProfile = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Profile & Family</h1>
-            <p className="text-muted-foreground">Manage your personal information</p>
+            <p className="text-muted-foreground">
+              Manage your personal information
+            </p>
           </div>
-          <Button 
+          <Button
             variant={isEditing ? "default" : "outline"}
             onClick={isEditing ? handleSave : () => setIsEditing(true)}
           >
@@ -82,69 +94,114 @@ const PatientProfile = () => {
                   <div className="flex flex-col items-center gap-4">
                     <Avatar className="h-24 w-24">
                       <AvatarImage src="" />
-                      <AvatarFallback className="text-2xl">JD</AvatarFallback>
+                      <AvatarFallback className="text-2xl">
+                        JD
+                      </AvatarFallback>
                     </Avatar>
                     {isEditing && (
-                      <Button variant="outline" size="sm">Change Photo</Button>
+                      <Button variant="outline" size="sm">
+                        Change Photo
+                      </Button>
                     )}
                   </div>
 
                   <div className="flex-1 grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label>Full Name</Label>
-                      <Input 
+                      <Input
                         value={profile.fullName}
-                        onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            fullName: e.target.value,
+                          })
+                        }
                         disabled={!isEditing}
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label>Email</Label>
-                      <Input 
+                      <Input
                         type="email"
                         value={profile.email}
-                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            email: e.target.value,
+                          })
+                        }
                         disabled={!isEditing}
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label>Phone</Label>
-                      <Input 
+                      <Input
                         value={profile.phone}
-                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            phone: e.target.value,
+                          })
+                        }
                         disabled={!isEditing}
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label>Date of Birth</Label>
-                      <Input 
+                      <Input
                         type="date"
                         value={profile.dateOfBirth}
-                        onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            dateOfBirth: e.target.value,
+                          })
+                        }
                         disabled={!isEditing}
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label>Gender</Label>
-                      <Input 
+                      <Input
                         value={profile.gender}
-                        onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            gender: e.target.value,
+                          })
+                        }
                         disabled={!isEditing}
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label>Blood Group</Label>
-                      <Input 
+                      <Input
                         value={profile.bloodGroup}
-                        onChange={(e) => setProfile({ ...profile, bloodGroup: e.target.value })}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            bloodGroup: e.target.value,
+                          })
+                        }
                         disabled={!isEditing}
                       />
                     </div>
+
                     <div className="space-y-2 md:col-span-2">
                       <Label>Address</Label>
-                      <Input 
+                      <Input
                         value={profile.address}
-                        onChange={(e) => setProfile({ ...profile, address: e.target.value })}
+                        onChange={(e) =>
+                          setProfile({
+                            ...profile,
+                            address: e.target.value,
+                          })
+                        }
                         disabled={!isEditing}
                       />
                     </div>
@@ -166,25 +223,42 @@ const PatientProfile = () => {
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
                     <Label>Contact Name</Label>
-                    <Input 
+                    <Input
                       value={emergencyContact.name}
-                      onChange={(e) => setEmergencyContact({ ...emergencyContact, name: e.target.value })}
+                      onChange={(e) =>
+                        setEmergencyContact({
+                          ...emergencyContact,
+                          name: e.target.value,
+                        })
+                      }
                       disabled={!isEditing}
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label>Relationship</Label>
-                    <Input 
+                    <Input
                       value={emergencyContact.relationship}
-                      onChange={(e) => setEmergencyContact({ ...emergencyContact, relationship: e.target.value })}
+                      onChange={(e) =>
+                        setEmergencyContact({
+                          ...emergencyContact,
+                          relationship: e.target.value,
+                        })
+                      }
                       disabled={!isEditing}
                     />
                   </div>
+
                   <div className="space-y-2">
                     <Label>Phone Number</Label>
-                    <Input 
+                    <Input
                       value={emergencyContact.phone}
-                      onChange={(e) => setEmergencyContact({ ...emergencyContact, phone: e.target.value })}
+                      onChange={(e) =>
+                        setEmergencyContact({
+                          ...emergencyContact,
+                          phone: e.target.value,
+                        })
+                      }
                       disabled={!isEditing}
                     />
                   </div>
@@ -200,17 +274,20 @@ const PatientProfile = () => {
                   <Users className="h-5 w-5" />
                   Family Members (Dependents)
                 </CardTitle>
-                <Button size="sm">
-                  Add Member
-                </Button>
+                <Button size="sm">Add Member</Button>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {familyMembers.map(member => (
-                    <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {familyMembers.map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex items-center gap-4">
                         <Avatar>
-                          <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                          <AvatarFallback>
+                            {member.name.charAt(0)}
+                          </AvatarFallback>
                         </Avatar>
                         <div>
                           <p className="font-medium">{member.name}</p>
@@ -219,7 +296,9 @@ const PatientProfile = () => {
                           </p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm">Switch Profile</Button>
+                      <Button variant="outline" size="sm">
+                        Switch Profile
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -227,6 +306,7 @@ const PatientProfile = () => {
             </Card>
           </TabsContent>
         </Tabs>
+      </div>
     </div>
   );
 };

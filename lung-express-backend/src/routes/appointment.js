@@ -227,7 +227,7 @@ router.get('/', async (req, res) => {
           d.full_name AS doctor_name,
           a.message, a.status, a.created_at
         FROM appointments a
-        JOIN hospital_doctors d ON d.id = a.doctor_id
+        JOIN doctors d ON d.id = a.doctor_id
         ${whereSql}
         ORDER BY a.appointment_date, a.appointment_time, a.id DESC
       `

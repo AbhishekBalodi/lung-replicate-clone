@@ -4,11 +4,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { HelpCircle, MessageSquare, Phone, Mail, Clock, CheckCircle, AlertCircle, Plus } from "lucide-react";
+import {
+  HelpCircle,
+  MessageSquare,
+  Phone,
+  Mail,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Plus,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 
 interface SupportTicket {
   id: string;
@@ -25,12 +39,26 @@ const PatientSupport = () => {
   const [newTicket, setNewTicket] = useState({
     category: "",
     subject: "",
-    description: ""
+    description: "",
   });
 
   const [tickets] = useState<SupportTicket[]>([
-    { id: "TKT-001", subject: "Unable to download lab report", category: "Technical", status: "resolved", createdAt: "2026-01-10", lastUpdate: "2026-01-11" },
-    { id: "TKT-002", subject: "Billing discrepancy", category: "Billing", status: "in-progress", createdAt: "2026-01-12", lastUpdate: "2026-01-13" },
+    {
+      id: "TKT-001",
+      subject: "Unable to download lab report",
+      category: "Technical",
+      status: "resolved",
+      createdAt: "2026-01-10",
+      lastUpdate: "2026-01-11",
+    },
+    {
+      id: "TKT-002",
+      subject: "Billing discrepancy",
+      category: "Billing",
+      status: "in-progress",
+      createdAt: "2026-01-12",
+      lastUpdate: "2026-01-13",
+    },
   ]);
 
   const handleSubmitTicket = () => {
@@ -38,7 +66,7 @@ const PatientSupport = () => {
       toast({
         title: "Missing Information",
         description: "Please fill all fields",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -47,6 +75,7 @@ const PatientSupport = () => {
       title: "Ticket Submitted",
       description: "We'll get back to you within 24 hours.",
     });
+
     setNewTicket({ category: "", subject: "", description: "" });
     setShowNewTicket(false);
   };
@@ -54,11 +83,26 @@ const PatientSupport = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "resolved":
-        return <Badge variant="secondary" className="flex items-center gap-1"><CheckCircle className="h-3 w-3" />Resolved</Badge>;
+        return (
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <CheckCircle className="h-3 w-3" />
+            Resolved
+          </Badge>
+        );
       case "in-progress":
-        return <Badge className="flex items-center gap-1"><Clock className="h-3 w-3" />In Progress</Badge>;
+        return (
+          <Badge className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            In Progress
+          </Badge>
+        );
       default:
-        return <Badge variant="outline" className="flex items-center gap-1"><AlertCircle className="h-3 w-3" />Open</Badge>;
+        return (
+          <Badge variant="outline" className="flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Open
+          </Badge>
+        );
     }
   };
 
@@ -68,7 +112,9 @@ const PatientSupport = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Helpdesk & Support</h1>
-            <p className="text-muted-foreground">Get help with any issues or questions</p>
+            <p className="text-muted-foreground">
+              Get help with any issues or questions
+            </p>
           </div>
           <Button onClick={() => setShowNewTicket(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -86,8 +132,12 @@ const PatientSupport = () => {
                 </div>
                 <div>
                   <p className="font-medium">Call Us</p>
-                  <p className="text-sm text-muted-foreground">+91 1800-123-4567</p>
-                  <p className="text-xs text-muted-foreground">Mon-Sat, 8AM-8PM</p>
+                  <p className="text-sm text-muted-foreground">
+                    +91 1800-123-4567
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Mon-Sat, 8AM-8PM
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -101,8 +151,12 @@ const PatientSupport = () => {
                 </div>
                 <div>
                   <p className="font-medium">Email Us</p>
-                  <p className="text-sm text-muted-foreground">support@hospital.com</p>
-                  <p className="text-xs text-muted-foreground">Response within 24hrs</p>
+                  <p className="text-sm text-muted-foreground">
+                    support@hospital.com
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Response within 24hrs
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -116,8 +170,12 @@ const PatientSupport = () => {
                 </div>
                 <div>
                   <p className="font-medium">Live Chat</p>
-                  <p className="text-sm text-muted-foreground">Chat with support</p>
-                  <p className="text-xs text-muted-foreground">Available 24/7</p>
+                  <p className="text-sm text-muted-foreground">
+                    Chat with support
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Available 24/7
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -136,15 +194,28 @@ const PatientSupport = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={newTicket.category} onValueChange={(v) => setNewTicket({ ...newTicket, category: v })}>
+                <Select
+                  value={newTicket.category}
+                  onValueChange={(v) =>
+                    setNewTicket({ ...newTicket, category: v })
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="technical">Technical Issue</SelectItem>
-                    <SelectItem value="billing">Billing & Payment</SelectItem>
-                    <SelectItem value="appointment">Appointment Related</SelectItem>
-                    <SelectItem value="reports">Reports & Documents</SelectItem>
+                    <SelectItem value="technical">
+                      Technical Issue
+                    </SelectItem>
+                    <SelectItem value="billing">
+                      Billing & Payment
+                    </SelectItem>
+                    <SelectItem value="appointment">
+                      Appointment Related
+                    </SelectItem>
+                    <SelectItem value="reports">
+                      Reports & Documents
+                    </SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -152,26 +223,43 @@ const PatientSupport = () => {
 
               <div className="space-y-2">
                 <Label>Subject</Label>
-                <Input 
+                <Input
                   placeholder="Brief description of your issue"
                   value={newTicket.subject}
-                  onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
+                  onChange={(e) =>
+                    setNewTicket({
+                      ...newTicket,
+                      subject: e.target.value,
+                    })
+                  }
                 />
               </div>
 
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Textarea 
+                <Textarea
                   placeholder="Please describe your issue in detail..."
                   value={newTicket.description}
-                  onChange={(e) => setNewTicket({ ...newTicket, description: e.target.value })}
+                  onChange={(e) =>
+                    setNewTicket({
+                      ...newTicket,
+                      description: e.target.value,
+                    })
+                  }
                   rows={5}
                 />
               </div>
 
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowNewTicket(false)}>Cancel</Button>
-                <Button onClick={handleSubmitTicket}>Submit Ticket</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowNewTicket(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmitTicket}>
+                  Submit Ticket
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -190,27 +278,37 @@ const PatientSupport = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {tickets.map(ticket => (
-                  <div key={ticket.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg">
+                {tickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg"
+                  >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm text-muted-foreground">{ticket.id}</span>
+                        <span className="font-mono text-sm text-muted-foreground">
+                          {ticket.id}
+                        </span>
                         <Badge variant="outline">{ticket.category}</Badge>
                         {getStatusBadge(ticket.status)}
                       </div>
                       <p className="font-medium">{ticket.subject}</p>
                       <p className="text-sm text-muted-foreground">
-                        Created: {new Date(ticket.createdAt).toLocaleDateString()} • 
-                        Last update: {new Date(ticket.lastUpdate).toLocaleDateString()}
+                        Created:{" "}
+                        {new Date(ticket.createdAt).toLocaleDateString()} •
+                        Last update:{" "}
+                        {new Date(ticket.lastUpdate).toLocaleDateString()}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm">View Details</Button>
+                    <Button variant="outline" size="sm">
+                      View Details
+                    </Button>
                   </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
+      </div>
     </div>
   );
 };

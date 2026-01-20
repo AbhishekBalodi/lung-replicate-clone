@@ -3,10 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, MessageSquare, AlertTriangle, CheckCircle, User } from "lucide-react";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
+  Star,
+  MessageSquare,
+  AlertTriangle,
+  CheckCircle,
+  User,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
 
 interface Doctor {
   id: string;
@@ -18,7 +28,7 @@ interface Doctor {
 
 const PatientFeedback = () => {
   const { toast } = useToast();
-  
+
   const [doctors] = useState<Doctor[]>([
     { id: "1", name: "Dr. Smith", department: "Cardiology", lastVisit: "2026-01-10", rating: 4 },
     { id: "2", name: "Dr. Patel", department: "Orthopedics", lastVisit: "2026-01-05", rating: 5 },
@@ -30,10 +40,10 @@ const PatientFeedback = () => {
   const [selectedRating, setSelectedRating] = useState<Record<string, number>>({});
 
   const handleDoctorRating = (doctorId: string, rating: number) => {
-    setSelectedRating(prev => ({ ...prev, [doctorId]: rating }));
+    setSelectedRating((prev) => ({ ...prev, [doctorId]: rating }));
     toast({
       title: "Rating Submitted",
-      description: `Thank you for rating the doctor!`,
+      description: "Thank you for rating the doctor!",
     });
   };
 
@@ -57,9 +67,15 @@ const PatientFeedback = () => {
     }
   };
 
-  const StarRating = ({ doctorId, currentRating }: { doctorId: string; currentRating?: number }) => {
+  const StarRating = ({
+    doctorId,
+    currentRating,
+  }: {
+    doctorId: string;
+    currentRating?: number;
+  }) => {
     const rating = selectedRating[doctorId] || currentRating || 0;
-    
+
     return (
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
@@ -86,7 +102,9 @@ const PatientFeedback = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Feedback & Ratings</h1>
-          <p className="text-muted-foreground">Share your experience with us</p>
+          <p className="text-muted-foreground">
+            Share your experience with us
+          </p>
         </div>
 
         <Tabs defaultValue="doctors">
@@ -105,24 +123,33 @@ const PatientFeedback = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {doctors.map(doctor => (
-                  <div key={doctor.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg">
+                {doctors.map((doctor) => (
+                  <div
+                    key={doctor.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-lg"
+                  >
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-muted rounded-full">
                         <User className="h-6 w-6" />
                       </div>
                       <div>
                         <p className="font-medium">{doctor.name}</p>
-                        <p className="text-sm text-muted-foreground">{doctor.department}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {doctor.department}
+                        </p>
                         <p className="text-xs text-muted-foreground">
-                          Last visit: {new Date(doctor.lastVisit).toLocaleDateString()}
+                          Last visit:{" "}
+                          {new Date(doctor.lastVisit).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <StarRating doctorId={doctor.id} currentRating={doctor.rating} />
+                      <StarRating
+                        doctorId={doctor.id}
+                        currentRating={doctor.rating}
+                      />
                       <span className="text-sm text-muted-foreground">
-                        {selectedRating[doctor.id] || doctor.rating 
+                        {selectedRating[doctor.id] || doctor.rating
                           ? `${selectedRating[doctor.id] || doctor.rating}/5 stars`
                           : "Rate this doctor"}
                       </span>
@@ -145,13 +172,16 @@ const PatientFeedback = () => {
                 <div className="space-y-2">
                   <Label>Share your experience with our hospital</Label>
                   <Textarea
-                    placeholder="Tell us about your overall experience with our facilities, staff, services..."
+                    placeholder="Tell us about your overall experience..."
                     value={hospitalFeedback}
                     onChange={(e) => setHospitalFeedback(e.target.value)}
                     rows={5}
                   />
                 </div>
-                <Button onClick={handleHospitalFeedback} disabled={!hospitalFeedback.trim()}>
+                <Button
+                  onClick={handleHospitalFeedback}
+                  disabled={!hospitalFeedback.trim()}
+                >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Submit Feedback
                 </Button>
@@ -170,22 +200,22 @@ const PatientFeedback = () => {
               <CardContent className="space-y-4">
                 <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <p className="text-sm text-orange-800">
-                    We take all complaints seriously. Please provide as much detail as possible, 
-                    and our team will investigate and respond within 48 hours.
+                    We take all complaints seriously. Please provide as much
+                    detail as possible.
                   </p>
                 </div>
                 <div className="space-y-2">
                   <Label>Describe your concern</Label>
                   <Textarea
-                    placeholder="Please describe the issue you faced in detail..."
+                    placeholder="Please describe the issue..."
                     value={complaint}
                     onChange={(e) => setComplaint(e.target.value)}
                     rows={5}
                   />
                 </div>
-                <Button 
-                  variant="destructive" 
-                  onClick={handleComplaint} 
+                <Button
+                  variant="destructive"
+                  onClick={handleComplaint}
                   disabled={!complaint.trim()}
                 >
                   <AlertTriangle className="h-4 w-4 mr-2" />
@@ -195,6 +225,7 @@ const PatientFeedback = () => {
             </Card>
           </TabsContent>
         </Tabs>
+      </div>
     </div>
   );
 };

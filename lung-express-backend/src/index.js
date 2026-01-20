@@ -35,6 +35,9 @@ import billingRouter from './routes/billing.js';
 import tenantsRouter from './routes/tenants.js';
 import platformAuthRouter from './routes/platform-auth.js';
 
+import dashboardRouter from './routes/dashboard.js';
+
+
 const app = express();
 
 /* ============================================================
@@ -179,6 +182,10 @@ app.use('/api/reviews', reviewsRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/billing', billingRouter);
+
+app.use('/api/dashboard', dashboardRouter);
+
+
 
 /* ============================================================
    🚀 SERVER START
