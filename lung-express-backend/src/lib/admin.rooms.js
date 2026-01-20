@@ -145,3 +145,70 @@ export async function getRoomAllotments(req, res) {
     res.status(500).json({ error: 'Failed to load room allotments' });
   }
 }
+
+/**
+ * POST /api/dashboard/rooms
+ * Add new room
+ */
+export async function addRoom(req, res) {
+  try {
+    const db = getTenantPool(req);
+    const { room_number, room_type_id, bed_count, status, notes } = req.body;
+
+    if (!room_number) {
+      return res.status(400).json({ error: 'Room number is required' });
+    }
+
+    const [result] = await db.query(`
+      INSERT INTO rooms (room_number, room_type_id, bed_count, status, notes)
+      VALUES (?, ?, ?, ?, ?)
+    `, [
+      room_number,
+      room_type_id || null,
+      bed_count || 1,
+      status || 'vacant',
+      notes || null
+    ]);
+
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (error) {
+    console.error('❌ Add room error:', error);
+    res.status(500).json({ error: 'Failed to add room' });
+  }
+}
+
+/**
+ * POST /api/dashboard/rooms/allotments
+ * Add new room allotment
+ */
+export async function addRoomAllotment(req, res) {
+  try {
+    const db = getTenantPool(req);
+    const { room_id, patient_name, patient_user_id, doctor_id, from_date, to_date, notes } = req.body;
+
+    if (!room_id || !patient_name || !from_date) {
+      return res.status(400).json({ error: 'Room, patient name, and from date are required' });
+    }
+
+    // Update room status to occupied
+    await db.query(`UPDATE rooms SET status = 'occupied' WHERE id = ?`, [room_id]);
+
+    const [result] = await db.query(`
+      INSERT INTO room_allotments (room_id, patient_name, patient_user_id, doctor_id, from_date, to_date, status, notes)
+      VALUES (?, ?, ?, ?, ?, ?, 'active', ?)
+    `, [
+      room_id,
+      patient_name,
+      patient_user_id || null,
+      doctor_id || null,
+      from_date,
+      to_date || null,
+      notes || null
+    ]);
+
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (error) {
+    console.error('❌ Add room allotment error:', error);
+    res.status(500).json({ error: 'Failed to add room allotment' });
+  }
+}
