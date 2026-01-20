@@ -271,11 +271,17 @@ CREATE TABLE IF NOT EXISTS blood_stock (
   units DECIMAL(10,2) DEFAULT 0,
   unit_type VARCHAR(20) DEFAULT 'ml',
   batch_number VARCHAR(100),
+  collection_date DATE,
   expiry_date DATE,
   source ENUM('donation','purchase','other') DEFAULT 'donation',
+  location VARCHAR(100) DEFAULT 'Refrigerator 1',
+  status ENUM('available','reserved','expired') DEFAULT 'available',
+  donor_id INT DEFAULT NULL,
+  notes TEXT,
   last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (blood_group_id) REFERENCES blood_groups(id) ON DELETE CASCADE
+  FOREIGN KEY (blood_group_id) REFERENCES blood_groups(id) ON DELETE CASCADE,
+  FOREIGN KEY (donor_id) REFERENCES blood_donors(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS blood_donors (
