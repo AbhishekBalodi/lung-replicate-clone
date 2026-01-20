@@ -107,6 +107,27 @@ export default function EMRDocuments() {
     }
   };
 
+  const handleDownload = async (doc: Document) => {
+    if (!doc.file_url) {
+      toast.error('No file available to download');
+      return;
+    }
+
+    try {
+      // Supports blob/object URLs and regular URLs.
+      const a = document.createElement('a');
+      a.href = doc.file_url;
+      a.download = doc.file_name || doc.title || 'document';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      toast.success('Download started');
+    } catch (e) {
+      toast.error('Failed to download file');
+    }
+  };
+
   const getFileIcon = (type: string) => {
     const lowerType = type?.toLowerCase() || '';
     if (lowerType.includes('x-ray') || lowerType.includes('mri') || lowerType.includes('ultrasound') || lowerType.includes('ct')) {
@@ -246,7 +267,7 @@ export default function EMRDocuments() {
                       <Button variant="ghost" size="icon" onClick={() => doc.file_url && window.open(doc.file_url, '_blank')}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => toast.info('Download feature coming soon')}>
+                      <Button variant="ghost" size="icon" onClick={() => handleDownload(doc)}>
                         <Download className="h-4 w-4" />
                       </Button>
                       <Button variant="ghost" size="icon" className="text-destructive" onClick={() => handleDelete(doc.id)}>

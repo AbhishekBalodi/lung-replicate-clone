@@ -149,7 +149,7 @@ export async function getCarePlans(req, res) {
     const { patient_id, status, search } = req.query;
     
     let query = `
-      SELECT cp.*, p.full_name as patient_name
+      SELECT cp.*, COALESCE(p.full_name, cp.patient_name) as patient_name
       FROM care_plans cp
       LEFT JOIN patients p ON p.id = cp.patient_id
     `;
