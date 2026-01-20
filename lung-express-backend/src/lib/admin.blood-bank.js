@@ -231,15 +231,15 @@ export async function getBloodDonors(req, res) {
 export async function addBloodDonor(req, res) {
   try {
     const db = getTenantPool(req);
-    const { name, phone, email, dob, gender, blood_group_id, last_donation_date, notes } = req.body;
+    const { name, phone, email, dob, gender, blood_group_id, last_donation_date, notes, address, emergency_contact } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'Donor name is required' });
     }
 
     const [result] = await db.query(`
-      INSERT INTO blood_donors (name, phone, email, dob, gender, blood_group_id, last_donation_date, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO blood_donors (name, phone, email, dob, gender, blood_group_id, last_donation_date, notes, address, emergency_contact)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       name,
       phone || null,
@@ -248,12 +248,130 @@ export async function addBloodDonor(req, res) {
       gender || 'male',
       blood_group_id || null,
       last_donation_date || null,
-      notes || null
+      notes || null,
+      address || null,
+      emergency_contact || null
     ]);
 
     res.status(201).json({ success: true, id: result.insertId });
   } catch (error) {
     console.error('❌ Add blood donor error:', error);
     res.status(500).json({ error: 'Failed to add blood donor' });
+  }
+}
+
+/**
+ * GET /api/dashboard/blood-bank/donors/summary
+ * Returns donor statistics for dashboard cards
+ */
+export async function getBloodDonorsSummary(req, res) {
+  try {
+    const db = getTenantPool(req);
+
+    // Total donors
+    const [[{ totalDonors }]] = await db.query(`SELECT COUNT(*) AS totalDonors FROM blood_donors`);
+    
+    // Donations this month
+    const [[{ donationsThisMonth }]] = await db.query(`
+      SELECT COUNT(*) AS donationsThisMonth FROM blood_stock 
+      WHERE MONTH(collection_date) = MONTH(CURDATE()) AND YEAR(collection_date) = YEAR(CURDATE())
+    `);
+    
+    // Eligible donors (donated > 56 days ago or never)
+    const [[{ eligibleDonors }]] = await db.query(`
+      SELECT COUNT(*) AS eligibleDonors FROM blood_donors 
+      WHERE last_donation_date IS NULL OR last_donation_date < DATE_SUB(CURDATE(), INTERVAL 56 DAY)
+    `);
+    
+    // Frequent donors (5+ donations)
+    const [[{ frequentDonors }]] = await db.query(`
+      SELECT COUNT(*) AS frequentDonors FROM (
+        SELECT donor_id FROM blood_stock WHERE donor_id IS NOT NULL GROUP BY donor_id HAVING COUNT(*) >= 5
+      ) AS frequent
+    `);
+
+    res.json({
+      totalDonors: Number(totalDonors) || 0,
+      donationsThisMonth: Number(donationsThisMonth) || 0,
+      eligibleDonors: Number(eligibleDonors) || 0,
+      frequentDonors: Number(frequentDonors) || 0
+    });
+  } catch (error) {
+    console.error('❌ Blood donors summary error:', error);
+    res.status(500).json({ error: 'Failed to load donors summary' });
+  }
+}
+
+/**
+ * GET /api/dashboard/blood-bank/donors/charts
+ * Returns chart data for blood donors page
+ */
+export async function getBloodDonorsCharts(req, res) {
+  try {
+    const db = getTenantPool(req);
+
+    // Donors by blood type
+    const [bloodTypeData] = await db.query(`
+      SELECT 
+        CONCAT(bg.group_name, bg.rh_factor) AS type,
+        COUNT(bd.id) AS count,
+        CASE bg.group_name 
+          WHEN 'O' THEN '#EF4444'
+          WHEN 'A' THEN '#3B82F6'
+          WHEN 'B' THEN '#22C55E'
+          WHEN 'AB' THEN '#A855F7'
+          ELSE '#6B7280'
+        END AS color
+      FROM blood_groups bg
+      LEFT JOIN blood_donors bd ON bd.blood_group_id = bg.id
+      GROUP BY bg.id, bg.group_name, bg.rh_factor
+      ORDER BY COUNT(bd.id) DESC
+    `);
+
+    // Add percentage to blood type data
+    const totalDonors = bloodTypeData.reduce((sum, bt) => sum + Number(bt.count), 0);
+    const bloodTypeWithPercentage = bloodTypeData.map(bt => ({
+      ...bt,
+      count: Number(bt.count),
+      percentage: totalDonors > 0 ? Math.round((Number(bt.count) / totalDonors) * 100) : 0
+    }));
+
+    // Donation frequency
+    const [donationFrequency] = await db.query(`
+      SELECT 
+        CASE 
+          WHEN donation_count = 1 THEN 'First Time'
+          WHEN donation_count BETWEEN 2 AND 4 THEN '2-4 Times'
+          WHEN donation_count BETWEEN 5 AND 9 THEN '5-9 Times'
+          WHEN donation_count BETWEEN 10 AND 24 THEN '10-24 Times'
+          ELSE '25+ Times'
+        END AS frequency,
+        COUNT(*) AS count
+      FROM (
+        SELECT donor_id, COUNT(*) AS donation_count 
+        FROM blood_stock 
+        WHERE donor_id IS NOT NULL 
+        GROUP BY donor_id
+      ) AS donor_counts
+      GROUP BY CASE 
+        WHEN donation_count = 1 THEN 'First Time'
+        WHEN donation_count BETWEEN 2 AND 4 THEN '2-4 Times'
+        WHEN donation_count BETWEEN 5 AND 9 THEN '5-9 Times'
+        WHEN donation_count BETWEEN 10 AND 24 THEN '10-24 Times'
+        ELSE '25+ Times'
+      END
+      ORDER BY MIN(donation_count)
+    `);
+
+    res.json({
+      bloodTypeData: bloodTypeWithPercentage,
+      donationFrequencyData: donationFrequency.map(df => ({ 
+        frequency: df.frequency, 
+        count: Number(df.count) 
+      }))
+    });
+  } catch (error) {
+    console.error('❌ Blood donors charts error:', error);
+    res.status(500).json({ error: 'Failed to load charts data' });
   }
 }

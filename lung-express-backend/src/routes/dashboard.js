@@ -4,7 +4,7 @@ import { getSuperAdminDashboardCharts } from '../lib/superadmin.dashboard.charts
 
 // Admin dashboard APIs
 import { getRoomsSummary, getRoomsList, getRoomAllotments, addRoom, addRoomAllotment } from '../lib/admin.rooms.js';
-import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups, addBloodDonor } from '../lib/admin.blood-bank.js';
+import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups, addBloodDonor, getBloodDonorsSummary, getBloodDonorsCharts } from '../lib/admin.blood-bank.js';
 import { getStaffSummary, getStaffList, addStaff, updateStaff, deleteStaff } from '../lib/admin.staff.js';
 import { getFeedbackSummary, getFeedbackList } from '../lib/admin.feedback.js';
 import { getBillingSummary, getRevenueByMonth, getRevenueByDoctor } from '../lib/admin.billing.js';
@@ -69,6 +69,8 @@ router.get('/blood-bank/stock', getBloodStock);
 router.post('/blood-bank/stock', addBloodStock);
 router.get('/blood-bank/donors', getBloodDonors);
 router.post('/blood-bank/donors', addBloodDonor);
+router.get('/blood-bank/donors/summary', getBloodDonorsSummary);
+router.get('/blood-bank/donors/charts', getBloodDonorsCharts);
 router.get('/blood-bank/blood-groups', getBloodGroups);
 
 /* ============================================================
