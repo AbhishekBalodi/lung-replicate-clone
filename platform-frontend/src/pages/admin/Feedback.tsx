@@ -6,47 +6,84 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import api from '@/lib/api';
-import { Star, MessageSquare } from 'lucide-react';
+import { Star, MessageSquare, Loader2 } from 'lucide-react';
 
 type FeedbackItem = {
   id: number;
-  patient_user_id?: number | null;
-  subject?: string | null;
-  message?: string | null;
-  status?: string | null;
-  department?: string | null;
-  rating?: number | null;
-  created_at?: string | null;
+  resource_type: string;
+  resource_name: string;
+  rating: number;
+  comment: string;
+  created_at: string;
 };
 
 type Tab = 'SURVEYS' | 'RECENT' | 'ANALYTICS';
 
 export default function Feedback() {
+  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState({
+    totalFeedback: 0,
+    avgRating: '0',
+    recentCount: 0,
+    ratingDistribution: [] as { rating: number; count: number }[]
+  });
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [tab, setTab] = useState<Tab>('RECENT');
   const [search, setSearch] = useState('');
 
-  const load = async () => {
+  const loadData = async () => {
     try {
-      const res = await api.apiGet('/api/feedback');
-      const js = await res.json();
-      if (!res.ok) throw new Error(js?.error || 'Failed');
-      setItems(js.items || []);
-    } catch (err: unknown) {
-      const e = err as Error;
-      toast.error('Failed to load: ' + (e?.message ?? String(err)));
+      setLoading(true);
+      
+      // Fetch summary
+      const summaryRes = await api.apiGet('/api/dashboard/feedback/summary');
+      const summaryData = await summaryRes.json();
+      if (summaryRes.ok) {
+        setSummary(summaryData);
+      }
+
+      // Fetch feedback list
+      let url = '/api/dashboard/feedback/list?';
+      if (search) url += `search=${encodeURIComponent(search)}`;
+      
+      const listRes = await api.apiGet(url);
+      const listData = await listRes.json();
+      if (listRes.ok) {
+        setItems(listData.feedback || []);
+      }
+    } catch (err) {
+      console.error('Error loading feedback:', err);
+      toast.error('Failed to load feedback data');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
-  }, []);
+    loadData();
+  }, [search]);
 
   const filtered = items.filter((i) =>
-    `${i.subject} ${i.message}`
+    `${i.resource_name} ${i.comment}`
       .toLowerCase()
       .includes(search.toLowerCase())
   );
+
+  // Calculate completion rate from rating distribution
+  const totalResponses = summary.ratingDistribution.reduce((sum, r) => sum + r.count, 0);
+  const completionRate = summary.totalFeedback > 0 
+    ? Math.round((totalResponses / summary.totalFeedback) * 100) 
+    : 0;
+
+  if (loading) {
+    return (
+      <ConsoleShell>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </ConsoleShell>
+    );
+  }
 
   return (
     <ConsoleShell>
@@ -55,7 +92,7 @@ export default function Feedback() {
         <div>
           <h1 className="text-2xl font-semibold">Feedback Management</h1>
           <p className="text-sm text-muted-foreground">
-            Create and manage patient feedback surveys
+            View and manage patient feedback and reviews
           </p>
         </div>
 
@@ -69,22 +106,22 @@ export default function Feedback() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Total Feedback</p>
-          <p className="text-2xl font-bold">{items.length}</p>
+          <p className="text-2xl font-bold">{summary.totalFeedback}</p>
         </Card>
 
         <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Responses</p>
-          <p className="text-2xl font-bold">{items.length}</p>
+          <p className="text-sm text-muted-foreground">Recent (30 days)</p>
+          <p className="text-2xl font-bold">{summary.recentCount}</p>
         </Card>
 
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Average Rating</p>
-          <p className="text-2xl font-bold">4.1/5</p>
+          <p className="text-2xl font-bold">{summary.avgRating}/5</p>
         </Card>
 
         <Card className="p-4">
-          <p className="text-sm text-muted-foreground">Completion Rate</p>
-          <p className="text-2xl font-bold">74%</p>
+          <p className="text-sm text-muted-foreground">Response Rate</p>
+          <p className="text-2xl font-bold">{completionRate}%</p>
         </Card>
       </div>
 
@@ -126,7 +163,7 @@ export default function Feedback() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-semibold">
-                    {fb.subject || 'Patient Feedback'}
+                    {fb.resource_name || 'Patient Feedback'}
                   </h3>
 
                   <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
@@ -135,8 +172,8 @@ export default function Feedback() {
                         {new Date(fb.created_at).toLocaleString()}
                       </span>
                     )}
-                    {fb.department && (
-                      <Badge variant="secondary">{fb.department}</Badge>
+                    {fb.resource_type && (
+                      <Badge variant="secondary" className="capitalize">{fb.resource_type}</Badge>
                     )}
                   </div>
                 </div>
@@ -157,7 +194,7 @@ export default function Feedback() {
               </div>
 
               <p className="mt-3 text-sm leading-relaxed">
-                {fb.message || 'No feedback message'}
+                {fb.comment || 'No feedback message'}
               </p>
 
               <div className="flex justify-end mt-4">
@@ -177,11 +214,37 @@ export default function Feedback() {
         </div>
       )}
 
-      {/* Placeholder for other tabs */}
-      {tab !== 'RECENT' && (
+      {/* Analytics Tab */}
+      {tab === 'ANALYTICS' && (
+        <Card className="p-6">
+          <h3 className="font-semibold mb-4">Rating Distribution</h3>
+          <div className="space-y-3">
+            {[5, 4, 3, 2, 1].map(rating => {
+              const count = summary.ratingDistribution.find(r => r.rating === rating)?.count || 0;
+              const percentage = totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0;
+              return (
+                <div key={rating} className="flex items-center gap-3">
+                  <div className="flex items-center w-16">
+                    {rating} <Star className="h-3 w-3 ml-1 fill-yellow-400 text-yellow-400" />
+                  </div>
+                  <div className="flex-1 bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-yellow-400 h-2 rounded-full" 
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  <span className="text-sm text-muted-foreground w-12">{count}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* Surveys Tab */}
+      {tab === 'SURVEYS' && (
         <Card className="p-6 text-sm text-muted-foreground">
-          {tab === 'SURVEYS' && 'Survey list UI goes here'}
-          {tab === 'ANALYTICS' && 'Analytics charts go here'}
+          No surveys created yet. Click "Create Survey" to get started.
         </Card>
       )}
     </ConsoleShell>
