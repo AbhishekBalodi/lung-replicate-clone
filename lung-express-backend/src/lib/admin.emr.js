@@ -5,6 +5,21 @@
 
 import { getTenantPool } from './tenant-db.js';
 
+function normalizeJsonForMysql(value) {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value === 'string') {
+    // If it's already JSON, keep it; otherwise wrap as an object.
+    try {
+      const parsed = JSON.parse(value);
+      return JSON.stringify(parsed);
+    } catch {
+      return JSON.stringify({ text: value });
+    }
+  }
+  // objects/arrays/numbers/booleans
+  return JSON.stringify(value);
+}
+
 // ============================================
 // DIAGNOSIS NOTES
 // ============================================
@@ -15,7 +30,7 @@ export async function getDiagnosisNotes(req, res) {
     const { patient_id, search, status } = req.query;
     
     let query = `
-      SELECT dn.*, p.full_name as patient_name
+      SELECT dn.*, COALESCE(p.full_name, dn.patient_name) as patient_name
       FROM diagnosis_notes dn
       LEFT JOIN patients p ON p.id = dn.patient_id
     `;
@@ -112,7 +127,7 @@ export async function getTreatmentPlans(req, res) {
     const { patient_id, search, status } = req.query;
     
     let query = `
-      SELECT tp.*, p.full_name as patient_name
+      SELECT tp.*, COALESCE(p.full_name, tp.patient_name) as patient_name
       FROM treatment_plans tp
       LEFT JOIN patients p ON p.id = tp.patient_id
     `;
@@ -196,7 +211,7 @@ export async function getProgressNotes(req, res) {
     const { patient_id, search } = req.query;
     
     let query = `
-      SELECT pn.*, p.full_name as patient_name
+      SELECT pn.*, COALESCE(p.full_name, pn.patient_name) as patient_name
       FROM progress_notes pn
       LEFT JOIN patients p ON p.id = pn.patient_id
     `;
@@ -232,13 +247,15 @@ export async function addProgressNote(req, res) {
   try {
     const pool = getTenantPool(req);
     const { patient_id, patient_name, note_type, content, vitals, doctor_id } = req.body;
-    
+
+    const vitalsJson = normalizeJsonForMysql(vitals);
+
     const [result] = await pool.execute(
       `INSERT INTO progress_notes (patient_id, patient_name, note_type, content, vitals, doctor_id)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [patient_id || null, patient_name, note_type || 'general', content, vitals || null, doctor_id || null]
+      [patient_id || null, patient_name, note_type || 'general', content, vitalsJson, doctor_id || null]
     );
-    
+
     res.json({ success: true, id: result.insertId });
   } catch (err) {
     console.error('addProgressNote error:', err);
@@ -256,7 +273,7 @@ export async function getMedicalDocuments(req, res) {
     const { patient_id, document_type, search } = req.query;
     
     let query = `
-      SELECT md.*, p.full_name as patient_name
+      SELECT md.*, COALESCE(p.full_name, md.patient_name) as patient_name
       FROM medical_documents md
       LEFT JOIN patients p ON p.id = md.patient_id
     `;

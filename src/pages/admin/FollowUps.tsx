@@ -106,14 +106,33 @@ export default function FollowUps() {
     }
   };
 
-  const toggleReminder = async (id: number, currentValue: boolean) => {
+  const toggleReminder = async (id: number, nextValue: boolean) => {
+    // Optimistic UI update
+    setFollowUps((prev) => prev.map((f) => (f.id === id ? { ...f, reminder_sent: nextValue } : f)));
+
     try {
-      const followUp = followUps.find(f => f.id === id);
-      if (followUp) {
-        await apiPut(`/api/dashboard/follow-ups/${id}`, { ...followUp, reminder_sent: !currentValue });
-        fetchData();
+      const followUp = followUps.find((f) => f.id === id);
+      if (!followUp) return;
+
+      // Backend table typically stores only pending/completed; 'overdue' is a UI-enriched status.
+      const safeStatus = followUp.status === 'overdue' ? 'pending' : followUp.status;
+
+      const res = await apiPut(`/api/dashboard/follow-ups/${id}`, {
+        follow_up_date: followUp.follow_up_date,
+        reason: followUp.reason,
+        notes: followUp.notes,
+        status: safeStatus,
+        reminder_sent: nextValue,
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed');
       }
+
+      fetchData();
     } catch (err) {
+      // Revert on error
+      setFollowUps((prev) => prev.map((f) => (f.id === id ? { ...f, reminder_sent: !nextValue } : f)));
       toast.error('Failed to update reminder');
     }
   };
@@ -244,7 +263,7 @@ export default function FollowUps() {
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2">
-                          <Switch id={`reminder-${followUp.id}`} checked={followUp.reminder_sent} onCheckedChange={() => toggleReminder(followUp.id, followUp.reminder_sent)} />
+                          <Switch id={`reminder-${followUp.id}`} checked={!!followUp.reminder_sent} onCheckedChange={(checked) => toggleReminder(followUp.id, checked)} />
                           <Label htmlFor={`reminder-${followUp.id}`} className="text-xs"><Bell className="h-3 w-3" /></Label>
                         </div>
                         {followUp.status !== "completed" && (
