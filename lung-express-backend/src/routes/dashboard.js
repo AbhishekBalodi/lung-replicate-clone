@@ -44,6 +44,15 @@ import { getRevenueOverview, getRevenueTrend, getBillingDashboard, getInsuranceC
 // Patient dashboard APIs
 import { getPatientHome, getPatientAppointments, getPatientMedicalRecords, getPatientPrescriptions, getPatientLabReports, getPatientBilling, getPatientTimeline } from '../lib/patient.dashboard.js';
 
+// Patient communications APIs
+import { getPatientTelemedicineSessions, bookTelemedicineSession, getPatientConversations, getPatientMessages, sendPatientMessage, getPatientNotifications, markNotificationAsRead, markAllNotificationsRead as markAllPatientNotificationsRead, deletePatientNotification } from '../lib/patient.communications.js';
+
+// Patient profile APIs
+import { getPatientProfile, updatePatientProfile, updateEmergencyContact, addFamilyMember, getPatientSettings, updatePatientSettings } from '../lib/patient.profile.js';
+
+// Patient support APIs
+import { getPatientSupportTickets, createSupportTicket, getSupportTicketDetails, getDoctorsForFeedback, submitDoctorRating, submitHospitalFeedback, submitComplaint } from '../lib/patient.support.js';
+
 // Telemedicine APIs
 import { getTelemedicineSummary, getTelemedicineSessions, addTelemedicineSession, updateTelemedicineSession } from '../lib/admin.telemedicine.js';
 
@@ -248,6 +257,48 @@ router.get('/patient/prescriptions', getPatientPrescriptions);
 router.get('/patient/lab-reports', getPatientLabReports);
 router.get('/patient/billing', getPatientBilling);
 router.get('/patient/timeline', getPatientTimeline);
+
+/* ============================================================
+   PATIENT TELEMEDICINE
+   ============================================================ */
+router.get('/patient/telemedicine/sessions', getPatientTelemedicineSessions);
+router.post('/patient/telemedicine/sessions', bookTelemedicineSession);
+
+/* ============================================================
+   PATIENT MESSAGES
+   ============================================================ */
+router.get('/patient/messages/conversations', getPatientConversations);
+router.get('/patient/messages/:conversationId', getPatientMessages);
+router.post('/patient/messages', sendPatientMessage);
+
+/* ============================================================
+   PATIENT NOTIFICATIONS
+   ============================================================ */
+router.get('/patient/notifications', getPatientNotifications);
+router.put('/patient/notifications/:id/read', markNotificationAsRead);
+router.post('/patient/notifications/read-all', markAllPatientNotificationsRead);
+router.delete('/patient/notifications/:id', deletePatientNotification);
+
+/* ============================================================
+   PATIENT PROFILE
+   ============================================================ */
+router.get('/patient/profile', getPatientProfile);
+router.put('/patient/profile', updatePatientProfile);
+router.put('/patient/emergency-contact', updateEmergencyContact);
+router.post('/patient/family-members', addFamilyMember);
+router.get('/patient/settings', getPatientSettings);
+router.put('/patient/settings', updatePatientSettings);
+
+/* ============================================================
+   PATIENT SUPPORT & FEEDBACK
+   ============================================================ */
+router.get('/patient/support/tickets', getPatientSupportTickets);
+router.post('/patient/support/tickets', createSupportTicket);
+router.get('/patient/support/tickets/:id', getSupportTicketDetails);
+router.get('/patient/feedback/doctors', getDoctorsForFeedback);
+router.post('/patient/feedback/doctor-rating', submitDoctorRating);
+router.post('/patient/feedback/hospital', submitHospitalFeedback);
+router.post('/patient/feedback/complaint', submitComplaint);
 
 /* ============================================================
    TELEMEDICINE
