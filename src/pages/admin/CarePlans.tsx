@@ -59,16 +59,41 @@ export default function CarePlans() {
       toast.error('Patient name and condition/title are required');
       return;
     }
+
     try {
-      await apiFetch('/api/dashboard/care-plans', {
+      const resp = await apiFetch('/api/dashboard/care-plans', {
         method: 'POST',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || `Request failed: ${resp.status}`);
+      }
+
+      const data = (await resp.json()) as { carePlan?: CarePlan | null };
+
       toast.success('Care plan created successfully');
       setIsModalOpen(false);
-      setFormData({ patient_name: '', title: '', description: '', goals: '', interventions: '', start_date: '', end_date: '', status: 'active' });
-      fetchCarePlans();
+      setFormData({
+        patient_name: '',
+        title: '',
+        description: '',
+        goals: '',
+        interventions: '',
+        start_date: '',
+        end_date: '',
+        status: 'active',
+      });
+
+      // Instant render without waiting for refetch
+      if (data?.carePlan) {
+        setCarePlans((prev) => [data.carePlan as CarePlan, ...prev]);
+      } else {
+        await fetchCarePlans();
+      }
     } catch (error) {
+      console.error('Failed to create care plan:', error);
       toast.error('Failed to create care plan');
     }
   };
