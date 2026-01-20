@@ -5,7 +5,7 @@ import { getSuperAdminDashboardCharts } from '../lib/superadmin.dashboard.charts
 // Admin dashboard APIs
 import { getRoomsSummary, getRoomsList, getRoomAllotments, addRoom, addRoomAllotment } from '../lib/admin.rooms.js';
 import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups, addBloodDonor } from '../lib/admin.blood-bank.js';
-import { getStaffSummary, getStaffList, addStaff } from '../lib/admin.staff.js';
+import { getStaffSummary, getStaffList, addStaff, updateStaff, deleteStaff } from '../lib/admin.staff.js';
 import { getFeedbackSummary, getFeedbackList } from '../lib/admin.feedback.js';
 import { getBillingSummary, getRevenueByMonth, getRevenueByDoctor } from '../lib/admin.billing.js';
 import { getAppointmentsSummary, getAppointmentsByDoctor, getAppointmentsByMonth } from '../lib/admin.appointments.js';

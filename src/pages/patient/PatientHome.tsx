@@ -1,14 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, Clock, FileText, Pill, FlaskConical, CreditCard,
-  AlertCircle, ChevronRight, Activity
-} from "lucide-react";
+import { Calendar, Clock, FileText, Pill, FlaskConical, CreditCard, AlertCircle, ChevronRight, Activity, RefreshCw } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { apiGet } from "@/lib/api";
+import { toast } from "sonner";
 
 interface DashboardStats {
   upcomingAppointments: number;
@@ -19,10 +17,11 @@ interface DashboardStats {
 }
 
 interface Appointment {
-  id: string;
+  id: number;
   appointment_date: string;
   appointment_time: string;
-  selected_doctor: string;
+  doctor_name: string;
+  status: string;
 }
 
 const PatientHome = () => {
@@ -39,68 +38,51 @@ const PatientHome = () => {
   const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null);
   const [healthAlerts, setHealthAlerts] = useState<string[]>([]);
 
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await apiGet('/api/dashboard/patient/home');
+      
+      if (res.ok) {
+        const data = await res.json();
+        setStats({
+          upcomingAppointments: data.upcomingAppointments || 0,
+          lastConsultation: data.lastConsultation || null,
+          pendingLabReports: data.pendingLabReports || 0,
+          outstandingBills: data.outstandingBills || 0,
+          activePrescriptions: data.activePrescriptions || 0
+        });
+        
+        if (data.nextAppointment) {
+          setNextAppointment(data.nextAppointment);
+        }
+        
+        // Generate health alerts based on data
+        const alerts: string[] = [];
+        if (data.nextAppointment) {
+          alerts.push(`Upcoming appointment on ${new Date(data.nextAppointment.appointment_date).toLocaleDateString()}`);
+        }
+        if (data.activePrescriptions > 0) {
+          alerts.push(`You have ${data.activePrescriptions} active prescription(s) - remember to take your medications`);
+        }
+        if (data.pendingLabReports > 0) {
+          alerts.push(`${data.pendingLabReports} lab report(s) pending`);
+        }
+        setHealthAlerts(alerts);
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (user?.id) {
       fetchDashboardData();
     }
-  }, [user?.id]);
-
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const today = new Date().toISOString().split('T')[0];
-
-      // Fetch upcoming appointments count
-      const { data: upcomingAppts, error: apptError } = await supabase
-        .from('appointments')
-        .select('id, appointment_date, appointment_time, selected_doctor')
-        .gte('appointment_date', today)
-        .order('appointment_date', { ascending: true });
-
-      if (!apptError && upcomingAppts) {
-        setStats(prev => ({ ...prev, upcomingAppointments: upcomingAppts.length }));
-        if (upcomingAppts.length > 0) {
-          setNextAppointment(upcomingAppts[0]);
-        }
-      }
-
-      // Fetch last consultation (past appointments)
-      const { data: pastAppts, error: pastError } = await supabase
-        .from('appointments')
-        .select('appointment_date')
-        .lt('appointment_date', today)
-        .order('appointment_date', { ascending: false })
-        .limit(1);
-
-      if (!pastError && pastAppts && pastAppts.length > 0) {
-        setStats(prev => ({ ...prev, lastConsultation: pastAppts[0].appointment_date }));
-      }
-
-      // Fetch active prescriptions count
-      const { data: prescriptions, error: rxError } = await supabase
-        .from('prescribed_medicines')
-        .select('id');
-
-      if (!rxError && prescriptions) {
-        setStats(prev => ({ ...prev, activePrescriptions: prescriptions.length }));
-      }
-
-      // Generate health alerts based on data
-      const alerts: string[] = [];
-      if (upcomingAppts && upcomingAppts.length > 0) {
-        alerts.push(`Upcoming appointment on ${new Date(upcomingAppts[0].appointment_date).toLocaleDateString()}`);
-      }
-      if (prescriptions && prescriptions.length > 0) {
-        alerts.push(`You have ${prescriptions.length} active prescription(s) - remember to take your medications`);
-      }
-      setHealthAlerts(alerts);
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user?.id, fetchDashboardData]);
 
   if (loading) {
     return (
@@ -112,9 +94,12 @@ const PatientHome = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Welcome Back!</h1>
-        <p className="text-muted-foreground">Here's your health overview</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Welcome Back{user?.name ? `, ${user.name}` : ''}!</h1>
+          <p className="text-muted-foreground">Here's your health overview</p>
+        </div>
+        <Button variant="outline" size="icon" onClick={fetchDashboardData}><RefreshCw className="h-4 w-4" /></Button>
       </div>
 
       {/* KPI Cards */}
@@ -136,9 +121,7 @@ const PatientHome = () => {
           </CardHeader>
           <CardContent>
             <div className="text-lg font-bold">
-              {stats.lastConsultation 
-                ? new Date(stats.lastConsultation).toLocaleDateString()
-                : 'No visits yet'}
+              {stats.lastConsultation ? new Date(stats.lastConsultation).toLocaleDateString() : 'No visits yet'}
             </div>
           </CardContent>
         </Card>
@@ -197,7 +180,7 @@ const PatientHome = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Doctor:</span>
-                  <span className="font-medium">{nextAppointment.selected_doctor}</span>
+                  <span className="font-medium">{nextAppointment.doctor_name}</span>
                 </div>
                 <Button className="w-full mt-4" variant="outline" onClick={() => navigate("/patient/appointments")}>
                   View All Appointments
@@ -207,9 +190,7 @@ const PatientHome = () => {
             ) : (
               <div className="text-center py-4">
                 <p className="text-muted-foreground mb-4">No upcoming appointments</p>
-                <Button onClick={() => navigate("/patient/appointments/book")}>
-                  Book an Appointment
-                </Button>
+                <Button onClick={() => navigate("/patient/appointments/book")}>Book an Appointment</Button>
               </div>
             )}
           </CardContent>

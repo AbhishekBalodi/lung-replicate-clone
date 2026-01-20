@@ -223,3 +223,37 @@ export async function getBloodDonors(req, res) {
     res.status(500).json({ error: 'Failed to load blood donors' });
   }
 }
+
+/**
+ * POST /api/dashboard/blood-bank/donors
+ * Add new blood donor
+ */
+export async function addBloodDonor(req, res) {
+  try {
+    const db = getTenantPool(req);
+    const { name, phone, email, dob, gender, blood_group_id, last_donation_date, notes } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Donor name is required' });
+    }
+
+    const [result] = await db.query(`
+      INSERT INTO blood_donors (name, phone, email, dob, gender, blood_group_id, last_donation_date, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      name,
+      phone || null,
+      email || null,
+      dob || null,
+      gender || 'male',
+      blood_group_id || null,
+      last_donation_date || null,
+      notes || null
+    ]);
+
+    res.status(201).json({ success: true, id: result.insertId });
+  } catch (error) {
+    console.error('❌ Add blood donor error:', error);
+    res.status(500).json({ error: 'Failed to add blood donor' });
+  }
+}

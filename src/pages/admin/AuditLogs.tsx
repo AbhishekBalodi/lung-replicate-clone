@@ -1,22 +1,34 @@
+import { useState, useEffect, useCallback } from "react";
 import ConsoleShell from "@/layouts/ConsoleShell";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Shield, User, Clock, FileText, Settings, LogIn, LogOut, Edit, Trash2, Eye } from "lucide-react";
-import { useState } from "react";
+import { Search, Shield, User, Clock, FileText, Settings, LogIn, LogOut, Edit, Trash2, Eye, RefreshCw, Download } from "lucide-react";
+import { toast } from "sonner";
+import { apiGet } from "@/lib/api";
 
-const mockLogs = [
-  { id: 1, user: "Dr. Mann", action: "LOGIN", resource: "System", ip: "192.168.1.100", timestamp: "2024-12-25 09:15:23", status: "success" },
-  { id: 2, user: "Admin", action: "UPDATE", resource: "Patient P001", ip: "192.168.1.101", timestamp: "2024-12-25 09:20:45", status: "success" },
-  { id: 3, user: "Dr. Gupta", action: "VIEW", resource: "Lab Results", ip: "192.168.1.102", timestamp: "2024-12-25 09:25:10", status: "success" },
-  { id: 4, user: "Nurse Singh", action: "CREATE", resource: "Prescription", ip: "192.168.1.103", timestamp: "2024-12-25 09:30:00", status: "success" },
-  { id: 5, user: "Unknown", action: "LOGIN", resource: "System", ip: "203.45.67.89", timestamp: "2024-12-25 09:35:22", status: "failed" },
-  { id: 6, user: "Admin", action: "DELETE", resource: "Old Records", ip: "192.168.1.101", timestamp: "2024-12-25 09:40:15", status: "success" },
-  { id: 7, user: "Dr. Sharma", action: "EXPORT", resource: "Patient Data", ip: "192.168.1.104", timestamp: "2024-12-25 09:45:30", status: "success" },
-  { id: 8, user: "Reception", action: "LOGOUT", resource: "System", ip: "192.168.1.105", timestamp: "2024-12-25 09:50:00", status: "success" },
-];
+interface AuditLog {
+  id: number;
+  user_id: number | null;
+  user_name: string;
+  action: string;
+  resource: string;
+  resource_id: number | null;
+  ip_address: string;
+  details: string;
+  status: "success" | "failed";
+  created_at: string;
+}
+
+interface Summary {
+  totalActions: number;
+  loginsToday: number;
+  dataChanges: number;
+  failedActions: number;
+}
 
 const getActionIcon = (action: string) => {
   const icons: Record<string, React.ReactNode> = {
@@ -32,11 +44,59 @@ const getActionIcon = (action: string) => {
 };
 
 export default function AuditLogs() {
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [summary, setSummary] = useState<Summary>({ totalActions: 0, loginsToday: 0, dataChanges: 0, failedActions: 0 });
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionFilter, setActionFilter] = useState("all");
 
-  const filteredLogs = mockLogs.filter(log => {
-    const matchesSearch = log.user.toLowerCase().includes(searchQuery.toLowerCase()) || log.resource.toLowerCase().includes(searchQuery.toLowerCase());
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [summaryRes, logsRes] = await Promise.all([
+        apiGet('/api/dashboard/audit-logs/summary'),
+        apiGet(`/api/dashboard/audit-logs?action=${actionFilter}&search=${searchQuery}`)
+      ]);
+      
+      if (summaryRes.ok) {
+        const data = await summaryRes.json();
+        setSummary(data);
+      }
+      
+      if (logsRes.ok) {
+        const data = await logsRes.json();
+        setLogs(data.logs || []);
+      }
+    } catch (err) {
+      console.error('Error fetching audit logs:', err);
+      toast.error('Failed to load audit logs');
+    } finally {
+      setLoading(false);
+    }
+  }, [actionFilter, searchQuery]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleExport = () => {
+    const csv = [
+      ['ID', 'User', 'Action', 'Resource', 'IP Address', 'Status', 'Date'].join(','),
+      ...logs.map(l => [l.id, l.user_name, l.action, l.resource, l.ip_address, l.status, l.created_at].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'audit_logs.csv';
+    a.click();
+    toast.success('Export completed');
+  };
+
+  const filteredLogs = logs.filter(log => {
+    const matchesSearch = log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          log.resource?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesAction = actionFilter === "all" || log.action === actionFilter;
     return matchesSearch && matchesAction;
   });
@@ -44,22 +104,28 @@ export default function AuditLogs() {
   return (
     <ConsoleShell>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-          <p className="text-gray-600">Track all system activities and user actions</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
+            <p className="text-muted-foreground">Track all system activities and user actions</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="icon" onClick={fetchData}><RefreshCw className="h-4 w-4" /></Button>
+            <Button variant="outline" onClick={handleExport}><Download className="h-4 w-4 mr-2" />Export</Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card><CardContent className="p-4"><p className="text-sm text-gray-600">Total Actions</p><p className="text-2xl font-bold">{mockLogs.length}</p></CardContent></Card>
-          <Card><CardContent className="p-4"><p className="text-sm text-gray-600">Logins Today</p><p className="text-2xl font-bold">{mockLogs.filter(l => l.action === "LOGIN").length}</p></CardContent></Card>
-          <Card><CardContent className="p-4"><p className="text-sm text-gray-600">Data Changes</p><p className="text-2xl font-bold">{mockLogs.filter(l => ["CREATE", "UPDATE", "DELETE"].includes(l.action)).length}</p></CardContent></Card>
-          <Card><CardContent className="p-4"><p className="text-sm text-gray-600 text-red-600">Failed Actions</p><p className="text-2xl font-bold text-red-600">{mockLogs.filter(l => l.status === "failed").length}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Total Actions</p><p className="text-2xl font-bold">{summary.totalActions}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Logins Today</p><p className="text-2xl font-bold">{summary.loginsToday}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-muted-foreground">Data Changes</p><p className="text-2xl font-bold">{summary.dataChanges}</p></CardContent></Card>
+          <Card><CardContent className="p-4"><p className="text-sm text-red-600">Failed Actions</p><p className="text-2xl font-bold text-red-600">{summary.failedActions}</p></CardContent></Card>
         </div>
 
         <div className="flex gap-4">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search logs..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-10" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search logs..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
           </div>
           <Select value={actionFilter} onValueChange={setActionFilter}>
             <SelectTrigger className="w-40"><SelectValue placeholder="Action" /></SelectTrigger>
@@ -89,16 +155,22 @@ export default function AuditLogs() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="flex items-center gap-2"><User className="h-4 w-4" />{log.user}</TableCell>
-                    <TableCell><div className="flex items-center gap-2">{getActionIcon(log.action)}{log.action}</div></TableCell>
-                    <TableCell>{log.resource}</TableCell>
-                    <TableCell className="font-mono text-sm">{log.ip}</TableCell>
-                    <TableCell>{log.timestamp}</TableCell>
-                    <TableCell><Badge className={log.status === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>{log.status}</Badge></TableCell>
-                  </TableRow>
-                ))}
+                {loading ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8">Loading...</TableCell></TableRow>
+                ) : filteredLogs.length === 0 ? (
+                  <TableRow><TableCell colSpan={6} className="text-center py-8">No logs found</TableCell></TableRow>
+                ) : (
+                  filteredLogs.map(log => (
+                    <TableRow key={log.id}>
+                      <TableCell className="flex items-center gap-2"><User className="h-4 w-4" />{log.user_name}</TableCell>
+                      <TableCell><div className="flex items-center gap-2">{getActionIcon(log.action)}{log.action}</div></TableCell>
+                      <TableCell>{log.resource}</TableCell>
+                      <TableCell className="font-mono text-sm">{log.ip_address}</TableCell>
+                      <TableCell>{new Date(log.created_at).toLocaleString()}</TableCell>
+                      <TableCell><Badge className={log.status === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>{log.status}</Badge></TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </CardContent>
