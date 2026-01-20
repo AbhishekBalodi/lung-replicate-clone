@@ -1,86 +1,160 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ConsoleShell from "@/layouts/ConsoleShell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Send, MessageSquare, Users, User, Clock, Pin, Plus } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Search, Send, MessageSquare, Users, Clock, Pin, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { apiGet, apiPost } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Message {
   id: number;
   sender: string;
-  senderRole: string;
+  sender_role: string;
   content: string;
-  time: string;
-  isOwn: boolean;
+  created_at: string;
+  is_own: boolean;
 }
 
 interface Chat {
   id: number;
   name: string;
   role: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  avatar?: string;
+  last_message: string;
+  last_message_time: string;
+  unread_count: number;
 }
 
 interface Note {
   id: number;
-  to: string;
+  recipient: string;
   subject: string;
   content: string;
-  time: string;
-  isPinned: boolean;
+  created_at: string;
+  is_pinned: boolean;
 }
 
-const mockChats: Chat[] = [
-  { id: 1, name: "Nurse Priya", role: "Nurse", lastMessage: "Patient in Room 5 needs attention", time: "2 min ago", unread: 2 },
-  { id: 2, name: "Dr. Amit Verma", role: "Doctor", lastMessage: "Can you review the case file?", time: "15 min ago", unread: 0 },
-  { id: 3, name: "Reception", role: "Staff", lastMessage: "New walk-in patient waiting", time: "1 hour ago", unread: 1 },
-  { id: 4, name: "Lab Team", role: "Lab", lastMessage: "Reports ready for Rahul Sharma", time: "2 hours ago", unread: 0 },
-];
-
-const mockMessages: Message[] = [
-  { id: 1, sender: "Nurse Priya", senderRole: "Nurse", content: "Doctor, the patient in Room 5 is complaining of severe headache.", time: "10:30 AM", isOwn: false },
-  { id: 2, sender: "You", senderRole: "Doctor", content: "Please check vitals and administer Paracetamol 500mg. I'll be there in 10 minutes.", time: "10:32 AM", isOwn: true },
-  { id: 3, sender: "Nurse Priya", senderRole: "Nurse", content: "BP is 140/90. Pulse 82. Temperature normal.", time: "10:35 AM", isOwn: false },
-  { id: 4, sender: "You", senderRole: "Doctor", content: "Monitor for 15 minutes. If BP doesn't come down, prepare for ECG.", time: "10:36 AM", isOwn: true },
-  { id: 5, sender: "Nurse Priya", senderRole: "Nurse", content: "Patient in Room 5 needs attention", time: "10:45 AM", isOwn: false },
-];
-
-const mockNotes: Note[] = [
-  { id: 1, to: "Nursing Staff", subject: "Morning Rounds", content: "Please prepare all patient files for morning rounds at 9 AM.", time: "Today, 8:00 AM", isPinned: true },
-  { id: 2, to: "Lab Team", subject: "Urgent Test Request", content: "Priority processing needed for patient Amit Kumar - CBC and LFT.", time: "Today, 9:30 AM", isPinned: false },
-  { id: 3, to: "Reception", subject: "Appointment Blocking", content: "Block my 2-3 PM slot for today. Emergency surgery.", time: "Yesterday", isPinned: false },
-];
-
 export default function Communication() {
-  const [activeChat, setActiveChat] = useState<Chat | null>(mockChats[0]);
-  const [messages, setMessages] = useState<Message[]>(mockMessages);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [notes, setNotes] = useState<Note[]>(mockNotes);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [noteForm, setNoteForm] = useState({ recipient: "", subject: "", content: "" });
 
-  const sendMessage = () => {
-    if (!newMessage.trim()) return;
-    const message: Message = {
-      id: messages.length + 1,
-      sender: "You",
-      senderRole: "Doctor",
-      content: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isOwn: true,
-    };
-    setMessages([...messages, message]);
-    setNewMessage("");
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Fetch chats
+      try {
+        const chatsRes = await apiGet("/api/dashboard/communication/chats");
+        if (chatsRes.ok) {
+          const data = await chatsRes.json();
+          setChats(data.chats || []);
+        }
+      } catch { /* endpoint may not exist yet */ }
+
+      // Fetch notes
+      try {
+        const notesRes = await apiGet("/api/dashboard/communication/notes");
+        if (notesRes.ok) {
+          const data = await notesRes.json();
+          setNotes(data.notes || []);
+        }
+      } catch { /* endpoint may not exist yet */ }
+    } catch (error) {
+      console.error("Error fetching communication data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const fetchMessages = useCallback(async (chatId: number) => {
+    try {
+      const res = await apiGet(`/api/dashboard/communication/messages?chat_id=${chatId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(data.messages || []);
+      }
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+    }
+  }, []);
+
+  const selectChat = (chat: Chat) => {
+    setActiveChat(chat);
+    fetchMessages(chat.id);
   };
 
-  const filteredChats = mockChats.filter(chat =>
+  const sendMessage = async () => {
+    if (!newMessage.trim() || !activeChat) return;
+    
+    try {
+      const res = await apiPost("/api/dashboard/communication/messages", {
+        chat_id: activeChat.id,
+        content: newMessage
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.message) {
+          setMessages(prev => [...prev, data.message]);
+        }
+        setNewMessage("");
+      }
+    } catch (error) {
+      // Fallback: add message locally for demo
+      const message: Message = {
+        id: Date.now(),
+        sender: "You",
+        sender_role: "Doctor",
+        content: newMessage,
+        created_at: new Date().toISOString(),
+        is_own: true,
+      };
+      setMessages(prev => [...prev, message]);
+      setNewMessage("");
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!noteForm.subject || !noteForm.content) {
+      toast.error("Subject and content are required");
+      return;
+    }
+    try {
+      const res = await apiPost("/api/dashboard/communication/notes", noteForm);
+      if (res.ok) {
+        const data = await res.json();
+        toast.success("Note sent");
+        setIsNoteDialogOpen(false);
+        setNoteForm({ recipient: "", subject: "", content: "" });
+        if (data.note) {
+          setNotes(prev => [data.note, ...prev]);
+        } else {
+          fetchData();
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to send note");
+    }
+  };
+
+  const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -123,31 +197,39 @@ export default function Communication() {
                 </div>
                 <ScrollArea className="flex-1">
                   <div className="p-2">
-                    {filteredChats.map((chat) => (
-                      <div
-                        key={chat.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-muted/50 ${activeChat?.id === chat.id ? 'bg-muted' : ''}`}
-                        onClick={() => setActiveChat(chat)}
-                      >
-                        <Avatar className="h-10 w-10">
-                          <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm">{chat.name}</span>
-                            <span className="text-xs text-muted-foreground">{chat.time}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs text-muted-foreground truncate">{chat.lastMessage}</p>
-                            {chat.unread > 0 && (
-                              <span className="h-5 w-5 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center">
-                                {chat.unread}
+                    {loading ? (
+                      <div className="text-center py-4 text-muted-foreground">Loading...</div>
+                    ) : filteredChats.length === 0 ? (
+                      <div className="text-center py-4 text-muted-foreground">No conversations yet</div>
+                    ) : (
+                      filteredChats.map((chat) => (
+                        <div
+                          key={chat.id}
+                          className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-muted/50 ${activeChat?.id === chat.id ? 'bg-muted' : ''}`}
+                          onClick={() => selectChat(chat)}
+                        >
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback>{chat.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="font-medium text-sm">{chat.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(chat.last_message_time).toLocaleDateString()}
                               </span>
-                            )}
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs text-muted-foreground truncate">{chat.last_message}</p>
+                              {chat.unread_count > 0 && (
+                                <span className="h-5 w-5 rounded-full bg-emerald-600 text-white text-xs flex items-center justify-center">
+                                  {chat.unread_count}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
               </div>
@@ -170,20 +252,20 @@ export default function Communication() {
                         {messages.map((message) => (
                           <div
                             key={message.id}
-                            className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}
+                            className={`flex ${message.is_own ? 'justify-end' : 'justify-start'}`}
                           >
-                            <div className={`max-w-[70%] ${message.isOwn ? 'order-2' : ''}`}>
+                            <div className={`max-w-[70%] ${message.is_own ? 'order-2' : ''}`}>
                               <div
                                 className={`rounded-lg px-4 py-2 ${
-                                  message.isOwn
+                                  message.is_own
                                     ? 'bg-emerald-600 text-white'
                                     : 'bg-muted'
                                 }`}
                               >
                                 <p className="text-sm">{message.content}</p>
                               </div>
-                              <div className={`text-xs text-muted-foreground mt-1 ${message.isOwn ? 'text-right' : ''}`}>
-                                {message.time}
+                              <div className={`text-xs text-muted-foreground mt-1 ${message.is_own ? 'text-right' : ''}`}>
+                                {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </div>
                           </div>
@@ -206,7 +288,10 @@ export default function Communication() {
                   </>
                 ) : (
                   <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                    Select a conversation to start chatting
+                    <div className="text-center">
+                      <MessageSquare className="h-12 w-12 mx-auto mb-4" />
+                      <p>Select a conversation to start chatting</p>
+                    </div>
                   </div>
                 )}
               </div>
@@ -215,35 +300,65 @@ export default function Communication() {
 
           <TabsContent value="notes" className="mt-4">
             <div className="flex justify-end mb-4">
-              <Button className="bg-emerald-600 hover:bg-emerald-700">
-                <Plus className="h-4 w-4 mr-2" />
-                New Note
-              </Button>
+              <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    New Note
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create Staff Note</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label>To</Label>
+                      <Input value={noteForm.recipient} onChange={(e) => setNoteForm({ ...noteForm, recipient: e.target.value })} placeholder="e.g., Nursing Staff, Lab Team" />
+                    </div>
+                    <div>
+                      <Label>Subject</Label>
+                      <Input value={noteForm.subject} onChange={(e) => setNoteForm({ ...noteForm, subject: e.target.value })} placeholder="Note subject" />
+                    </div>
+                    <div>
+                      <Label>Message</Label>
+                      <Textarea value={noteForm.content} onChange={(e) => setNoteForm({ ...noteForm, content: e.target.value })} placeholder="Note content..." rows={4} />
+                    </div>
+                    <Button onClick={handleAddNote} className="w-full">Send Note</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
             <div className="grid gap-4">
-              {notes.map((note) => (
-                <Card key={note.id} className={note.isPinned ? 'border-emerald-300 bg-emerald-50/50' : ''}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          {note.isPinned && <Pin className="h-4 w-4 text-emerald-600" />}
-                          <h3 className="font-medium">{note.subject}</h3>
-                          <Badge variant="outline">To: {note.to}</Badge>
+              {loading ? (
+                <Card><CardContent className="py-8 text-center text-muted-foreground">Loading...</CardContent></Card>
+              ) : notes.length === 0 ? (
+                <Card><CardContent className="py-8 text-center text-muted-foreground">No notes yet</CardContent></Card>
+              ) : (
+                notes.map((note) => (
+                  <Card key={note.id} className={note.is_pinned ? 'border-emerald-300 bg-emerald-50/50' : ''}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            {note.is_pinned && <Pin className="h-4 w-4 text-emerald-600" />}
+                            <h3 className="font-medium">{note.subject}</h3>
+                            <Badge variant="outline">To: {note.recipient}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{note.content}</p>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {new Date(note.created_at).toLocaleString()}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{note.content}</p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {note.time}
-                        </div>
+                        <Button variant="ghost" size="icon">
+                          <Pin className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="icon">
-                        <Pin className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>

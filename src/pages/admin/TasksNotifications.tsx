@@ -1,19 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ConsoleShell from "@/layouts/ConsoleShell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, Bell, CheckCircle2, Clock, AlertTriangle, FileText, Phone, Calendar, User, X } from "lucide-react";
+import { Search, Bell, CheckCircle2, Clock, AlertTriangle, FileText, Calendar, User, X, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
+import { toast } from "sonner";
 
 interface Task {
   id: number;
-  type: "report" | "follow-up" | "emergency" | "lab";
+  type: "report" | "follow-up" | "emergency" | "lab" | "general";
   title: string;
   description: string;
-  patient?: string;
-  dueDate: string;
+  patient_name?: string;
+  due_date: string;
   priority: "high" | "medium" | "low";
   status: "pending" | "completed";
 }
@@ -23,29 +29,137 @@ interface Notification {
   type: "info" | "warning" | "success" | "error";
   title: string;
   message: string;
-  time: string;
-  read: boolean;
+  created_at: string;
+  is_read: boolean;
 }
 
-const mockTasks: Task[] = [
-  { id: 1, type: "report", title: "Review Lab Report", description: "Blood test results for Rahul Sharma", patient: "Rahul Sharma", dueDate: "2026-01-15", priority: "high", status: "pending" },
-  { id: 2, type: "follow-up", title: "Patient Follow-Up Due", description: "Diabetes check-up reminder", patient: "Priya Patel", dueDate: "2026-01-16", priority: "medium", status: "pending" },
-  { id: 3, type: "emergency", title: "Critical Lab Value", description: "Potassium level 6.2 mEq/L", patient: "Amit Kumar", dueDate: "2026-01-15", priority: "high", status: "pending" },
-  { id: 4, type: "lab", title: "Sign Prescription", description: "Pending prescription approval", patient: "Sneha Gupta", dueDate: "2026-01-15", priority: "low", status: "completed" },
-];
-
-const mockNotifications: Notification[] = [
-  { id: 1, type: "warning", title: "Critical Lab Result", message: "Patient Amit Kumar has abnormal potassium levels", time: "5 minutes ago", read: false },
-  { id: 2, type: "info", title: "New Appointment", message: "Rahul Sharma booked for tomorrow at 10:00 AM", time: "1 hour ago", read: false },
-  { id: 3, type: "success", title: "Prescription Sent", message: "Prescription for Priya Patel sent to pharmacy", time: "2 hours ago", read: true },
-  { id: 4, type: "info", title: "Follow-Up Reminder", message: "3 patients due for follow-up this week", time: "3 hours ago", read: true },
-];
+interface Summary {
+  unread: number;
+  pending: number;
+  urgent: number;
+}
 
 export default function TasksNotifications() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [summary, setSummary] = useState<Summary>({ unread: 0, pending: 0, urgent: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [taskFilter, setTaskFilter] = useState<"all" | "pending" | "completed">("pending");
+  const [loading, setLoading] = useState(true);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [taskForm, setTaskForm] = useState({
+    title: "",
+    description: "",
+    type: "general" as Task["type"],
+    priority: "medium" as Task["priority"],
+    due_date: "",
+    patient_name: ""
+  });
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [tasksSummaryRes, tasksRes, notifSummaryRes, notifRes] = await Promise.all([
+        apiGet("/api/dashboard/tasks/summary"),
+        apiGet(`/api/dashboard/tasks?status=${taskFilter}`),
+        apiGet("/api/dashboard/notifications/summary"),
+        apiGet("/api/dashboard/notifications")
+      ]);
+
+      if (tasksSummaryRes.ok) {
+        const data = await tasksSummaryRes.json();
+        setSummary(prev => ({ ...prev, pending: data.pending || 0, urgent: data.urgent || 0 }));
+      }
+
+      if (tasksRes.ok) {
+        const data = await tasksRes.json();
+        setTasks(data.tasks || []);
+      }
+
+      if (notifSummaryRes.ok) {
+        const data = await notifSummaryRes.json();
+        setSummary(prev => ({ ...prev, unread: data.unread || 0 }));
+      }
+
+      if (notifRes.ok) {
+        const data = await notifRes.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [taskFilter]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleAddTask = async () => {
+    if (!taskForm.title || !taskForm.due_date) {
+      toast.error("Title and due date are required");
+      return;
+    }
+    try {
+      const res = await apiPost("/api/dashboard/tasks", taskForm);
+      if (res.ok) {
+        const data = await res.json();
+        toast.success("Task created");
+        setIsTaskDialogOpen(false);
+        setTaskForm({ title: "", description: "", type: "general", priority: "medium", due_date: "", patient_name: "" });
+        if (data.task) {
+          setTasks(prev => [data.task, ...prev]);
+        } else {
+          fetchData();
+        }
+      } else {
+        toast.error("Failed to create task");
+      }
+    } catch (error) {
+      toast.error("Failed to create task");
+    }
+  };
+
+  const markTaskComplete = async (id: number) => {
+    try {
+      const res = await apiPut(`/api/dashboard/tasks/${id}/complete`, {});
+      if (res.ok) {
+        toast.success("Task completed");
+        setTasks(prev => prev.map(t => t.id === id ? { ...t, status: "completed" } : t));
+      }
+    } catch (error) {
+      toast.error("Failed to complete task");
+    }
+  };
+
+  const markNotificationRead = async (id: number) => {
+    try {
+      await apiPut(`/api/dashboard/notifications/${id}/read`, {});
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (error) {
+      console.error("Failed to mark as read");
+    }
+  };
+
+  const markAllRead = async () => {
+    try {
+      await apiPost("/api/dashboard/notifications/read-all", {});
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setSummary(prev => ({ ...prev, unread: 0 }));
+    } catch (error) {
+      toast.error("Failed to mark all as read");
+    }
+  };
+
+  const dismissNotification = async (id: number) => {
+    try {
+      await apiDelete(`/api/dashboard/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (error) {
+      toast.error("Failed to dismiss notification");
+    }
+  };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -77,24 +191,12 @@ export default function TasksNotifications() {
 
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (task.patient && task.patient.toLowerCase().includes(searchTerm.toLowerCase()));
+      (task.patient_name && task.patient_name.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = taskFilter === "all" || task.status === taskFilter;
     return matchesSearch && matchesFilter;
   });
 
-  const markTaskComplete = (id: number) => {
-    setTasks(tasks.map(t => t.id === id ? { ...t, status: "completed" as const } : t));
-  };
-
-  const markNotificationRead = (id: number) => {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n));
-  };
-
-  const dismissNotification = (id: number) => {
-    setNotifications(notifications.filter(n => n.id !== id));
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
   const pendingTasks = tasks.filter(t => t.status === "pending").length;
   const highPriorityTasks = tasks.filter(t => t.priority === "high" && t.status === "pending").length;
 
@@ -161,67 +263,128 @@ export default function TasksNotifications() {
                   </Button>
                 ))}
               </div>
+              <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-emerald-600 hover:bg-emerald-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add New Task</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label>Title</Label>
+                      <Input value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} placeholder="Task title" />
+                    </div>
+                    <div>
+                      <Label>Description</Label>
+                      <Textarea value={taskForm.description} onChange={(e) => setTaskForm({ ...taskForm, description: e.target.value })} placeholder="Task description..." />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Type</Label>
+                        <Select value={taskForm.type} onValueChange={(v) => setTaskForm({ ...taskForm, type: v as any })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="general">General</SelectItem>
+                            <SelectItem value="report">Report</SelectItem>
+                            <SelectItem value="follow-up">Follow-up</SelectItem>
+                            <SelectItem value="lab">Lab</SelectItem>
+                            <SelectItem value="emergency">Emergency</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Priority</Label>
+                        <Select value={taskForm.priority} onValueChange={(v) => setTaskForm({ ...taskForm, priority: v as any })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="low">Low</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Due Date</Label>
+                      <Input type="date" value={taskForm.due_date} onChange={(e) => setTaskForm({ ...taskForm, due_date: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Patient Name (optional)</Label>
+                      <Input value={taskForm.patient_name} onChange={(e) => setTaskForm({ ...taskForm, patient_name: e.target.value })} placeholder="Patient name" />
+                    </div>
+                    <Button onClick={handleAddTask} className="w-full">Create Task</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
 
-            <div className="grid gap-4">
-              {filteredTasks.map((task) => (
-                <Card key={task.id} className={`hover:shadow-md transition-shadow ${task.status === "completed" ? "opacity-60" : ""}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
-                        task.type === "emergency" ? "bg-red-100 text-red-600" :
-                        task.type === "follow-up" ? "bg-blue-100 text-blue-600" :
-                        "bg-emerald-100 text-emerald-600"
-                      }`}>
-                        {getTypeIcon(task.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className={`font-medium ${task.status === "completed" ? "line-through" : ""}`}>
-                            {task.title}
-                          </h3>
-                          <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+            {loading ? (
+              <Card><CardContent className="py-12 text-center text-muted-foreground">Loading...</CardContent></Card>
+            ) : (
+              <div className="grid gap-4">
+                {filteredTasks.map((task) => (
+                  <Card key={task.id} className={`hover:shadow-md transition-shadow ${task.status === "completed" ? "opacity-60" : ""}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-4">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
+                          task.type === "emergency" ? "bg-red-100 text-red-600" :
+                          task.type === "follow-up" ? "bg-blue-100 text-blue-600" :
+                          "bg-emerald-100 text-emerald-600"
+                        }`}>
+                          {getTypeIcon(task.type)}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          {task.patient && (
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className={`font-medium ${task.status === "completed" ? "line-through" : ""}`}>
+                              {task.title}
+                            </h3>
+                            <Badge className={getPriorityColor(task.priority)}>{task.priority}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">{task.description}</p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            {task.patient_name && (
+                              <span className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {task.patient_name}
+                              </span>
+                            )}
                             <span className="flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              {task.patient}
+                              <Clock className="h-3 w-3" />
+                              Due: {new Date(task.due_date).toLocaleDateString()}
                             </span>
-                          )}
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            Due: {new Date(task.dueDate).toLocaleDateString()}
-                          </span>
+                          </div>
                         </div>
+                        {task.status === "pending" && (
+                          <Button variant="outline" size="sm" onClick={() => markTaskComplete(task.id)}>
+                            <CheckCircle2 className="h-4 w-4 mr-1" />
+                            Complete
+                          </Button>
+                        )}
+                        {task.status === "completed" && (
+                          <Badge className="bg-emerald-100 text-emerald-800">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Done
+                          </Badge>
+                        )}
                       </div>
-                      {task.status === "pending" && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => markTaskComplete(task.id)}
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                          Complete
-                        </Button>
-                      )}
-                      {task.status === "completed" && (
-                        <Badge className="bg-emerald-100 text-emerald-800">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Done
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {filteredTasks.length === 0 && (
+                  <Card><CardContent className="py-12 text-center text-muted-foreground">No tasks found</CardContent></Card>
+                )}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="notifications" className="mt-4">
             <div className="flex justify-end mb-4">
-              <Button variant="outline" size="sm" onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}>
+              <Button variant="outline" size="sm" onClick={markAllRead}>
                 Mark all as read
               </Button>
             </div>
@@ -229,7 +392,7 @@ export default function TasksNotifications() {
               {notifications.map((notification) => (
                 <Card
                   key={notification.id}
-                  className={`border-l-4 ${getNotificationColor(notification.type)} ${notification.read ? "opacity-60" : ""}`}
+                  className={`border-l-4 ${getNotificationColor(notification.type)} ${notification.is_read ? "opacity-60" : ""}`}
                   onClick={() => markNotificationRead(notification.id)}
                 >
                   <CardContent className="p-4">
@@ -237,12 +400,14 @@ export default function TasksNotifications() {
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <h4 className="font-medium">{notification.title}</h4>
-                          {!notification.read && (
+                          {!notification.is_read && (
                             <span className="h-2 w-2 rounded-full bg-blue-500" />
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">{notification.message}</p>
-                        <span className="text-xs text-muted-foreground mt-1">{notification.time}</span>
+                        <span className="text-xs text-muted-foreground mt-1">
+                          {new Date(notification.created_at).toLocaleString()}
+                        </span>
                       </div>
                       <Button
                         variant="ghost"
