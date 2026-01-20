@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CustomAuthProvider } from "./contexts/CustomAuthContext";
 import { AppointmentProvider } from "./contexts/AppointmentContext";
+import { TabAccessProvider } from "./contexts/TabAccessContext";
 import DevTenantSwitcher from "./components/DevTenantSwitcher";
 import Index from "./pages/Index";
 import CustomAuth from "./pages/CustomAuth";
@@ -135,6 +136,7 @@ const App = () => (
   <AuthProvider>
     <CustomAuthProvider>
       <AppointmentProvider>
+        <TabAccessProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -315,6 +317,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+        </TabAccessProvider>
     </AppointmentProvider>
   </CustomAuthProvider>
   </AuthProvider>
