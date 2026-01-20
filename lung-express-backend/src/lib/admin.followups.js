@@ -189,15 +189,50 @@ export async function getCarePlans(req, res) {
 export async function addCarePlan(req, res) {
   try {
     const pool = getTenantPool(req);
-    const { patient_id, patient_name, title, description, goals, interventions, start_date, end_date, status, doctor_id } = req.body;
-    
+    const {
+      patient_id,
+      patient_name,
+      title,
+      description,
+      goals,
+      interventions,
+      start_date,
+      end_date,
+      status,
+      doctor_id,
+    } = req.body;
+
+    if (!patient_name || !title) {
+      return res.status(400).json({ error: 'patient_name and title are required' });
+    }
+
     const [result] = await pool.execute(
       `INSERT INTO care_plans (patient_id, patient_name, title, description, goals, interventions, start_date, end_date, status, doctor_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [patient_id || null, patient_name, title, description || null, goals || null, interventions || null, start_date || null, end_date || null, status || 'active', doctor_id || null]
+      [
+        patient_id || null,
+        patient_name,
+        title,
+        description || null,
+        goals || null,
+        interventions || null,
+        start_date || null,
+        end_date || null,
+        status || 'active',
+        doctor_id || null,
+      ]
     );
-    
-    res.json({ success: true, id: result.insertId });
+
+    // Return the created row so the UI can render instantly
+    const [rows] = await pool.execute(
+      `SELECT cp.*, COALESCE(p.full_name, cp.patient_name) as patient_name
+       FROM care_plans cp
+       LEFT JOIN patients p ON p.id = cp.patient_id
+       WHERE cp.id = ?`,
+      [result.insertId]
+    );
+
+    res.status(201).json({ success: true, id: result.insertId, carePlan: rows[0] || null });
   } catch (err) {
     console.error('addCarePlan error:', err);
     res.status(500).json({ error: 'Failed to add care plan' });
