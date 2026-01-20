@@ -20,13 +20,15 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/api";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 
 const PatientBookAppointment = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useCustomAuth();
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     department: "",
     doctor: "",
@@ -70,12 +72,43 @@ const PatientBookAppointment = () => {
     ? doctors.filter((d) => d.department === formData.department)
     : doctors;
 
-  const handleSubmit = () => {
-    toast({
-      title: "Appointment Booked!",
-      description: "Your appointment has been successfully scheduled.",
-    });
-    navigate("/patient/appointments");
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    try {
+      const selectedDoctor = doctors.find(d => d.id === formData.doctor);
+      const response = await apiFetch('/api/appointment', {
+        method: 'POST',
+        body: JSON.stringify({
+          full_name: user?.name || 'Patient',
+          email: user?.email || '',
+          phone: user?.phone || '',
+          appointment_date: formData.date,
+          appointment_time: formData.time,
+          selected_doctor: selectedDoctor?.name || formData.doctor,
+          message: formData.reason || '',
+          patient_id: user?.id,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Appointment Booked!",
+          description: "Your appointment has been successfully scheduled.",
+        });
+        navigate("/patient/appointments");
+      } else {
+        throw new Error('Failed to book appointment');
+      }
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to book appointment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -344,8 +377,9 @@ const PatientBookAppointment = () => {
                 <Button
                   className="flex-1"
                   onClick={handleSubmit}
+                  disabled={submitting}
                 >
-                  Confirm Booking
+                  {submitting ? 'Booking...' : 'Confirm Booking'}
                 </Button>
               </div>
             </CardContent>
