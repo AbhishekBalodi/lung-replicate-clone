@@ -3,51 +3,64 @@ import { getPool, getConnection } from '../lib/tenant-db.js';
 
 const router = express.Router();
 
+/**
+ * Determine schema configuration based on tenant type
+ */
+function getSchemaConfig(req) {
+  const isHospital = req.tenant?.type === 'hospital';
+  return {
+    isHospital,
+    doctorColumn: isHospital ? 'doctor_id' : 'selected_doctor',
+    doctorNameQuery: isHospital 
+      ? 'd.name' 
+      : 'a.selected_doctor'
+  };
+}
+
 // GET /api/calendar - Fetch all appointments for calendar view
 router.get('/', async (req, res) => {
   let conn;
   try {
     conn = await getConnection(req);
-    
-    // Ensure appointments table has status column
-    await conn.execute(`
-      CREATE TABLE IF NOT EXISTS appointments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        full_name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) NOT NULL,
-        phone VARCHAR(20) NOT NULL,
-        appointment_date DATE NOT NULL,
-        appointment_time VARCHAR(10) NOT NULL,
-        selected_doctor VARCHAR(100) NOT NULL,
-        message TEXT,
-        status VARCHAR(20) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    // Add status column if it doesn't exist
-    await conn.execute(`
-      ALTER TABLE appointments 
-      ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending'
-    `).catch(() => {}); // Ignore error if column exists
+    const config = getSchemaConfig(req);
     
     const { start, end } = req.query;
     
-    let query = `
-      SELECT 
-        id,
-        full_name,
-        email,
-        phone,
-        appointment_date,
-        appointment_time,
-        selected_doctor,
-        message,
-        COALESCE(status, 'pending') as status,
-        created_at
-      FROM appointments
-      WHERE COALESCE(status, 'pending') != 'cancelled'
-    `;
+    let query;
+    if (config.isHospital) {
+      query = `
+        SELECT 
+          a.id,
+          a.full_name,
+          a.email,
+          a.phone,
+          a.appointment_date,
+          a.appointment_time,
+          COALESCE(d.name, 'Unassigned') AS selected_doctor,
+          a.message,
+          COALESCE(a.status, 'pending') as status,
+          a.created_at
+        FROM appointments a
+        LEFT JOIN doctors d ON a.doctor_id = d.id
+        WHERE COALESCE(a.status, 'pending') != 'cancelled'
+      `;
+    } else {
+      query = `
+        SELECT 
+          id,
+          full_name,
+          email,
+          phone,
+          appointment_date,
+          appointment_time,
+          selected_doctor,
+          message,
+          COALESCE(status, 'pending') as status,
+          created_at
+        FROM appointments
+        WHERE COALESCE(status, 'pending') != 'cancelled'
+      `;
+    }
     
     const params = [];
     
@@ -64,7 +77,10 @@ router.get('/', async (req, res) => {
     // Transform data for FullCalendar format
     const events = rows.map(appointment => {
       // Combine date and time for FullCalendar
-      const startDateTime = `${appointment.appointment_date.toISOString().split('T')[0]}T${appointment.appointment_time}`;
+      const dateStr = appointment.appointment_date instanceof Date 
+        ? appointment.appointment_date.toISOString().split('T')[0]
+        : appointment.appointment_date;
+      const startDateTime = `${dateStr}T${appointment.appointment_time}`;
       
       // Set color based on status
       let color;
@@ -140,16 +156,35 @@ router.get('/doctors', async (req, res) => {
   let conn;
   try {
     conn = await getConnection(req);
-    const [doctors] = await conn.query(`
-      SELECT 
-        selected_doctor as name,
-        COUNT(*) as appointment_count,
-        SUM(CASE WHEN COALESCE(status, 'pending') = 'pending' THEN 1 ELSE 0 END) as pending_count
-      FROM appointments
-      WHERE COALESCE(status, 'pending') != 'cancelled'
-      GROUP BY selected_doctor
-      ORDER BY appointment_count DESC
-    `);
+    const config = getSchemaConfig(req);
+    
+    let query;
+    if (config.isHospital) {
+      query = `
+        SELECT 
+          d.name,
+          COUNT(a.id) as appointment_count,
+          SUM(CASE WHEN COALESCE(a.status, 'pending') = 'pending' THEN 1 ELSE 0 END) as pending_count
+        FROM doctors d
+        LEFT JOIN appointments a ON a.doctor_id = d.id AND COALESCE(a.status, 'pending') != 'cancelled'
+        WHERE d.is_active = TRUE
+        GROUP BY d.id, d.name
+        ORDER BY appointment_count DESC
+      `;
+    } else {
+      query = `
+        SELECT 
+          selected_doctor as name,
+          COUNT(*) as appointment_count,
+          SUM(CASE WHEN COALESCE(status, 'pending') = 'pending' THEN 1 ELSE 0 END) as pending_count
+        FROM appointments
+        WHERE COALESCE(status, 'pending') != 'cancelled'
+        GROUP BY selected_doctor
+        ORDER BY appointment_count DESC
+      `;
+    }
+    
+    const [doctors] = await conn.query(query);
     
     res.json(doctors);
   } catch (error) {

@@ -118,6 +118,8 @@ router.get('/ambulance/fleet/:id', getAmbulanceDetails);
 router.get('/staff/summary', getStaffSummary);
 router.get('/staff/list', getStaffList);
 router.post('/staff', addStaff);
+router.put('/staff/:id', updateStaff);
+router.delete('/staff/:id', deleteStaff);
 
 /* ============================================================
    PHARMACY MANAGEMENT

@@ -36,6 +36,7 @@ import tenantsRouter from './routes/tenants.js';
 import platformAuthRouter from './routes/platform-auth.js';
 
 import dashboardRouter from './routes/dashboard.js';
+import scheduleRouter from './routes/schedule.js';
 
 
 const app = express();
@@ -184,6 +185,7 @@ app.use('/api/tasks', tasksRouter);
 app.use('/api/billing', billingRouter);
 
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/schedule', scheduleRouter);
 
 
 
