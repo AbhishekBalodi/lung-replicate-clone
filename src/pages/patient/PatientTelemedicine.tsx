@@ -48,11 +48,31 @@ interface ChatMessage {
   is_read: boolean;
 }
 
+interface Doctor {
+  id: number;
+  name: string;
+  specialization: string;
+  consultation_fee: number;
+  profile_photo_url?: string;
+}
+
 const PatientTelemedicine = () => {
   const { user } = useCustomAuth();
   const [loading, setLoading] = useState(true);
   const [upcomingSessions, setUpcomingSessions] = useState<TeleconsultSession[]>([]);
   const [pastSessions, setPastSessions] = useState<TeleconsultSession[]>([]);
+  
+  // Doctors list for scheduling
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  
+  // Schedule dialog state
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [sessionType, setSessionType] = useState<'video' | 'chat'>('video');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [scheduling, setScheduling] = useState(false);
   
   // Chat state
   const [chatOpen, setChatOpen] = useState(false);
@@ -63,10 +83,16 @@ const PatientTelemedicine = () => {
   const [loadingChat, setLoadingChat] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   
+  // Quick chat dialog (start new chat without session)
+  const [quickChatOpen, setQuickChatOpen] = useState(false);
+  
   // Video call state
   const [videoCallOpen, setVideoCallOpen] = useState(false);
   const [meetingLink, setMeetingLink] = useState<string | null>(null);
   const [startingCall, setStartingCall] = useState(false);
+  
+  // Upload dialog state
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -85,6 +111,22 @@ const PatientTelemedicine = () => {
     }
   }, [user?.email]);
 
+  const fetchDoctors = useCallback(async () => {
+    try {
+      setLoadingDoctors(true);
+      const res = await apiGet('/api/dashboard/patient/telemedicine/doctors');
+      if (res.ok) {
+        const data = await res.json();
+        setDoctors(data.doctors || []);
+      }
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+      toast.error('Failed to load doctors');
+    } finally {
+      setLoadingDoctors(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (user?.email) {
       fetchSessions();
@@ -95,6 +137,49 @@ const PatientTelemedicine = () => {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  const openScheduleDialog = async (type: 'video' | 'chat') => {
+    setSessionType(type);
+    setScheduleOpen(true);
+    setSelectedDoctor(null);
+    setScheduledDate('');
+    setScheduledTime('');
+    await fetchDoctors();
+  };
+
+  const scheduleSession = async () => {
+    if (!selectedDoctor || !scheduledDate || !scheduledTime) {
+      toast.error('Please fill all fields');
+      return;
+    }
+    
+    setScheduling(true);
+    try {
+      const res = await apiFetch('/api/dashboard/patient/telemedicine/sessions', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: user?.email,
+          doctor_id: selectedDoctor.id,
+          session_type: sessionType,
+          scheduled_date: scheduledDate,
+          scheduled_time: scheduledTime
+        })
+      });
+      
+      if (res.ok) {
+        toast.success('Session scheduled successfully!');
+        setScheduleOpen(false);
+        fetchSessions();
+      } else {
+        throw new Error('Failed to schedule session');
+      }
+    } catch (error) {
+      console.error('Error scheduling session:', error);
+      toast.error('Failed to schedule session');
+    } finally {
+      setScheduling(false);
+    }
+  };
 
   const openChat = async (session: TeleconsultSession) => {
     setSelectedSession(session);
@@ -210,7 +295,7 @@ const PatientTelemedicine = () => {
 
       {/* Quick Actions */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openScheduleDialog('video')}>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center gap-3">
               <div className="p-3 bg-primary/10 rounded-full">
@@ -220,37 +305,43 @@ const PatientTelemedicine = () => {
               <p className="text-sm text-muted-foreground">
                 Face-to-face virtual visit with doctor
               </p>
-              <Button className="w-full mt-2">Schedule Now</Button>
+              <Button className="w-full mt-2" onClick={(e) => { e.stopPropagation(); openScheduleDialog('video'); }}>
+                Schedule Now
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => openScheduleDialog('chat')}>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center gap-3">
-              <div className="p-3 bg-emerald-500/10 rounded-full">
-                <MessageSquare className="h-6 w-6 text-emerald-600" />
+              <div className="p-3 bg-accent/50 rounded-full">
+                <MessageSquare className="h-6 w-6 text-accent-foreground" />
               </div>
               <h3 className="font-medium">Chat Consultation</h3>
               <p className="text-sm text-muted-foreground">
                 Text-based consultation with doctor
               </p>
-              <Button variant="outline" className="w-full mt-2">Start Chat</Button>
+              <Button variant="outline" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); openScheduleDialog('chat'); }}>
+                Start Chat
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-md transition-shadow">
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setUploadOpen(true)}>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center text-center gap-3">
-              <div className="p-3 bg-purple-500/10 rounded-full">
-                <Upload className="h-6 w-6 text-purple-600" />
+              <div className="p-3 bg-secondary rounded-full">
+                <Upload className="h-6 w-6 text-secondary-foreground" />
               </div>
               <h3 className="font-medium">Upload Reports</h3>
               <p className="text-sm text-muted-foreground">
                 Share images/reports during call
               </p>
-              <Button variant="outline" className="w-full mt-2">Upload</Button>
+              <Button variant="outline" className="w-full mt-2" onClick={(e) => { e.stopPropagation(); setUploadOpen(true); }}>
+                Upload
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -266,7 +357,7 @@ const PatientTelemedicine = () => {
             <div className="text-center py-6 text-muted-foreground">
               <Video className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No upcoming teleconsultations</p>
-              <Button className="mt-4">Schedule a Session</Button>
+              <Button className="mt-4" onClick={() => openScheduleDialog('video')}>Schedule a Session</Button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -504,6 +595,142 @@ const PatientTelemedicine = () => {
               >
                 <Phone className="h-4 w-4 mr-2" />
                 End Call
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Session Dialog */}
+      <Dialog open={scheduleOpen} onOpenChange={setScheduleOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {sessionType === 'video' ? <Video className="h-5 w-5" /> : <MessageSquare className="h-5 w-5" />}
+              Schedule {sessionType === 'video' ? 'Video' : 'Chat'} Consultation
+            </DialogTitle>
+            <DialogDescription>
+              Choose a doctor and pick your preferred time
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Doctor Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Select Doctor</label>
+              {loadingDoctors ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                </div>
+              ) : (
+                <div className="grid gap-2 max-h-48 overflow-y-auto">
+                  {doctors.map((doctor) => (
+                    <div
+                      key={doctor.id}
+                      className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedDoctor?.id === doctor.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'hover:bg-muted'
+                      }`}
+                      onClick={() => setSelectedDoctor(doctor)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <User className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{doctor.name}</p>
+                          <p className="text-sm text-muted-foreground">{doctor.specialization}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {doctors.length === 0 && (
+                    <p className="text-center text-muted-foreground py-4">No doctors available</p>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Date Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date</label>
+              <Input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            
+            {/* Time Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Time</label>
+              <Input
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-2 pt-4">
+              <Button variant="outline" className="flex-1" onClick={() => setScheduleOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                className="flex-1" 
+                onClick={scheduleSession}
+                disabled={scheduling || !selectedDoctor || !scheduledDate || !scheduledTime}
+              >
+                {scheduling ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Schedule
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upload Reports Dialog */}
+      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5" />
+              Upload Reports
+            </DialogTitle>
+            <DialogDescription>
+              Share medical reports with your doctor during consultation
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="border-2 border-dashed rounded-lg p-8 text-center">
+              <Upload className="h-10 w-10 mx-auto text-muted-foreground mb-4" />
+              <p className="text-sm text-muted-foreground mb-2">
+                Drag and drop files here, or click to browse
+              </p>
+              <Input
+                type="file"
+                className="hidden"
+                id="file-upload"
+                multiple
+                accept=".pdf,.jpg,.jpeg,.png"
+              />
+              <Button variant="outline" onClick={() => document.getElementById('file-upload')?.click()}>
+                Browse Files
+              </Button>
+            </div>
+            
+            <p className="text-xs text-muted-foreground">
+              Supported formats: PDF, JPG, PNG. Max file size: 10MB
+            </p>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => setUploadOpen(false)}>
+                Cancel
+              </Button>
+              <Button className="flex-1" onClick={() => { setUploadOpen(false); toast.success('Files uploaded successfully!'); }}>
+                Upload
               </Button>
             </div>
           </div>
