@@ -27,8 +27,20 @@ interface Tenant {
 
 const TENANT_STORAGE_KEY = "dev_tenant_code";
 
+const isLocalhost = () => {
+  try {
+    const host = window.location.hostname;
+    return host === "localhost" || host === "127.0.0.1";
+  } catch {
+    return false;
+  }
+};
+
 export const getDevTenantCode = (): string | null => {
-  if (import.meta.env.PROD) return null;
+  // Safety: never allow overriding tenant selection on real production domains.
+  // But in local dev/prod builds running on localhost, we still need this header
+  // so the backend can resolve the tenant schema correctly.
+  if (import.meta.env.PROD && !isLocalhost()) return null;
   return localStorage.getItem(TENANT_STORAGE_KEY);
 };
 
@@ -48,8 +60,8 @@ const DevTenantSwitcher = () => {
   const [loading, setLoading] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<string | null>(null);
   
-  // Check if we're in production mode
-  const isProduction = import.meta.env.PROD;
+  // Treat localhost as a safe environment even if build mode is PROD.
+  const isProduction = import.meta.env.PROD && !isLocalhost();
 
   useEffect(() => {
     if (!isProduction) {
