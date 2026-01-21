@@ -825,17 +825,34 @@ CREATE TABLE IF NOT EXISTS telemedicine_sessions (
   patient_id INT,
   patient_name VARCHAR(255),
   doctor_id INT,
-  type ENUM('video', 'chat', 'phone') DEFAULT 'video',
-  scheduled_time DATETIME NOT NULL,
+  session_type ENUM('video', 'chat', 'phone') DEFAULT 'video',
+  scheduled_date DATE NOT NULL,
+  scheduled_time TIME NOT NULL,
   duration VARCHAR(50) DEFAULT '30 min',
   status ENUM('scheduled', 'in-progress', 'completed', 'cancelled') DEFAULT 'scheduled',
+  meeting_link VARCHAR(500),
   notes TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL,
   FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL,
   INDEX idx_telemedicine_status (status),
-  INDEX idx_telemedicine_scheduled (scheduled_time)
+  INDEX idx_telemedicine_scheduled (scheduled_date)
+);
+
+-- ============================================
+-- TELEMEDICINE CHAT MESSAGES
+-- ============================================
+CREATE TABLE IF NOT EXISTS telemedicine_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  session_id INT NOT NULL,
+  sender_type ENUM('patient', 'doctor') NOT NULL,
+  sender_id INT,
+  message TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (session_id) REFERENCES telemedicine_sessions(id) ON DELETE CASCADE,
+  INDEX idx_tele_messages_session (session_id)
 );
 
 -- ============================================
