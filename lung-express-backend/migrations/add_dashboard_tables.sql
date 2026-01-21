@@ -1,9 +1,13 @@
 -- ============================================
 -- ADDITIONAL TABLES FOR SUPER ADMIN DASHBOARD
--- Run this migration on existing tenant databases
+-- SAFE MIGRATION (MySQL 5.7+ compatible)
+-- Run on existing tenant databases
 -- ============================================
 
--- Ambulance Calls
+/* =======================
+   CORE TABLES
+   ======================= */
+
 CREATE TABLE IF NOT EXISTS ambulance_calls (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_name VARCHAR(255) NOT NULL,
@@ -21,7 +25,6 @@ CREATE TABLE IF NOT EXISTS ambulance_calls (
   FOREIGN KEY (ambulance_id) REFERENCES ambulances(id) ON DELETE SET NULL
 );
 
--- Diagnosis Notes (EMR)
 CREATE TABLE IF NOT EXISTS diagnosis_notes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
@@ -37,7 +40,6 @@ CREATE TABLE IF NOT EXISTS diagnosis_notes (
   FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE SET NULL
 );
 
--- Treatment Plans (EMR)
 CREATE TABLE IF NOT EXISTS treatment_plans (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
@@ -54,7 +56,6 @@ CREATE TABLE IF NOT EXISTS treatment_plans (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
 
--- Progress Notes (EMR)
 CREATE TABLE IF NOT EXISTS progress_notes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
@@ -67,7 +68,6 @@ CREATE TABLE IF NOT EXISTS progress_notes (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
 
--- Medical Documents (EMR)
 CREATE TABLE IF NOT EXISTS medical_documents (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
@@ -81,7 +81,6 @@ CREATE TABLE IF NOT EXISTS medical_documents (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
 
--- Follow-ups
 CREATE TABLE IF NOT EXISTS follow_ups (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
@@ -98,7 +97,6 @@ CREATE TABLE IF NOT EXISTS follow_ups (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
 
--- Care Plans
 CREATE TABLE IF NOT EXISTS care_plans (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
@@ -116,7 +114,6 @@ CREATE TABLE IF NOT EXISTS care_plans (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
 
--- Audit Logs
 CREATE TABLE IF NOT EXISTS audit_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT,
@@ -131,7 +128,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Data Access Logs
 CREATE TABLE IF NOT EXISTS data_access_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT,
@@ -144,7 +140,6 @@ CREATE TABLE IF NOT EXISTS data_access_logs (
   accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- System Alerts
 CREATE TABLE IF NOT EXISTS system_alerts (
   id INT AUTO_INCREMENT PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
@@ -158,7 +153,6 @@ CREATE TABLE IF NOT EXISTS system_alerts (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Notification Settings
 CREATE TABLE IF NOT EXISTS notification_settings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   category VARCHAR(100),
@@ -172,7 +166,6 @@ CREATE TABLE IF NOT EXISTS notification_settings (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Hospital Profile
 CREATE TABLE IF NOT EXISTS hospital_profile (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255),
@@ -197,7 +190,6 @@ CREATE TABLE IF NOT EXISTS hospital_profile (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Departments
 CREATE TABLE IF NOT EXISTS departments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -212,10 +204,29 @@ CREATE TABLE IF NOT EXISTS departments (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- Add department_id to doctors if not exists
-ALTER TABLE doctors ADD COLUMN IF NOT EXISTS department_id INT;
+/* =======================
+   SAFE COLUMN ADD (FIX)
+   ======================= */
 
--- Hospital Facilities
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE table_schema = DATABASE()
+        AND table_name = 'doctors'
+        AND column_name = 'department_id'
+    ),
+    'SELECT "department_id already exists";',
+    'ALTER TABLE doctors ADD COLUMN department_id INT;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+/* =======================
+   OTHER TABLES
+   ======================= */
+
 CREATE TABLE IF NOT EXISTS hospital_facilities (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -227,7 +238,6 @@ CREATE TABLE IF NOT EXISTS hospital_facilities (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Hospital Equipment
 CREATE TABLE IF NOT EXISTS hospital_equipment (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
@@ -243,7 +253,6 @@ CREATE TABLE IF NOT EXISTS hospital_equipment (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insurance Claims
 CREATE TABLE IF NOT EXISTS insurance_claims (
   id INT AUTO_INCREMENT PRIMARY KEY,
   patient_id INT,
@@ -266,7 +275,6 @@ CREATE TABLE IF NOT EXISTS insurance_claims (
   FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
 );
 
--- Access Roles
 CREATE TABLE IF NOT EXISTS access_roles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE,
@@ -274,7 +282,6 @@ CREATE TABLE IF NOT EXISTS access_roles (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Access Permissions
 CREATE TABLE IF NOT EXISTS access_permissions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -283,7 +290,6 @@ CREATE TABLE IF NOT EXISTS access_permissions (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Role Permissions Junction
 CREATE TABLE IF NOT EXISTS role_permissions (
   id INT AUTO_INCREMENT PRIMARY KEY,
   role_id INT NOT NULL,
@@ -294,12 +300,17 @@ CREATE TABLE IF NOT EXISTS role_permissions (
   UNIQUE KEY unique_role_permission (role_id, permission_id)
 );
 
--- Seed default notification settings
-INSERT IGNORE INTO notification_settings (category, setting_key, setting_name, enabled, email_enabled, sms_enabled) VALUES
-('appointments', 'new_appointment', 'New Appointment', TRUE, TRUE, TRUE),
-('appointments', 'appointment_reminder', 'Appointment Reminder', TRUE, TRUE, TRUE),
-('appointments', 'appointment_cancelled', 'Appointment Cancelled', TRUE, TRUE, FALSE),
-('billing', 'invoice_created', 'Invoice Created', TRUE, TRUE, FALSE),
-('billing', 'payment_received', 'Payment Received', TRUE, TRUE, FALSE),
-('lab', 'results_ready', 'Lab Results Ready', TRUE, TRUE, TRUE),
-('system', 'system_alerts', 'System Alerts', TRUE, TRUE, FALSE);
+/* =======================
+   SEED DATA
+   ======================= */
+
+INSERT IGNORE INTO notification_settings
+(category, setting_key, setting_name, enabled, email_enabled, sms_enabled)
+VALUES
+('appointments','new_appointment','New Appointment',TRUE,TRUE,TRUE),
+('appointments','appointment_reminder','Appointment Reminder',TRUE,TRUE,TRUE),
+('appointments','appointment_cancelled','Appointment Cancelled',TRUE,TRUE,FALSE),
+('billing','invoice_created','Invoice Created',TRUE,TRUE,FALSE),
+('billing','payment_received','Payment Received',TRUE,TRUE,FALSE),
+('lab','results_ready','Lab Results Ready',TRUE,TRUE,TRUE),
+('system','system_alerts','System Alerts',TRUE,TRUE,FALSE);

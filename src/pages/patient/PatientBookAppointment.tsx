@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -98,20 +98,31 @@ const PatientBookAppointment = () => {
   const selectedDoctor = doctors.find(d => d.id.toString() === formData.doctor);
 
   const handleSubmit = async () => {
+
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "User not authenticated",
+        variant: "destructive",
+      });
+      return;
+    }
+
+
+
     setSubmitting(true);
     try {
       const response = await apiFetch('/api/appointment', {
         method: 'POST',
         body: JSON.stringify({
-          full_name: user?.name || 'Patient',
-          email: user?.email || '',
-          phone: user?.phone || '',
+          patient_id: user?.id,
+          doctor_id: Number(formData.doctor),
+
           appointment_date: formData.date,
           appointment_time: formData.time,
           selected_doctor: selectedDoctor?.name || formData.doctor,
           doctor_id: selectedDoctor?.id,
           message: formData.reason || '',
-          patient_id: user?.id,
         }),
       });
 
@@ -122,7 +133,8 @@ const PatientBookAppointment = () => {
         });
         navigate("/patient/appointments");
       } else {
-        throw new Error('Failed to book appointment');
+        const err = await response.json();
+        throw new Error(err?.error || 'Failed to book appointment');
       }
     } catch (error) {
       console.error('Error booking appointment:', error);
@@ -258,6 +270,7 @@ const PatientBookAppointment = () => {
                       </SelectItem>
                     )}
                   </SelectContent>
+
                 </Select>
               </div>
 

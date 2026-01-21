@@ -1,33 +1,86 @@
 -- ============================================
 -- MIGRATION: Add missing fields to blood_stock table
 -- Run this on existing tenant databases
+-- Compatible with MySQL 5.7+ and 8.x
 -- ============================================
 
--- Add collection_date column
-ALTER TABLE blood_stock 
-ADD COLUMN IF NOT EXISTS collection_date DATE AFTER batch_number;
+-- collection_date
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE table_schema = DATABASE()
+        AND table_name = 'blood_stock'
+        AND column_name = 'collection_date'
+    ),
+    'SELECT "collection_date already exists";',
+    'ALTER TABLE blood_stock ADD COLUMN collection_date DATE AFTER batch_number;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add location column
-ALTER TABLE blood_stock 
-ADD COLUMN IF NOT EXISTS location VARCHAR(100) DEFAULT 'Refrigerator 1' AFTER source;
+-- location
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE table_schema = DATABASE()
+        AND table_name = 'blood_stock'
+        AND column_name = 'location'
+    ),
+    'SELECT "location already exists";',
+    'ALTER TABLE blood_stock ADD COLUMN location VARCHAR(100) DEFAULT ''Refrigerator 1'' AFTER source;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add status column  
-ALTER TABLE blood_stock 
-ADD COLUMN IF NOT EXISTS status ENUM('available','reserved','expired') DEFAULT 'available' AFTER location;
+-- status
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE table_schema = DATABASE()
+        AND table_name = 'blood_stock'
+        AND column_name = 'status'
+    ),
+    'SELECT "status already exists";',
+    'ALTER TABLE blood_stock ADD COLUMN status ENUM(''available'',''reserved'',''expired'') DEFAULT ''available'' AFTER location;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add donor_id column with foreign key
-ALTER TABLE blood_stock 
-ADD COLUMN IF NOT EXISTS donor_id INT DEFAULT NULL AFTER status;
+-- donor_id
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE table_schema = DATABASE()
+        AND table_name = 'blood_stock'
+        AND column_name = 'donor_id'
+    ),
+    'SELECT "donor_id already exists";',
+    'ALTER TABLE blood_stock ADD COLUMN donor_id INT DEFAULT NULL AFTER status;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add notes column
-ALTER TABLE blood_stock 
-ADD COLUMN IF NOT EXISTS notes TEXT AFTER donor_id;
+-- notes
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE table_schema = DATABASE()
+        AND table_name = 'blood_stock'
+        AND column_name = 'notes'
+    ),
+    'SELECT "notes already exists";',
+    'ALTER TABLE blood_stock ADD COLUMN notes TEXT AFTER donor_id;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add foreign key constraint for donor_id (if blood_donors table exists)
--- Note: Run this separately after ensuring blood_donors table exists
--- ALTER TABLE blood_stock ADD FOREIGN KEY (donor_id) REFERENCES blood_donors(id) ON DELETE SET NULL;
-
--- Insert default blood groups if not present
+-- Insert default blood groups
 INSERT IGNORE INTO blood_groups (group_name, rh_factor, description) VALUES
 ('A', '+', 'A Positive'),
 ('A', '-', 'A Negative'),
