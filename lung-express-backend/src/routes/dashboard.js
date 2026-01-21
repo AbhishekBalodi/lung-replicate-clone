@@ -47,6 +47,12 @@ import { getPatientHome, getPatientAppointments, getPatientMedicalRecords, getPa
 // Patient communications APIs
 import { getPatientTelemedicineSessions, bookTelemedicineSession, getPatientConversations, getPatientMessages, sendPatientMessage, getPatientNotifications, markNotificationAsRead, markAllNotificationsRead as markAllPatientNotificationsRead, deletePatientNotification } from '../lib/patient.communications.js';
 
+// Patient doctors API (for dynamic specialties)
+import { getPatientDoctors, getPatientSpecializations } from '../lib/patient.doctors.js';
+
+// Patient telemedicine chat/video APIs
+import { getTelemedicineChat, sendTelemedicineMessage, startVideoCall, endVideoCall, getTelemedicineDoctors } from '../lib/patient.telemedicine.js';
+
 // Patient profile APIs
 import { getPatientProfile, updatePatientProfile, updateEmergencyContact, addFamilyMember, getPatientSettings, updatePatientSettings } from '../lib/patient.profile.js';
 
@@ -343,5 +349,20 @@ router.get('/analytics/summary', getDoctorAnalyticsSummary);
 router.get('/analytics/trends', getMonthlyTrends);
 router.get('/analytics/status-distribution', getAppointmentStatusDistribution);
 router.get('/analytics/ratings', getRatingBreakdown);
+
+/* ============================================================
+   PATIENT DOCTORS (Dynamic Specialties)
+   ============================================================ */
+router.get('/patient/doctors', getPatientDoctors);
+router.get('/patient/specializations', getPatientSpecializations);
+
+/* ============================================================
+   PATIENT TELEMEDICINE CHAT & VIDEO
+   ============================================================ */
+router.get('/patient/telemedicine/chat/:sessionId', getTelemedicineChat);
+router.post('/patient/telemedicine/chat/:sessionId', sendTelemedicineMessage);
+router.post('/patient/telemedicine/start-video/:sessionId', startVideoCall);
+router.post('/patient/telemedicine/end-video/:sessionId', endVideoCall);
+router.get('/patient/telemedicine/doctors', getTelemedicineDoctors);
 
 export default router;
