@@ -24,6 +24,17 @@ export async function getPatientDoctors(req, res) {
 
     if (hasDoctorsTable) {
       // Hospital tenant OR doctor tenant with doctors table
+      // NOTE: some older schemas may not have profile_photo_url yet.
+      // Make query schema-aware to prevent ER_BAD_FIELD_ERROR.
+      const [columns] = await db.query(`
+        SELECT COLUMN_NAME
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors'
+      `);
+
+      const colSet = new Set(columns.map((c) => c.COLUMN_NAME));
+      const hasProfilePhotoUrl = colSet.has('profile_photo_url');
+
       const [doctors] = await db.query(`
         SELECT 
           id,
@@ -31,7 +42,7 @@ export async function getPatientDoctors(req, res) {
           specialization,
           qualifications,
           consultation_fee,
-          profile_photo_url
+          ${hasProfilePhotoUrl ? 'profile_photo_url' : 'NULL'} AS profile_photo_url
         FROM doctors
         WHERE is_active = TRUE OR is_active IS NULL
         ORDER BY name ASC
@@ -110,6 +121,17 @@ export async function getPatientSpecializations(req, res) {
     
     if (tables.length > 0) {
       // Has doctors table
+      // Schema-aware: ensure specialization column exists
+      const [columns] = await db.query(`
+        SELECT COLUMN_NAME
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors'
+      `);
+      const colSet = new Set(columns.map((c) => c.COLUMN_NAME));
+      if (!colSet.has('specialization')) {
+        return res.json({ specializations: [] });
+      }
+
       const [results] = await db.query(`
         SELECT DISTINCT specialization
         FROM doctors
