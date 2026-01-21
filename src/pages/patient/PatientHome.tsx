@@ -41,26 +41,41 @@ const PatientHome = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiGet('/api/dashboard/patient/home');
+      const res = await apiGet(
+        `/api/dashboard/patient/home?email=${encodeURIComponent(user?.email || "")}`
+      );
       
       if (res.ok) {
         const data = await res.json();
+
+        // Backend may return either a numeric count or an array of upcoming appointments.
+        const upcomingList = Array.isArray(data.upcomingAppointments)
+          ? data.upcomingAppointments
+          : [];
+        const upcomingCount =
+          typeof data.upcomingAppointments === "number"
+            ? data.upcomingAppointments
+            : upcomingList.length;
+
+        const resolvedNextAppointment =
+          data.nextAppointment || (upcomingList.length ? upcomingList[0] : null);
+
         setStats({
-          upcomingAppointments: data.upcomingAppointments || 0,
+          upcomingAppointments: upcomingCount || 0,
           lastConsultation: data.lastConsultation || null,
           pendingLabReports: data.pendingLabReports || 0,
           outstandingBills: data.outstandingBills || 0,
           activePrescriptions: data.activePrescriptions || 0
         });
         
-        if (data.nextAppointment) {
-          setNextAppointment(data.nextAppointment);
-        }
+        setNextAppointment(resolvedNextAppointment);
         
         // Generate health alerts based on data
         const alerts: string[] = [];
-        if (data.nextAppointment) {
-          alerts.push(`Upcoming appointment on ${new Date(data.nextAppointment.appointment_date).toLocaleDateString()}`);
+        if (resolvedNextAppointment) {
+          alerts.push(
+            `Upcoming appointment on ${new Date(resolvedNextAppointment.appointment_date).toLocaleDateString()}`
+          );
         }
         if (data.activePrescriptions > 0) {
           alerts.push(`You have ${data.activePrescriptions} active prescription(s) - remember to take your medications`);
@@ -76,7 +91,7 @@ const PatientHome = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.email]);
 
   useEffect(() => {
     if (user?.id) {

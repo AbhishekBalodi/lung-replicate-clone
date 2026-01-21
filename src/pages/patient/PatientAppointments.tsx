@@ -4,84 +4,87 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, User, XCircle, Edit } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Calendar, Clock, User, XCircle, Loader2 } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+import api from "@/lib/api";
 
 interface Appointment {
-  id: string;
+  id: number;
   appointment_date: string;
   appointment_time: string;
-  selected_doctor: string;
+  doctor_name: string;
+  specialization: string;
+  status: string;
   message: string | null;
-  full_name: string;
 }
 
 const PatientAppointments = () => {
   const { user } = useCustomAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.id) {
+    if (user?.email) {
       fetchAppointments();
     }
-  }, [user?.id]);
+  }, [user?.email]);
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('appointment_date', { ascending: false });
+      const res = await api.apiGet(
+        `/api/dashboard/patient/appointments?email=${encodeURIComponent(user?.email || "")}`
+      );
+      const data = await res.json();
 
-      if (error) throw error;
-      setAppointments(data || []);
+      if (res.ok) {
+        setAppointments(data.appointments || []);
+      } else {
+        throw new Error(data.error || "Failed to load appointments");
+      }
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load appointments",
-        variant: "destructive"
-      });
+      toast.error('Failed to load appointments');
     } finally {
       setLoading(false);
     }
   };
 
   const today = new Date().toISOString().split('T')[0];
-  const upcomingAppointments = appointments.filter(a => a.appointment_date >= today);
-  const pastAppointments = appointments.filter(a => a.appointment_date < today);
+  const upcomingAppointments = appointments.filter(
+    (a) => a.appointment_date >= today && a.status !== 'cancelled'
+  );
+  const pastAppointments = appointments.filter(
+    (a) => a.appointment_date < today || a.status === 'done'
+  );
 
-  const handleCancelAppointment = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-      
-      toast({
-        title: "Appointment Cancelled",
-        description: "Your appointment has been cancelled successfully."
-      });
-      fetchAppointments();
-    } catch (error) {
-      console.error('Error cancelling appointment:', error);
-      toast({
-        title: "Error",
-        description: "Failed to cancel appointment",
-        variant: "destructive"
-      });
-    }
+  const handleCancelAppointment = async (id: number) => {
+    // Note: This would need an API endpoint to cancel appointments
+    toast.info('Cancel appointment feature coming soon');
   };
 
-  const AppointmentCard = ({ appointment, showActions = false }: { appointment: Appointment; showActions?: boolean }) => (
+  const getStatusBadge = (status: string, isUpcoming: boolean) => {
+    if (status === 'cancelled') {
+      return <Badge variant="destructive">Cancelled</Badge>;
+    }
+    if (status === 'done') {
+      return <Badge variant="secondary">Completed</Badge>;
+    }
+    if (isUpcoming) {
+      return <Badge className="bg-primary">Upcoming</Badge>;
+    }
+    return <Badge variant="secondary">{status}</Badge>;
+  };
+
+  const AppointmentCard = ({
+    appointment,
+    isUpcoming = false,
+  }: {
+    appointment: Appointment;
+    isUpcoming?: boolean;
+  }) => (
     <Card className="mb-4">
       <CardContent className="pt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -100,17 +103,15 @@ const PatientAppointments = () => {
             </div>
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
-              <span>{appointment.selected_doctor}</span>
+              <span>Dr. {appointment.doctor_name} {appointment.specialization ? `(${appointment.specialization})` : ''}</span>
             </div>
             {appointment.message && (
               <p className="text-sm text-muted-foreground">Note: {appointment.message}</p>
             )}
-            <Badge variant={showActions ? "default" : "secondary"}>
-              {showActions ? "Upcoming" : "Completed"}
-            </Badge>
+            {getStatusBadge(appointment.status, isUpcoming)}
           </div>
           
-          {showActions && (
+          {isUpcoming && appointment.status !== 'cancelled' && (
             <div className="flex gap-2">
               <Button 
                 variant="destructive" 
@@ -130,7 +131,7 @@ const PatientAppointments = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Loading appointments...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -167,7 +168,7 @@ const PatientAppointments = () => {
             </Card>
           ) : (
             upcomingAppointments.map(apt => (
-              <AppointmentCard key={apt.id} appointment={apt} showActions />
+              <AppointmentCard key={apt.id} appointment={apt} isUpcoming />
             ))
           )}
         </TabsContent>
