@@ -8,10 +8,22 @@ import { getTenantPool } from './tenant-db.js';
 export async function getPatientDoctors(req, res) {
   try {
     const db = getTenantPool(req);
-    const isHospital = req.tenant?.type === 'hospital';
+    const tenantType = req.tenant?.type;
+    const tenantCode = req.tenant?.tenant_code || 'unknown';
+    
+    console.log(`📋 Fetching doctors for tenant: ${tenantCode}, type: ${tenantType}`);
 
-    if (isHospital) {
-      // Hospital tenant - get doctors from local doctors table
+    // Check if doctors table exists first
+    const [tables] = await db.query(`
+      SELECT TABLE_NAME FROM information_schema.TABLES 
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors'
+    `);
+    
+    const hasDoctorsTable = tables.length > 0;
+    console.log(`  └─ Has doctors table: ${hasDoctorsTable}`);
+
+    if (hasDoctorsTable) {
+      // Hospital tenant OR doctor tenant with doctors table
       const [doctors] = await db.query(`
         SELECT 
           id,
@@ -21,9 +33,11 @@ export async function getPatientDoctors(req, res) {
           consultation_fee,
           profile_photo_url
         FROM doctors
-        WHERE is_active = TRUE
+        WHERE is_active = TRUE OR is_active IS NULL
         ORDER BY name ASC
       `);
+
+      console.log(`  └─ Found ${doctors.length} doctors`);
 
       // Get unique specializations for filtering
       const specializations = [...new Set(doctors.map(d => d.specialization).filter(Boolean))];
@@ -31,11 +45,12 @@ export async function getPatientDoctors(req, res) {
       res.json({ 
         doctors, 
         specializations,
-        tenantType: 'hospital'
+        tenantType: tenantType || 'doctor'
       });
     } else {
-      // Individual doctor tenant - get doctor info from tenant settings or tenants table
-      // For individual doctors, there's typically one doctor
+      // Individual doctor tenant - get doctor info from tenant_settings
+      console.log(`  └─ No doctors table, trying tenant_settings`);
+      
       const [[tenantSettings]] = await db.query(`
         SELECT 
           doctor_name,
@@ -48,6 +63,7 @@ export async function getPatientDoctors(req, res) {
       `).catch(() => [[null]]);
 
       if (tenantSettings && tenantSettings.doctor_name) {
+        console.log(`  └─ Found tenant settings doctor: ${tenantSettings.doctor_name}`);
         res.json({
           doctors: [{
             id: 1,
@@ -61,25 +77,10 @@ export async function getPatientDoctors(req, res) {
           tenantType: 'doctor'
         });
       } else {
-        // Fallback - try to get from doctors table if it exists
-        const [doctors] = await db.query(`
-          SELECT 
-            id,
-            name,
-            specialization,
-            qualifications,
-            consultation_fee,
-            profile_photo_url
-          FROM doctors
-          WHERE is_active = TRUE
-          ORDER BY name ASC
-        `).catch(() => [[]]);
-
-        const specializations = [...new Set(doctors.map(d => d.specialization).filter(Boolean))];
-
+        console.log(`  └─ No tenant settings found, returning empty`);
         res.json({ 
-          doctors, 
-          specializations,
+          doctors: [], 
+          specializations: [],
           tenantType: 'doctor'
         });
       }
@@ -97,21 +98,34 @@ export async function getPatientDoctors(req, res) {
 export async function getPatientSpecializations(req, res) {
   try {
     const db = getTenantPool(req);
-    const isHospital = req.tenant?.type === 'hospital';
+    const tenantCode = req.tenant?.tenant_code || 'unknown';
 
-    if (isHospital) {
+    console.log(`📋 Fetching specializations for tenant: ${tenantCode}`);
+
+    // Check if doctors table exists
+    const [tables] = await db.query(`
+      SELECT TABLE_NAME FROM information_schema.TABLES 
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors'
+    `);
+    
+    if (tables.length > 0) {
+      // Has doctors table
       const [results] = await db.query(`
         SELECT DISTINCT specialization
         FROM doctors
-        WHERE is_active = TRUE AND specialization IS NOT NULL AND specialization != ''
+        WHERE (is_active = TRUE OR is_active IS NULL) 
+          AND specialization IS NOT NULL 
+          AND specialization != ''
         ORDER BY specialization ASC
       `);
+
+      console.log(`  └─ Found ${results.length} specializations`);
 
       res.json({ 
         specializations: results.map(r => r.specialization)
       });
     } else {
-      // Individual doctor tenant
+      // Individual doctor tenant - get from tenant_settings
       const [[tenantSettings]] = await db.query(`
         SELECT doctor_specialty
         FROM tenant_settings
