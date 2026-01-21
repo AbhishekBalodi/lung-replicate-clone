@@ -44,7 +44,13 @@ const doctorSchema = baseSchema.extend({
 });
 
 const hospitalSchema = baseSchema.extend({
-  doctor_id: z.number().optional().nullable(),
+  // Accept string or number for doctor_id and coerce to number
+  doctor_id: z.union([z.number(), z.string()]).optional().nullable().transform(v => {
+    if (v === null || v === undefined || v === '') return null;
+    const num = Number(v);
+    return isNaN(num) ? null : num;
+  }),
+  selected_doctor: z.string().optional(), // Allow but ignore for hospital
 });
 
 /* =====================================================
@@ -65,12 +71,30 @@ router.post('/', async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    const timeRegex = /^(\d{2}):(\d{2})$/;
-    if (!timeRegex.test(v.appointment_time)) {
-      return res.status(400).json({ error: 'Invalid time format HH:mm' });
+    // Accept both HH:mm (24h) and h:mm AM/PM (12h) formats
+    const time24Regex = /^(\d{2}):(\d{2})$/;
+    const time12Regex = /^(\d{1,2}):(\d{2})\s*(AM|PM)$/i;
+    
+    let normalizedTime = v.appointment_time;
+    
+    if (!time24Regex.test(v.appointment_time)) {
+      // Try 12-hour format
+      const match12 = v.appointment_time.match(time12Regex);
+      if (match12) {
+        let hours = parseInt(match12[1], 10);
+        const minutes = match12[2];
+        const period = match12[3].toUpperCase();
+        
+        if (period === 'PM' && hours !== 12) hours += 12;
+        else if (period === 'AM' && hours === 12) hours = 0;
+        
+        normalizedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
+      } else {
+        return res.status(400).json({ error: 'Invalid time format. Use HH:mm or h:mm AM/PM' });
+      }
     }
 
-    const appointmentDateTime = `${v.appointment_date} ${v.appointment_time}`;
+    const appointmentDateTime = `${v.appointment_date} ${normalizedTime}`;
 
     const [conflicts] = await conn.execute(
       `
@@ -112,7 +136,7 @@ router.post('/', async (req, res) => {
         v.email,
         v.phone,
         v.appointment_date,
-        v.appointment_time,
+        normalizedTime,
         v.message,
         v.reports_uploaded ? 1 : 0,
       ];
@@ -131,7 +155,7 @@ router.post('/', async (req, res) => {
         v.email,
         v.phone,
         v.appointment_date,
-        v.appointment_time,
+        normalizedTime,
         v.selected_doctor,
         v.message,
         v.reports_uploaded ? 1 : 0,

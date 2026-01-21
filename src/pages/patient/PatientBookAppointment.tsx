@@ -134,9 +134,38 @@ const PatientBookAppointment = () => {
 
   const selectedDoctor = doctors.find(d => d.id.toString() === formData.doctor);
 
+  // Convert 12-hour format (e.g., "02:00 PM") to 24-hour format (e.g., "14:00")
+  const convertTo24Hour = (time12h: string): string => {
+    // If already in 24h format, return as-is
+    if (/^\d{2}:\d{2}$/.test(time12h)) {
+      return time12h;
+    }
+    
+    const match = time12h.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+    if (!match) {
+      // Invalid format, return as-is and let backend handle
+      return time12h;
+    }
+    
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2];
+    const period = match[3].toUpperCase();
+    
+    if (period === 'PM' && hours !== 12) {
+      hours += 12;
+    } else if (period === 'AM' && hours === 12) {
+      hours = 0;
+    }
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
+      // Convert time to 24-hour format for backend
+      const time24h = convertTo24Hour(formData.time);
+      
       const response = await apiFetch('/api/appointment', {
         method: 'POST',
         body: JSON.stringify({
@@ -144,11 +173,10 @@ const PatientBookAppointment = () => {
           email: user?.email || '',
           phone: user?.phone || '',
           appointment_date: formData.date,
-          appointment_time: formData.time,
+          appointment_time: time24h,
           selected_doctor: selectedDoctor?.name || formData.doctor,
-          doctor_id: selectedDoctor?.id,
+          doctor_id: selectedDoctor?.id ? Number(selectedDoctor.id) : null,
           message: formData.reason || '',
-          patient_id: user?.id,
         }),
       });
 
@@ -159,13 +187,15 @@ const PatientBookAppointment = () => {
         });
         navigate("/patient/appointments");
       } else {
-        throw new Error('Failed to book appointment');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Booking error response:', errorData);
+        throw new Error(errorData.error || 'Failed to book appointment');
       }
     } catch (error) {
       console.error('Error booking appointment:', error);
       toast({
         title: "Error",
-        description: "Failed to book appointment. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to book appointment. Please try again.",
         variant: "destructive",
       });
     } finally {
