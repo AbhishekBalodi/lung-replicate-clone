@@ -33,6 +33,11 @@ interface Doctor {
   profile_photo_url?: string;
 }
 
+interface TimeSlot {
+  time: string;
+  available: boolean;
+}
+
 const PatientBookAppointment = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,8 +45,10 @@ const PatientBookAppointment = () => {
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(true);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [specializations, setSpecializations] = useState<string[]>([]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [formData, setFormData] = useState({
     department: "",
     doctor: "",
@@ -49,21 +56,6 @@ const PatientBookAppointment = () => {
     time: "",
     reason: "",
   });
-
-  const timeSlots = [
-    "09:00 AM",
-    "09:30 AM",
-    "10:00 AM",
-    "10:30 AM",
-    "11:00 AM",
-    "11:30 AM",
-    "02:00 PM",
-    "02:30 PM",
-    "03:00 PM",
-    "03:30 PM",
-    "04:00 PM",
-    "04:30 PM",
-  ];
 
   // Fetch doctors and specializations from backend
   useEffect(() => {
@@ -90,6 +82,51 @@ const PatientBookAppointment = () => {
 
     fetchDoctors();
   }, [toast]);
+
+  // Fetch available time slots when doctor and date are selected
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      if (!formData.doctor || !formData.date) {
+        return;
+      }
+      
+      try {
+        setLoadingSlots(true);
+        const res = await apiGet(`/api/schedule/available-slots?doctor_id=${formData.doctor}&date=${formData.date}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTimeSlots(data.slots || []);
+        } else {
+          // Fallback to default slots if API fails
+          setTimeSlots(getDefaultTimeSlots());
+        }
+      } catch (error) {
+        console.error('Error fetching time slots:', error);
+        // Fallback to default slots
+        setTimeSlots(getDefaultTimeSlots());
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    fetchTimeSlots();
+  }, [formData.doctor, formData.date]);
+
+  // Default time slots as fallback
+  const getDefaultTimeSlots = (): TimeSlot[] => [
+    { time: "09:00 AM", available: true },
+    { time: "09:30 AM", available: true },
+    { time: "10:00 AM", available: true },
+    { time: "10:30 AM", available: true },
+    { time: "11:00 AM", available: true },
+    { time: "11:30 AM", available: true },
+    { time: "02:00 PM", available: true },
+    { time: "02:30 PM", available: true },
+    { time: "03:00 PM", available: true },
+    { time: "03:30 PM", available: true },
+    { time: "04:00 PM", available: true },
+    { time: "04:30 PM", available: true },
+  ];
 
   const filteredDoctors = formData.department
     ? doctors.filter((d) => d.specialization === formData.department)
@@ -144,6 +181,8 @@ const PatientBookAppointment = () => {
       </div>
     );
   }
+
+  const availableSlots = timeSlots.filter(slot => slot.available);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -301,6 +340,7 @@ const PatientBookAppointment = () => {
                     setFormData({
                       ...formData,
                       date: e.target.value,
+                      time: "", // Reset time when date changes
                     })
                   }
                 />
@@ -308,23 +348,38 @@ const PatientBookAppointment = () => {
 
               <div className="space-y-2">
                 <Label>Available Time Slots</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map((slot) => (
-                    <Button
-                      key={slot}
-                      variant={formData.time === slot ? "default" : "outline"}
-                      size="sm"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          time: slot,
-                        })
-                      }
-                    >
-                      {slot}
-                    </Button>
-                  ))}
-                </div>
+                {loadingSlots ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Loading slots...</span>
+                  </div>
+                ) : availableSlots.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableSlots.map((slot) => (
+                      <Button
+                        key={slot.time}
+                        variant={formData.time === slot.time ? "default" : "outline"}
+                        size="sm"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            time: slot.time,
+                          })
+                        }
+                      >
+                        {slot.time}
+                      </Button>
+                    ))}
+                  </div>
+                ) : formData.date ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    No available slots for this date. Please select another date.
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    Please select a date to see available slots.
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-2">
