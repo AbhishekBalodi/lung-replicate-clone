@@ -27,8 +27,17 @@ interface Tenant {
 
 const TENANT_STORAGE_KEY = "dev_tenant_code";
 
+const isLocalhost = () => {
+  try {
+    const host = window.location.hostname;
+    return host === "localhost" || host === "127.0.0.1";
+  } catch {
+    return false;
+  }
+};
+
 export const getDevTenantCode = (): string | null => {
-  if (import.meta.env.PROD) return null;
+  if (import.meta.env.PROD && !isLocalhost()) return null;
   return localStorage.getItem(TENANT_STORAGE_KEY);
 };
 
@@ -48,8 +57,7 @@ const DevTenantSwitcher = () => {
   const [loading, setLoading] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<string | null>(null);
   
-  // Check if we're in production mode
-  const isProduction = import.meta.env.PROD;
+  const isProduction = import.meta.env.PROD && !isLocalhost();
 
   useEffect(() => {
     if (!isProduction) {
