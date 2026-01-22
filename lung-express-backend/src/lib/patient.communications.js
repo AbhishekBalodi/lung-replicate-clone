@@ -27,10 +27,19 @@ export async function getPatientTelemedicineSessions(req, res) {
       return res.json({ upcomingSessions: [], pastSessions: [] });
     }
 
+    // Schema-aware: older tenant schemas may not have telemedicine_sessions.session_type
+    const [tsColumns] = await db.query(`
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_sessions'
+    `).catch(() => [[]]);
+    const tsColSet = new Set((tsColumns || []).map((c) => c.COLUMN_NAME));
+    const hasSessionType = tsColSet.has('session_type');
+
     let query = `
       SELECT 
         ts.id,
-        ts.session_type,
+        ${hasSessionType ? 'ts.session_type' : 'NULL'} AS session_type,
         ts.scheduled_date,
         ts.scheduled_time,
         ts.status,
@@ -89,11 +98,31 @@ export async function bookTelemedicineSession(req, res) {
       return res.status(404).json({ error: 'Patient not found' });
     }
 
-    const [result] = await db.query(`
-      INSERT INTO telemedicine_sessions 
-      (patient_id, doctor_id, session_type, scheduled_date, scheduled_time, status, notes)
-      VALUES (?, ?, ?, ?, ?, 'scheduled', ?)
-    `, [patient.id, doctor_id, session_type || 'video', scheduled_date, scheduled_time, notes || null]);
+    // Schema-aware insert: handle tenants without session_type column
+    const [tsColumns] = await db.query(`
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_sessions'
+    `).catch(() => [[]]);
+    const tsColSet = new Set((tsColumns || []).map((c) => c.COLUMN_NAME));
+    const hasSessionType = tsColSet.has('session_type');
+
+    const [result] = await db.query(
+      hasSessionType
+        ? `
+          INSERT INTO telemedicine_sessions 
+          (patient_id, doctor_id, session_type, scheduled_date, scheduled_time, status, notes)
+          VALUES (?, ?, ?, ?, ?, 'scheduled', ?)
+        `
+        : `
+          INSERT INTO telemedicine_sessions 
+          (patient_id, doctor_id, scheduled_date, scheduled_time, status, notes)
+          VALUES (?, ?, ?, ?, 'scheduled', ?)
+        `,
+      hasSessionType
+        ? [patient.id, doctor_id, session_type || 'video', scheduled_date, scheduled_time, notes || null]
+        : [patient.id, doctor_id, scheduled_date, scheduled_time, notes || null]
+    );
 
     res.json({ 
       success: true, 
