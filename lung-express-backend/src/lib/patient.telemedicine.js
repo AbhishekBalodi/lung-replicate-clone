@@ -214,13 +214,22 @@ export async function getTelemedicineDoctors(req, res) {
   try {
     const db = getTenantPool(req);
 
+    // Schema-aware: older tenants may not have doctors.profile_photo_url yet
+    const [columns] = await db.query(`
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors'
+    `).catch(() => [[]]);
+    const colSet = new Set((columns || []).map((c) => c.COLUMN_NAME));
+    const hasProfilePhotoUrl = colSet.has('profile_photo_url');
+
     const [doctors] = await db.query(`
       SELECT 
         id,
         name,
         specialization,
         consultation_fee,
-        profile_photo_url
+        ${hasProfilePhotoUrl ? 'profile_photo_url' : 'NULL'} AS profile_photo_url
       FROM doctors
       WHERE is_active = TRUE
       ORDER BY name ASC

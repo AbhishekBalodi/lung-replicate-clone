@@ -100,6 +100,16 @@ export async function getPatientAppointments(req, res) {
       return res.status(400).json({ error: 'Patient email required' });
     }
 
+    // Schema-aware: older tenants may not have doctors.profile_photo_url yet
+    const [doctorColumns] = await db.query(`
+      SELECT COLUMN_NAME
+      FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors'
+    `).catch(() => [[]]);
+
+    const doctorColSet = new Set((doctorColumns || []).map((c) => c.COLUMN_NAME));
+    const hasProfilePhotoUrl = doctorColSet.has('profile_photo_url');
+
     let query = `
       SELECT 
         a.id,
@@ -110,7 +120,7 @@ export async function getPatientAppointments(req, res) {
         a.created_at,
         d.name AS doctor_name,
         d.specialization,
-        d.profile_photo_url
+        ${hasProfilePhotoUrl ? 'd.profile_photo_url' : 'NULL'} AS profile_photo_url
       FROM appointments a
       LEFT JOIN doctors d ON a.doctor_id = d.id
       WHERE a.email = ?
