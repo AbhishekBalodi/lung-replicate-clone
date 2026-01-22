@@ -86,16 +86,28 @@ export async function bookTelemedicineSession(req, res) {
     const { email, doctor_id, session_type, scheduled_date, scheduled_time, notes } = req.body;
 
     if (!email || !doctor_id || !scheduled_date || !scheduled_time) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Missing required fields: email, doctor_id, scheduled_date, and scheduled_time are required' });
+    }
+
+    // Check if telemedicine_sessions table exists
+    const [tables] = await db.query(`
+      SELECT TABLE_NAME 
+      FROM information_schema.TABLES 
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_sessions'
+    `).catch(() => [[]]);
+
+    if (!tables || tables.length === 0) {
+      console.error('❌ telemedicine_sessions table does not exist in this tenant schema');
+      return res.status(400).json({ error: 'Telemedicine is not available for this tenant. Please contact support to enable it.' });
     }
 
     const [[patient]] = await db.query(
-      `SELECT id FROM patients WHERE email = ? LIMIT 1`,
+      `SELECT id, full_name FROM patients WHERE email = ? LIMIT 1`,
       [email]
     );
 
     if (!patient) {
-      return res.status(404).json({ error: 'Patient not found' });
+      return res.status(404).json({ error: 'Patient not found. Please ensure you have a patient profile.' });
     }
 
     // Schema-aware insert: handle tenants without session_type column
@@ -106,23 +118,41 @@ export async function bookTelemedicineSession(req, res) {
     `).catch(() => [[]]);
     const tsColSet = new Set((tsColumns || []).map((c) => c.COLUMN_NAME));
     const hasSessionType = tsColSet.has('session_type');
+    const hasPatientName = tsColSet.has('patient_name');
 
-    const [result] = await db.query(
-      hasSessionType
-        ? `
-          INSERT INTO telemedicine_sessions 
-          (patient_id, doctor_id, session_type, scheduled_date, scheduled_time, status, notes)
-          VALUES (?, ?, ?, ?, ?, 'scheduled', ?)
-        `
-        : `
-          INSERT INTO telemedicine_sessions 
-          (patient_id, doctor_id, scheduled_date, scheduled_time, status, notes)
-          VALUES (?, ?, ?, ?, 'scheduled', ?)
-        `,
-      hasSessionType
-        ? [patient.id, doctor_id, session_type || 'video', scheduled_date, scheduled_time, notes || null]
-        : [patient.id, doctor_id, scheduled_date, scheduled_time, notes || null]
-    );
+    // Build insert query based on available columns
+    let insertCols = ['patient_id', 'doctor_id', 'scheduled_date', 'scheduled_time', 'status'];
+    let insertPlaceholders = ['?', '?', '?', '?', "'scheduled'"];
+    let insertValues = [patient.id, doctor_id, scheduled_date, scheduled_time];
+
+    if (hasSessionType) {
+      insertCols.push('session_type');
+      insertPlaceholders.push('?');
+      insertValues.push(session_type || 'video');
+    }
+
+    if (hasPatientName) {
+      insertCols.push('patient_name');
+      insertPlaceholders.push('?');
+      insertValues.push(patient.full_name || 'Patient');
+    }
+
+    if (notes) {
+      insertCols.push('notes');
+      insertPlaceholders.push('?');
+      insertValues.push(notes);
+    }
+
+    const insertQuery = `
+      INSERT INTO telemedicine_sessions (${insertCols.join(', ')})
+      VALUES (${insertPlaceholders.join(', ')})
+    `;
+
+    console.log('📋 Booking telemedicine session:', { email, doctor_id, scheduled_date, scheduled_time, session_type });
+
+    const [result] = await db.query(insertQuery, insertValues);
+
+    console.log('✅ Telemedicine session booked successfully:', result.insertId);
 
     res.json({ 
       success: true, 
@@ -131,7 +161,7 @@ export async function bookTelemedicineSession(req, res) {
     });
   } catch (error) {
     console.error('❌ Book telemedicine session error:', error);
-    res.status(500).json({ error: 'Failed to book session' });
+    res.status(500).json({ error: `Failed to book session: ${error.message}` });
   }
 }
 

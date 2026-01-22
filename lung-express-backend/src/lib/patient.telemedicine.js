@@ -4,6 +4,16 @@ import { getTenantPool } from './tenant-db.js';
  * Telemedicine Chat and Video APIs for Patient Dashboard
  */
 
+// Helper to check if telemedicine_messages table exists
+async function checkMessagesTableExists(db) {
+  const [tables] = await db.query(`
+    SELECT TABLE_NAME 
+    FROM information_schema.TABLES 
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_messages'
+  `).catch(() => [[]]);
+  return tables && tables.length > 0;
+}
+
 /**
  * GET /api/dashboard/patient/telemedicine/chat/:sessionId
  * Get chat messages for a telemedicine session
@@ -18,6 +28,9 @@ export async function getTelemedicineChat(req, res) {
       return res.status(400).json({ error: 'Missing required parameters' });
     }
 
+    // Check if telemedicine_messages table exists
+    const hasMessagesTable = await checkMessagesTableExists(db);
+
     // Verify patient owns this session
     const [[session]] = await db.query(`
       SELECT ts.id, ts.patient_id, ts.doctor_id, d.name as doctor_name
@@ -31,26 +44,31 @@ export async function getTelemedicineChat(req, res) {
       return res.status(404).json({ error: 'Session not found' });
     }
 
-    // Get chat messages
-    const [messages] = await db.query(`
-      SELECT 
-        id,
-        sender_type,
-        sender_id,
-        message,
-        created_at as timestamp,
-        is_read
-      FROM telemedicine_messages
-      WHERE session_id = ?
-      ORDER BY created_at ASC
-    `, [sessionId]);
+    let messages = [];
 
-    // Mark doctor messages as read
-    await db.query(`
-      UPDATE telemedicine_messages 
-      SET is_read = TRUE 
-      WHERE session_id = ? AND sender_type = 'doctor'
-    `, [sessionId]);
+    if (hasMessagesTable) {
+      // Get chat messages
+      const [msgRows] = await db.query(`
+        SELECT 
+          id,
+          sender_type,
+          sender_id,
+          message,
+          created_at as timestamp,
+          is_read
+        FROM telemedicine_messages
+        WHERE session_id = ?
+        ORDER BY created_at ASC
+      `, [sessionId]);
+      messages = msgRows || [];
+
+      // Mark doctor messages as read
+      await db.query(`
+        UPDATE telemedicine_messages 
+        SET is_read = TRUE 
+        WHERE session_id = ? AND sender_type = 'doctor'
+      `, [sessionId]).catch(() => {});
+    }
 
     res.json({ 
       messages,
@@ -78,6 +96,12 @@ export async function sendTelemedicineMessage(req, res) {
 
     if (!email || !sessionId || !message) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if telemedicine_messages table exists
+    const hasMessagesTable = await checkMessagesTableExists(db);
+    if (!hasMessagesTable) {
+      return res.status(400).json({ error: 'Chat functionality is not available for this tenant. Please contact support.' });
     }
 
     // Get patient ID

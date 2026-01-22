@@ -166,16 +166,23 @@ const PatientTelemedicine = () => {
         })
       });
       
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      
+      if (res.ok && data.success) {
         toast.success('Session scheduled successfully!');
         setScheduleOpen(false);
+        setSelectedDoctor(null);
+        setScheduledDate('');
+        setScheduledTime('');
         fetchSessions();
       } else {
-        throw new Error('Failed to schedule session');
+        const errorMsg = data.error || 'Failed to schedule session';
+        console.error('Schedule session error:', errorMsg);
+        toast.error(errorMsg);
       }
     } catch (error) {
       console.error('Error scheduling session:', error);
-      toast.error('Failed to schedule session');
+      toast.error('Failed to schedule session. Please try again.');
     } finally {
       setScheduling(false);
     }
