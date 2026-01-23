@@ -1,40 +1,57 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Calendar, Search, User, Clock } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCustomAuth } from "@/contexts/CustomAuthContext";
+import api from "@/lib/api";
 
 interface HistoricalAppointment {
-  id: string;
+  id: number;
   appointment_date: string;
   appointment_time: string;
-  selected_doctor: string;
+  doctor_name: string;
+  specialization?: string;
+  status?: string;
   message: string | null;
 }
 
 const PatientAppointmentHistory = () => {
+  const { user } = useCustomAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [appointments, setAppointments] = useState<HistoricalAppointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAppointmentHistory();
-  }, []);
+    if (user?.email) fetchAppointmentHistory();
+  }, [user?.email]);
 
   const fetchAppointmentHistory = async () => {
     try {
       setLoading(true);
-      const today = new Date().toISOString().split('T')[0];
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .lt('appointment_date', today)
-        .order('appointment_date', { ascending: false });
+      const res = await api.apiGet(
+        `/api/dashboard/patient/appointments?email=${encodeURIComponent(user?.email || "")}`
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to load appointments");
 
-      if (error) throw error;
-      setAppointments(data || []);
+      const list: HistoricalAppointment[] = (data?.appointments || []).map((a: any) => ({
+        id: Number(a.id),
+        appointment_date: a.appointment_date,
+        appointment_time: a.appointment_time,
+        doctor_name: a.doctor_name || a.selected_doctor || "",
+        specialization: a.specialization || "",
+        status: a.status,
+        message: a.message ?? null,
+      }));
+
+      const today = new Date().toISOString().split("T")[0];
+      // History shows past appointments and completed ones
+      const history = list.filter(
+        (apt) => apt.appointment_date < today || apt.status === "done"
+      );
+
+      setAppointments(history);
     } catch (error) {
       console.error('Error fetching appointment history:', error);
     } finally {
@@ -42,10 +59,16 @@ const PatientAppointmentHistory = () => {
     }
   };
 
-  const filteredAppointments = appointments.filter(apt =>
-    apt.selected_doctor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (apt.message && apt.message.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredAppointments = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return appointments;
+    return appointments.filter(
+      (apt) =>
+        (apt.doctor_name || "").toLowerCase().includes(q) ||
+        (apt.specialization || "").toLowerCase().includes(q) ||
+        (apt.message || "").toLowerCase().includes(q)
+    );
+  }, [appointments, searchTerm]);
 
   if (loading) {
     return (
@@ -103,7 +126,10 @@ const PatientAppointmentHistory = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{apt.selected_doctor}</span>
+                      <span>
+                        Dr. {apt.doctor_name}
+                        {apt.specialization ? ` (${apt.specialization})` : ""}
+                      </span>
                     </div>
                     {apt.message && (
                       <p className="text-sm text-muted-foreground">

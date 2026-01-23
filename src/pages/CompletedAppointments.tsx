@@ -11,6 +11,7 @@ import { FileText, Download, Search } from "lucide-react";
 import { format } from "date-fns";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { apiFetch } from "@/lib/api";
 
 type Appointment = {
   id: number;
@@ -35,10 +36,7 @@ type Medicine = {
   prescribed_date: string | null;
 };
 
-const API_ROOT =
-  (import.meta as any)?.env?.VITE_API_URL
-    ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, "")}/api`
-    : "/api";
+// NOTE: Use apiFetch so tenant + doctor context headers are always attached.
 
 export default function CompletedAppointments() {
   const { user, loading: authLoading } = useCustomAuth();
@@ -62,7 +60,7 @@ export default function CompletedAppointments() {
   const fetchCompletedAppointments = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_ROOT}/appointment?status=done`);
+      const res = await apiFetch(`/api/appointment?status=done`, { method: "GET" });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to load appointments");
       setAppointments(Array.isArray(data) ? data : []);
@@ -76,7 +74,10 @@ export default function CompletedAppointments() {
   const fetchPatientPrescriptions = async (patientName: string): Promise<Medicine[]> => {
     try {
       // First get patient ID
-      const patientsRes = await fetch(`${API_ROOT}/patients?q=${encodeURIComponent(patientName)}`);
+      const patientsRes = await apiFetch(
+        `/api/patients?q=${encodeURIComponent(patientName)}`,
+        { method: "GET" }
+      );
       const patients = await patientsRes.json();
       
       if (!patients || patients.length === 0) {
@@ -86,7 +87,10 @@ export default function CompletedAppointments() {
       const patientId = patients[0].id;
       
       // Then get prescriptions
-      const prescRes = await fetch(`${API_ROOT}/prescriptions?patient_id=${patientId}`);
+      const prescRes = await apiFetch(
+        `/api/prescriptions?patient_id=${patientId}`,
+        { method: "GET" }
+      );
       const medicines = await prescRes.json();
       
       return Array.isArray(medicines) ? medicines : [];
