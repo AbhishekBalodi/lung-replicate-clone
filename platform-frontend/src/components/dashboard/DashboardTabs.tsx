@@ -4,6 +4,7 @@ import ScheduleTab from "./tabs/ScheduleTab";
 import PatientsTab from "./tabs/PatientsTab";
 import TasksTab from "./tabs/TasksTab";
 import StatsTab from "./tabs/StatsTab";
+import PrescriptionsTab from "./tabs/PrescriptionsTab";
 
 interface Appointment {
   id: number;
@@ -56,6 +57,9 @@ export default function DashboardTabs({ appointments, onViewAppointment, isHospi
         <TabsTrigger value="stats" className={triggerBase}>
           Stats
         </TabsTrigger>
+        <TabsTrigger value="prescriptions" className={triggerBase}>
+          Prescriptions
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="schedule" className="mt-6">
@@ -77,6 +81,10 @@ export default function DashboardTabs({ appointments, onViewAppointment, isHospi
 
       <TabsContent value="stats" className="mt-6">
         <StatsTab appointments={appointments} isHospital={isHospital} />
+      </TabsContent>
+
+      <TabsContent value="prescriptions" className="mt-6">
+        <PrescriptionsTab isHospital={isHospital} />
       </TabsContent>
     </Tabs>
   );

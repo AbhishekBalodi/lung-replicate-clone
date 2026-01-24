@@ -1,6 +1,16 @@
 import { Card } from "@/components/ui/card";
-import { Calendar, FileText, Users, ListTodo, ArrowUpRight } from "lucide-react";
+import {
+  Calendar,
+  FileText,
+  Users,
+  ListTodo,
+  ArrowUpRight,
+  AlertTriangle,
+  Bell,
+  ClipboardList
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 interface DashboardKPICardsProps {
   todayAppointments: number;
@@ -11,6 +21,13 @@ interface DashboardKPICardsProps {
   newPatients: number;
   pendingTasks: number;
   highPriorityTasks: number;
+
+  /* 🔽 NEW KPI PROPS (ADDITIVE ONLY) */
+  completedAppointments?: number;
+  cancelledAppointments?: number;
+  unreadLabReports?: number;
+  emergencyAlerts?: number;
+  pendingAppointments?: number;
 }
 
 export default function DashboardKPICards({
@@ -22,12 +39,39 @@ export default function DashboardKPICards({
   newPatients,
   pendingTasks,
   highPriorityTasks,
+
+  /* 🔽 NEW KPI VALUES */
+  completedAppointments = 0,
+  cancelledAppointments = 0,
+  unreadLabReports = 0,
+  emergencyAlerts = 0,
+  pendingAppointments = 0,
 }: DashboardKPICardsProps) {
   const navigate = useNavigate();
 
+  /* 🔽 FILTER STATE FOR FIRST KPI CARD */
+  const [appointmentFilter, setAppointmentFilter] = useState<
+    "today" | "completed" | "cancelled"
+  >("today");
+
+  const getAppointmentCount = () => {
+    if (appointmentFilter === "completed") return completedAppointments;
+    if (appointmentFilter === "cancelled") return cancelledAppointments;
+    return todayAppointments;
+  };
+
+  const getAppointmentLabel = () => {
+    if (appointmentFilter === "completed") return "Completed appointments";
+    if (appointmentFilter === "cancelled") return "Cancelled appointments";
+    return "Today's consultations";
+  };
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {/* Appointments Card */}
+
+      {/* ==============================
+          APPOINTMENTS CARD (FILTER ADDED)
+      ============================== */}
       <Card className="relative overflow-hidden bg-card border-l-4 border-l-teal-500 border-t border-r border-b p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -35,16 +79,39 @@ export default function DashboardKPICards({
               <Calendar className="h-5 w-5 text-teal-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Appointments</p>
-              <span className="text-xs text-red-500 font-medium">{urgentAppointments} urgent</span>
+              <p className="text-sm font-medium text-foreground">
+                Appointments
+              </p>
+              <span className="text-xs text-red-500 font-medium">
+                {urgentAppointments} urgent
+              </span>
             </div>
           </div>
+
+          {/* 🔽 FILTER DROPDOWN */}
+          <select
+            value={appointmentFilter}
+            onChange={(e) =>
+              setAppointmentFilter(e.target.value as any)
+            }
+            className="text-xs border rounded-md px-2 py-1 bg-background text-foreground"
+          >
+            <option value="today">Today</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
         </div>
+
         <div className="mt-4">
-          <p className="text-4xl font-bold text-foreground">{todayAppointments}</p>
-          <p className="text-sm text-muted-foreground mt-1">Today's consultations</p>
+          <p className="text-4xl font-bold text-foreground">
+            {getAppointmentCount()}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {getAppointmentLabel()}
+          </p>
         </div>
-        <button 
+
+        <button
           onClick={() => navigate("/appointments")}
           className="flex items-center gap-1 text-teal-600 text-sm mt-4 hover:text-teal-700 transition-colors font-medium"
         >
@@ -53,7 +120,9 @@ export default function DashboardKPICards({
         </button>
       </Card>
 
-      {/* Pending Reports Card */}
+      {/* ==============================
+          PENDING REPORTS (UNCHANGED)
+      ============================== */}
       <Card className="relative overflow-hidden bg-card border-l-4 border-l-amber-500 border-t border-r border-b p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -61,16 +130,24 @@ export default function DashboardKPICards({
               <FileText className="h-5 w-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Pending Reports</p>
-              <span className="text-xs text-green-500 font-medium">{reportsReady} ready</span>
+              <p className="text-sm font-medium text-foreground">
+                Pending Reports
+              </p>
+              <span className="text-xs text-green-500 font-medium">
+                {reportsReady} ready
+              </span>
             </div>
           </div>
         </div>
         <div className="mt-4">
-          <p className="text-4xl font-bold text-foreground">{pendingReports}</p>
-          <p className="text-sm text-muted-foreground mt-1">Lab results awaiting review</p>
+          <p className="text-4xl font-bold text-foreground">
+            {pendingReports}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Lab results awaiting review
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => navigate("/lab-tests")}
           className="flex items-center gap-1 text-amber-600 text-sm mt-4 hover:text-amber-700 transition-colors font-medium"
         >
@@ -79,7 +156,9 @@ export default function DashboardKPICards({
         </button>
       </Card>
 
-      {/* Active Patients Card */}
+      {/* ==============================
+          ACTIVE PATIENTS (UNCHANGED)
+      ============================== */}
       <Card className="relative overflow-hidden bg-card border-l-4 border-l-emerald-500 border-t border-r border-b p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -87,16 +166,24 @@ export default function DashboardKPICards({
               <Users className="h-5 w-5 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Active Patients</p>
-              <span className="text-xs text-emerald-500 font-medium">{newPatients} new</span>
+              <p className="text-sm font-medium text-foreground">
+                Active Patients
+              </p>
+              <span className="text-xs text-emerald-500 font-medium">
+                {newPatients} new
+              </span>
             </div>
           </div>
         </div>
         <div className="mt-4">
-          <p className="text-4xl font-bold text-foreground">{activePatients}</p>
-          <p className="text-sm text-muted-foreground mt-1">Total patient count this week</p>
+          <p className="text-4xl font-bold text-foreground">
+            {activePatients}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Total patient count this week
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => navigate("/patients")}
           className="flex items-center gap-1 text-emerald-600 text-sm mt-4 hover:text-emerald-700 transition-colors font-medium"
         >
@@ -105,7 +192,9 @@ export default function DashboardKPICards({
         </button>
       </Card>
 
-      {/* Pending Tasks Card */}
+      {/* ==============================
+          PENDING TASKS (UNCHANGED)
+      ============================== */}
       <Card className="relative overflow-hidden bg-card border-l-4 border-l-rose-500 border-t border-r border-b p-5">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
@@ -113,22 +202,79 @@ export default function DashboardKPICards({
               <ListTodo className="h-5 w-5 text-rose-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Pending Tasks</p>
-              <span className="text-xs text-rose-500 font-medium">{highPriorityTasks} high priority</span>
+              <p className="text-sm font-medium text-foreground">
+                Pending Tasks
+              </p>
+              <span className="text-xs text-rose-500 font-medium">
+                {highPriorityTasks} high priority
+              </span>
             </div>
           </div>
         </div>
         <div className="mt-4">
-          <p className="text-4xl font-bold text-foreground">{pendingTasks}</p>
-          <p className="text-sm text-muted-foreground mt-1">Tasks requiring attention</p>
+          <p className="text-4xl font-bold text-foreground">
+            {pendingTasks}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tasks requiring attention
+          </p>
         </div>
-        <button 
-          className="flex items-center gap-1 text-rose-600 text-sm mt-4 hover:text-rose-700 transition-colors font-medium"
-        >
-          View Tasks
-          <ArrowUpRight className="h-4 w-4" />
-        </button>
       </Card>
+
+      {/* ==============================
+          🔴 UNREAD LAB REPORTS
+      ============================== */}
+      <Card className="relative overflow-hidden bg-card border-l-4 border-l-indigo-500 p-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-indigo-500/10">
+            <Bell className="h-5 w-5 text-indigo-600" />
+          </div>
+          <p className="text-sm font-medium text-foreground">
+            Unread Lab Reports
+          </p>
+        </div>
+        <p className="text-4xl font-bold mt-4">{unreadLabReports}</p>
+        <p className="text-sm text-muted-foreground">
+          Reports not yet opened
+        </p>
+      </Card>
+
+      {/* ==============================
+          🚨 EMERGENCY ALERTS
+      ============================== */}
+      <Card className="relative overflow-hidden bg-card border-l-4 border-l-red-600 p-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-red-500/10">
+            <AlertTriangle className="h-5 w-5 text-red-600" />
+          </div>
+          <p className="text-sm font-medium text-foreground">
+            Emergency Alerts
+          </p>
+        </div>
+        <p className="text-4xl font-bold mt-4">{emergencyAlerts}</p>
+        <p className="text-sm text-muted-foreground">
+          Requires immediate action
+        </p>
+      </Card>
+
+      {/* ==============================
+          ⏳ PENDING APPOINTMENTS
+      ============================== */}
+      <Card className="relative overflow-hidden bg-card border-l-4 border-l-sky-500 p-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-lg bg-sky-500/10">
+            <ClipboardList className="h-5 w-5 text-sky-600" />
+          </div>
+          <p className="text-sm font-medium text-foreground">
+            Pending Appointments
+          </p>
+        </div>
+        <p className="text-4xl font-bold mt-4">{pendingAppointments}</p>
+        <p className="text-sm text-muted-foreground">
+          Awaiting confirmation
+        </p>
+      </Card>
+
     </div>
   );
 }

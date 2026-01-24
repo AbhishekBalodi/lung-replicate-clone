@@ -119,23 +119,8 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Hydrate from localStorage (PlatformLogin stores these values)
-    try {
-      const storedUser = localStorage.getItem('customUser');
-      if (storedUser) setUser(JSON.parse(storedUser));
-
-      const storedTenant = localStorage.getItem('tenantInfo');
-      if (storedTenant) {
-        const t = JSON.parse(storedTenant);
-        setTenant(t);
-        setTenantInfo(t);
-      }
-    } catch {
-      // ignore
-    }
-
-    // Fetch latest tenant info (non-blocking)
-    Promise.resolve(fetchTenantInfo()).finally(() => setLoading(false));
+    fetchTenantInfo();
+    setLoading(false);
   }, []);
 
   /* ============================================================
@@ -178,9 +163,6 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(data.user);
       setTenant(data.tenant || null);
-      localStorage.setItem('customUser', JSON.stringify(data.user));
-      localStorage.setItem('tenantInfo', JSON.stringify(data.tenant));
-
       return { user: data.user, error: null };
     } catch (e: any) {
       return { user: undefined, error: { message: e.message || 'Network error' } };
@@ -188,44 +170,25 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const loginAsSuperAdmin = async (email: string, password: string): Promise<AuthResult> => {
-    if (isLegacyDrMannSite()) {
-      // Legacy path uses auth provider; treat as admin-only
-      return { user: undefined, error: { message: 'Super Admin login is not available on this site' } };
+    const result = await loginAsAdmin(email, password);
+    if (result.user && result.user.role !== 'super_admin') {
+      return { user: undefined, error: { message: 'Invalid Super Admin credentials' } };
     }
-
-    try {
-      const tenantCode = getDevTenantCode();
-      const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
-        method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({ email, password, tenantCode, loginType: 'super_admin' })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        return { user: undefined, error: { message: data.error || 'Login failed' } };
-      }
-
-      setUser(data.user);
-      setTenant(data.tenant || null);
-      localStorage.setItem('customUser', JSON.stringify(data.user));
-      localStorage.setItem('tenantInfo', JSON.stringify(data.tenant));
-
-      return { user: data.user, error: null };
-    } catch (e: any) {
-      return { user: undefined, error: { message: e.message || 'Network error' } };
-    }
+    return result;
   };
 
   const loginAsPatient = async (email: string, phone: string): Promise<AuthResult> => {
     try {
       const tenantCode = getDevTenantCode();
-      const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
         method: 'POST',
         headers: getHeaders(),
         credentials: 'include',
-        body: JSON.stringify({ email, phone, tenantCode, loginType: 'patient' })
+        body: JSON.stringify({
+           email,
+          password: phone,
+          loginType: 'patient' 
+            })
       });
 
       const data = await res.json();
@@ -234,10 +197,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setUser(data.user);
-      setTenant(data.tenant || null);
-      localStorage.setItem('customUser', JSON.stringify(data.user));
-      localStorage.setItem('tenantInfo', JSON.stringify(data.tenant));
-
+      //setTenant(data.tenant || null);
       return { user: data.user, error: null };
     } catch (e: any) {
       return { user: undefined, error: { message: e.message || 'Network error' } };
@@ -245,10 +205,12 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
+      method: 'POST',
+      credentials: 'include'
+    });
     setUser(null);
     setTenant(null);
-    localStorage.removeItem('customUser');
-    localStorage.removeItem('tenantInfo');
   };
 
   /* ============================================================

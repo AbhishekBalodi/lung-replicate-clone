@@ -1,81 +1,72 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Pill, FlaskConical, Stethoscope, Loader2, Calendar, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Download, Eye, Calendar, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
-import { toast } from "sonner";
-import api from "@/lib/api";
 
-interface Prescription {
-  id: number;
-  medicine_name: string;
-  dosage: string | null;
-  frequency: string | null;
-  duration: string | null;
-  instructions: string | null;
-  prescribed_date: string;
-  doctor_name: string;
-}
-
-interface LabTest {
-  id: number;
-  test_name: string;
-  status: string;
-  result: string | null;
-  prescribed_date: string;
-  completed_date: string | null;
-  doctor_name: string;
-}
-
-interface Procedure {
-  id: number;
-  procedure_name: string;
-  status: string;
+interface Visit {
+  id: string;
+  visit_date: string | null;
+  symptoms: string | null;
+  diagnosis: string | null;
   notes: string | null;
-  scheduled_date: string | null;
-  completed_date: string | null;
-  doctor_name: string;
 }
 
 const PatientMedicalRecords = () => {
   const { user } = useCustomAuth();
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
-  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-  const [labTests, setLabTests] = useState<LabTest[]>([]);
-  const [procedures, setProcedures] = useState<Procedure[]>([]);
 
   useEffect(() => {
-    if (user?.email) {
-      fetchMedicalRecords();
-    }
-  }, [user?.email]);
+    fetchMedicalRecords();
+  }, []);
 
   const fetchMedicalRecords = async () => {
     try {
       setLoading(true);
-      const res = await api.apiGet(`/api/dashboard/patient/medical-records?email=${encodeURIComponent(user?.email || '')}`);
-      const data = await res.json();
       
-      if (res.ok) {
-        setPrescriptions(data.prescriptions || []);
-        setLabTests(data.labTests || []);
-        setProcedures(data.procedures || []);
-      } else {
-        throw new Error(data.error || 'Failed to load medical records');
+      // Fetch patient visits
+      const { data: visitsData, error: visitsError } = await supabase
+        .from('patient_visits')
+        .select('*')
+        .order('visit_date', { ascending: false });
+
+      if (!visitsError && visitsData) {
+        setVisits(visitsData);
       }
     } catch (error) {
       console.error('Error fetching medical records:', error);
-      toast.error('Failed to load medical records');
     } finally {
       setLoading(false);
     }
   };
 
+  // Extract unique diagnoses from visits
+  const diagnoses = visits
+    .filter(v => v.diagnosis)
+    .map(v => ({
+      id: v.id,
+      date: v.visit_date,
+      condition: v.diagnosis,
+      status: "Recorded"
+    }));
+
+  // Extract doctor notes from visits
+  const doctorNotes = visits
+    .filter(v => v.notes)
+    .map(v => ({
+      id: v.id,
+      date: v.visit_date,
+      note: v.notes
+    }));
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <p className="text-muted-foreground">Loading medical records...</p>
       </div>
     );
   }
@@ -84,82 +75,78 @@ const PatientMedicalRecords = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Medical Records</h1>
-        <p className="text-muted-foreground">View your complete medical history (Read Only)</p>
+        <p className="text-muted-foreground">View your complete medical history (Read-Only)</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Pill className="h-4 w-4" /> Prescriptions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{prescriptions.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <FlaskConical className="h-4 w-4" /> Lab Tests
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{labTests.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Stethoscope className="h-4 w-4" /> Procedures
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{procedures.length}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="prescriptions">
-        <TabsList>
-          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
-          <TabsTrigger value="lab-tests">Lab Tests</TabsTrigger>
-          <TabsTrigger value="procedures">Procedures</TabsTrigger>
+      <Tabs defaultValue="visits">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="visits">Visits</TabsTrigger>
+          <TabsTrigger value="diagnoses">Diagnoses</TabsTrigger>
+          <TabsTrigger value="notes">Doctor Notes</TabsTrigger>
+          <TabsTrigger value="discharge">Discharge</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="prescriptions" className="mt-6 space-y-4">
-          {prescriptions.length === 0 ? (
+        <TabsContent value="visits" className="mt-6 space-y-4">
+          {visits.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center">
-                <Pill className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No prescriptions found</p>
+                <p className="text-muted-foreground">No visit records found</p>
               </CardContent>
             </Card>
           ) : (
-            prescriptions.map(rx => (
-              <Card key={rx.id}>
+            visits.map(visit => (
+              <Card key={visit.id}>
                 <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">{rx.medicine_name}</h3>
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">
+                          {visit.visit_date 
+                            ? new Date(visit.visit_date).toLocaleDateString()
+                            : 'Date not recorded'}
+                        </span>
+                        <Badge variant="outline">Visit</Badge>
+                      </div>
+                      {visit.symptoms && (
+                        <p className="text-sm"><strong>Symptoms:</strong> {visit.symptoms}</p>
+                      )}
+                      {visit.diagnosis && (
+                        <p className="text-sm"><strong>Diagnosis:</strong> {visit.diagnosis}</p>
+                      )}
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Eye className="h-4 w-4 mr-1" />
+                      View Details
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="diagnoses" className="mt-6 space-y-4">
+          {diagnoses.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center">
+                <p className="text-muted-foreground">No diagnosis records found</p>
+              </CardContent>
+            </Card>
+          ) : (
+            diagnoses.map(diagnosis => (
+              <Card key={diagnosis.id}>
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{diagnosis.condition}</span>
+                        <Badge variant="secondary">{diagnosis.status}</Badge>
+                      </div>
                       <div className="text-sm text-muted-foreground">
-                        {rx.dosage && <span>{rx.dosage}</span>}
-                        {rx.frequency && <span> • {rx.frequency}</span>}
-                        {rx.duration && <span> • {rx.duration}</span>}
-                      </div>
-                      {rx.instructions && (
-                        <p className="text-sm text-muted-foreground">{rx.instructions}</p>
-                      )}
-                    </div>
-                    <div className="text-right text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(rx.prescribed_date).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        Dr. {rx.doctor_name}
+                        Recorded on {diagnosis.date 
+                          ? new Date(diagnosis.date).toLocaleDateString()
+                          : 'Date not available'}
                       </div>
                     </div>
                   </div>
@@ -169,38 +156,27 @@ const PatientMedicalRecords = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="lab-tests" className="mt-6 space-y-4">
-          {labTests.length === 0 ? (
+        <TabsContent value="notes" className="mt-6 space-y-4">
+          {doctorNotes.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center">
-                <FlaskConical className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No lab tests found</p>
+                <p className="text-muted-foreground">No doctor notes found</p>
               </CardContent>
             </Card>
           ) : (
-            labTests.map(test => (
-              <Card key={test.id}>
+            doctorNotes.map(note => (
+              <Card key={note.id}>
                 <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">{test.test_name}</h3>
-                      <Badge variant={test.status === 'completed' ? 'default' : 'secondary'}>
-                        {test.status}
-                      </Badge>
-                      {test.result && (
-                        <p className="text-sm mt-2 p-2 bg-muted rounded">Result: {test.result}</p>
-                      )}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">
+                        {note.date 
+                          ? new Date(note.date).toLocaleDateString()
+                          : 'Date not available'}
+                      </span>
                     </div>
-                    <div className="text-right text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(test.prescribed_date).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        Dr. {test.doctor_name}
-                      </div>
-                    </div>
+                    <p className="text-sm bg-muted p-3 rounded-lg">{note.note}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -208,45 +184,12 @@ const PatientMedicalRecords = () => {
           )}
         </TabsContent>
 
-        <TabsContent value="procedures" className="mt-6 space-y-4">
-          {procedures.length === 0 ? (
-            <Card>
-              <CardContent className="py-10 text-center">
-                <Stethoscope className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No procedures found</p>
-              </CardContent>
-            </Card>
-          ) : (
-            procedures.map(proc => (
-              <Card key={proc.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">{proc.procedure_name}</h3>
-                      <Badge variant={proc.status === 'completed' ? 'default' : 'secondary'}>
-                        {proc.status}
-                      </Badge>
-                      {proc.notes && (
-                        <p className="text-sm text-muted-foreground mt-2">{proc.notes}</p>
-                      )}
-                    </div>
-                    <div className="text-right text-sm text-muted-foreground">
-                      {proc.scheduled_date && (
-                        <div className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(proc.scheduled_date).toLocaleDateString()}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        Dr. {proc.doctor_name}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+        <TabsContent value="discharge" className="mt-6 space-y-4">
+          <Card>
+            <CardContent className="py-10 text-center">
+              <p className="text-muted-foreground">No discharge summaries available</p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
