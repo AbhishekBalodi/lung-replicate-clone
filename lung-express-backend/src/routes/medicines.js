@@ -50,6 +50,10 @@ async function ensureTables(conn) {
   await ensureColumn(conn, 'medicines', 'duration', 'VARCHAR(100) NULL');
   await ensureColumn(conn, 'medicines', 'instructions', 'TEXT NULL');
   await ensureColumn(conn, 'medicines', 'prescribed_date', 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP');
+
+  // Fix ENUM columns - convert to VARCHAR to support any value
+  await fixEnumColumn(conn, 'medicines_catalog', 'form', 'VARCHAR(100) NULL');
+  await fixEnumColumn(conn, 'medicines_catalog', 'route', 'VARCHAR(100) NULL');
 }
 
 /**
@@ -71,6 +75,30 @@ async function ensureColumn(conn, tableName, columnName, columnSqlDef) {
     await conn.execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnSqlDef}`);
   } catch (e) {
     console.log(`ensureColumn skipped for ${tableName}.${columnName}:`, e.message);
+  }
+}
+
+/**
+ * Fix ENUM columns by converting them to VARCHAR if they are currently ENUM type
+ * This prevents "Data truncated" errors when inserting free-form values
+ */
+async function fixEnumColumn(conn, tableName, columnName, newDef) {
+  try {
+    const [rows] = await conn.execute(
+      `SELECT DATA_TYPE, COLUMN_TYPE FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      [tableName, columnName]
+    );
+    if (rows.length === 0) return;
+    
+    // Check if it's an ENUM type
+    if (rows[0].DATA_TYPE === 'enum') {
+      console.log(`Converting ENUM column ${tableName}.${columnName} to VARCHAR...`);
+      await conn.execute(`ALTER TABLE ${tableName} MODIFY COLUMN ${columnName} ${newDef}`);
+      console.log(`Successfully converted ${tableName}.${columnName} to VARCHAR`);
+    }
+  } catch (e) {
+    console.log(`fixEnumColumn for ${tableName}.${columnName}:`, e.message);
   }
 }
 

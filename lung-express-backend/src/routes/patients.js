@@ -47,28 +47,64 @@ router.get('/', async (req, res) => {
     
     let patients = [];
     
+    // Check if doctor_id column exists in appointments table
+    const [doctorIdColCheck] = await conn.execute(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointments' AND COLUMN_NAME = 'doctor_id'`
+    );
+    const hasAppointmentDoctorId = doctorIdColCheck.length > 0;
+    
+    // Check if doctor_id column exists in patients table
+    const [patientDoctorIdCheck] = await conn.execute(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'patients' AND COLUMN_NAME = 'doctor_id'`
+    );
+    const hasPatientDoctorId = patientDoctorIdCheck.length > 0;
+    
     if (config.isHospital && doctorId && !isSuperAdmin) {
       // For hospital doctors: get patients who have appointments with this doctor
       // OR patients explicitly assigned to this doctor
-      const [rows] = await conn.execute(`
-        SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
-        FROM patients p
-        WHERE p.doctor_id = ?
-        UNION
-        SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
-        FROM patients p
-        INNER JOIN appointments a ON (
-          (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
-          OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> '')
-        )
-        WHERE a.doctor_id = ?
-        ORDER BY full_name ASC
-      `, [doctorId, doctorId]);
-      patients = rows;
+      if (hasAppointmentDoctorId && hasPatientDoctorId) {
+        const [rows] = await conn.execute(`
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
+          FROM patients p
+          WHERE p.doctor_id = ?
+          UNION
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
+          FROM patients p
+          INNER JOIN appointments a ON (
+            (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
+            OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> '')
+          )
+          WHERE a.doctor_id = ?
+          ORDER BY full_name ASC
+        `, [doctorId, doctorId]);
+        patients = rows;
+      } else if (hasAppointmentDoctorId) {
+        // Only appointments has doctor_id
+        const [rows] = await conn.execute(`
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone
+          FROM patients p
+          INNER JOIN appointments a ON (
+            (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
+            OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> '')
+          )
+          WHERE a.doctor_id = ?
+          ORDER BY p.full_name ASC
+        `, [doctorId]);
+        patients = rows;
+      } else {
+        // Fallback: show all patients (legacy schema)
+        const [rows] = await conn.execute(
+          `SELECT id, full_name, email, phone FROM patients ORDER BY full_name ASC`
+        );
+        patients = rows;
+      }
     } else if (config.isHospital) {
       // Super admin: see all patients
+      const selectCols = hasPatientDoctorId ? 'id, full_name, email, phone, doctor_id' : 'id, full_name, email, phone';
       const [rows] = await conn.execute(
-        `SELECT id, full_name, email, phone, doctor_id FROM patients ORDER BY full_name ASC`
+        `SELECT ${selectCols} FROM patients ORDER BY full_name ASC`
       );
       patients = rows;
     } else {
@@ -118,23 +154,61 @@ router.get('/search', async (req, res) => {
     const userRole = req.headers['x-user-role'];
     const isSuperAdmin = userRole === 'super_admin';
     
+    // Check schema columns exist
+    const [doctorIdColCheck] = await conn.execute(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointments' AND COLUMN_NAME = 'doctor_id'`
+    );
+    const hasAppointmentDoctorId = doctorIdColCheck.length > 0;
+    
+    const [patientDoctorIdCheck] = await conn.execute(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'patients' AND COLUMN_NAME = 'doctor_id'`
+    );
+    const hasPatientDoctorId = patientDoctorIdCheck.length > 0;
+    
     let patients = [];
     
     if (config.isHospital && doctorId && !isSuperAdmin) {
       // For hospital doctors: search only their patients
-      const [rows] = await conn.execute(`
-        SELECT DISTINCT p.id, p.full_name, p.email, p.phone
-        FROM patients p
-        WHERE (p.doctor_id = ? OR EXISTS (
-          SELECT 1 FROM appointments a 
-          WHERE a.doctor_id = ? 
-          AND ((p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
-               OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> ''))
-        ))
-        AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ?)
-        ORDER BY p.full_name ASC
-      `, [doctorId, doctorId, `%${term}%`, `%${term}%`, `%${term}%`]);
-      patients = rows;
+      if (hasPatientDoctorId && hasAppointmentDoctorId) {
+        const [rows] = await conn.execute(`
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone
+          FROM patients p
+          WHERE (p.doctor_id = ? OR EXISTS (
+            SELECT 1 FROM appointments a 
+            WHERE a.doctor_id = ? 
+            AND ((p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
+                 OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> ''))
+          ))
+          AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ?)
+          ORDER BY p.full_name ASC
+        `, [doctorId, doctorId, `%${term}%`, `%${term}%`, `%${term}%`]);
+        patients = rows;
+      } else if (hasAppointmentDoctorId) {
+        // Only appointments has doctor_id
+        const [rows] = await conn.execute(`
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone
+          FROM patients p
+          INNER JOIN appointments a ON (
+            (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
+            OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> '')
+          )
+          WHERE a.doctor_id = ?
+          AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ?)
+          ORDER BY p.full_name ASC
+        `, [doctorId, `%${term}%`, `%${term}%`, `%${term}%`]);
+        patients = rows;
+      } else {
+        // Fallback: search all patients
+        const [rows] = await conn.execute(
+          `SELECT id, full_name, email, phone FROM patients 
+           WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ?
+           ORDER BY full_name ASC`,
+          [`%${term}%`, `%${term}%`, `%${term}%`]
+        );
+        patients = rows;
+      }
     } else {
       // Super admin or individual doctor: search all patients
       const [rows] = await conn.execute(
