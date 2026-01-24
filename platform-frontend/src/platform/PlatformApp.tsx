@@ -20,6 +20,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CustomAuthProvider } from "@/contexts/CustomAuthContext";
 import { AppointmentProvider } from "@/contexts/AppointmentContext";
+import { TabAccessProvider } from "@/contexts/TabAccessContext";
 import DevTenantSwitcher from "@/components/DevTenantSwitcher";
 
 // Platform pages
@@ -109,116 +110,118 @@ const PlatformApp = () => (
     <AuthProvider>
       <CustomAuthProvider>
         <AppointmentProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <DevTenantSwitcher />
-            <BrowserRouter>
-              <Routes>
-                {/* Platform routes */}
-                <Route path="/" element={<Navigate to="/login" replace />} />
-                <Route path="/login" element={<PlatformLogin />} />
-                <Route path="/register" element={<TenantOnboarding />} />
-                
-                {/* Platform Admin Dashboard */}
-                <Route path="/platform-dashboard" element={<PlatformDashboard />} />
-                
-                {/* Tenant detail & settings */}
-                <Route path="/tenants/:id" element={<TenantDetails />} />
-                <Route path="/tenants/:id/settings" element={<TenantSettings />} />
+          <TabAccessProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <DevTenantSwitcher />
+              <BrowserRouter>
+                <Routes>
+                  {/* Platform routes */}
+                  <Route path="/" element={<Navigate to="/login" replace />} />
+                  <Route path="/login" element={<PlatformLogin />} />
+                  <Route path="/register" element={<TenantOnboarding />} />
+                  
+                  {/* Platform Admin Dashboard */}
+                  <Route path="/platform-dashboard" element={<PlatformDashboard />} />
+                  
+                  {/* Tenant detail & settings */}
+                  <Route path="/tenants/:id" element={<TenantDetails />} />
+                  <Route path="/tenants/:id/settings" element={<TenantSettings />} />
 
-                {/* Tenant Admin Dashboard Routes (same as 8080) */}
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/super-admin" element={<SuperAdminDashboard />} />
-                
-                <Route path="/appointments" element={<AppointmentsPage />} />
-                <Route path="/calendar" element={<Calendar />} />
-                <Route path="/patients" element={<PatientsPage />} />
-                <Route path="/patients/:id" element={<PatientsPage />} />
-                <Route path="/medicines" element={<MedicinesManagement />} />
-                <Route path="/lab-tests" element={<LabTests />} />
-                <Route path="/procedures" element={<Procedures />} />
-                <Route path="/consultation" element={<Consultation />} />
-                <Route path="/completed-appointments" element={<CompletedAppointments />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/new-appointment" element={<NewAppointment />} />
+                  {/* Tenant Admin Dashboard Routes (same as 8080) */}
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/super-admin" element={<SuperAdminDashboard />} />
+                  
+                  <Route path="/appointments" element={<AppointmentsPage />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/patients" element={<PatientsPage />} />
+                  <Route path="/patients/:id" element={<PatientsPage />} />
+                  <Route path="/medicines" element={<MedicinesManagement />} />
+                  <Route path="/lab-tests" element={<LabTests />} />
+                  <Route path="/procedures" element={<Procedures />} />
+                  <Route path="/consultation" element={<Consultation />} />
+                  <Route path="/completed-appointments" element={<CompletedAppointments />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/new-appointment" element={<NewAppointment />} />
 
-                {/* Admin feature routes */}
-                <Route path="/admin/ambulances" element={<AmbulancesPage />} />
-                <Route path="/admin/staffs/calls" element={<StaffCallList />} />
-                <Route path="/admin/staffs/list" element={<StaffFleetList />} />
-                <Route path="/admin/staffs/details/:id" element={<StaffDetails />} />
-                <Route path="/admin/ambulances/calls" element={<AmbulanceCallList />} />
-                <Route path="/admin/ambulances/list" element={<AmbulanceFleetList />} />
-                <Route path="/admin/ambulances/details/:id" element={<AmbulanceDetails />} />
-                <Route path="/admin/ambulances/dispatch" element={<AmbulanceDispatch />} />
-                <Route path="/admin/pharmacy/medicines" element={<PharmacyMedicines />} />
-                <Route path="/admin/pharmacy/inventory" element={<PharmacyInventory />} />
-                <Route path="/admin/blood-bank/stock" element={<BloodStock />} />
-                <Route path="/admin/blood-bank/donors" element={<BloodDonors />} />
-                <Route path="/admin/blood-bank/issued" element={<BloodIssued />} />
-                <Route path="/admin/blood-bank/add-unit" element={<AddBloodUnit />} />
-                <Route path="/admin/blood-bank/issue" element={<IssueBlood />} />
-                <Route path="/admin/feedback" element={<Feedback />} />
-                <Route path="/admin/rooms/alloted" element={<RoomsAlloted />} />
-                <Route path="/admin/rooms/new" element={<NewAllotment />} />
-                <Route path="/admin/rooms" element={<Rooms />} />
-                <Route path="/admin/reviews" element={<Reviews />} />
-                <Route path="/admin/pending-tasks" element={<PendingTasks />} />
+                  {/* Admin feature routes */}
+                  <Route path="/admin/ambulances" element={<AmbulancesPage />} />
+                  <Route path="/admin/staffs/calls" element={<StaffCallList />} />
+                  <Route path="/admin/staffs/list" element={<StaffFleetList />} />
+                  <Route path="/admin/staffs/details/:id" element={<StaffDetails />} />
+                  <Route path="/admin/ambulances/calls" element={<AmbulanceCallList />} />
+                  <Route path="/admin/ambulances/list" element={<AmbulanceFleetList />} />
+                  <Route path="/admin/ambulances/details/:id" element={<AmbulanceDetails />} />
+                  <Route path="/admin/ambulances/dispatch" element={<AmbulanceDispatch />} />
+                  <Route path="/admin/pharmacy/medicines" element={<PharmacyMedicines />} />
+                  <Route path="/admin/pharmacy/inventory" element={<PharmacyInventory />} />
+                  <Route path="/admin/blood-bank/stock" element={<BloodStock />} />
+                  <Route path="/admin/blood-bank/donors" element={<BloodDonors />} />
+                  <Route path="/admin/blood-bank/issued" element={<BloodIssued />} />
+                  <Route path="/admin/blood-bank/add-unit" element={<AddBloodUnit />} />
+                  <Route path="/admin/blood-bank/issue" element={<IssueBlood />} />
+                  <Route path="/admin/feedback" element={<Feedback />} />
+                  <Route path="/admin/rooms/alloted" element={<RoomsAlloted />} />
+                  <Route path="/admin/rooms/new" element={<NewAllotment />} />
+                  <Route path="/admin/rooms" element={<Rooms />} />
+                  <Route path="/admin/reviews" element={<Reviews />} />
+                  <Route path="/admin/pending-tasks" element={<PendingTasks />} />
 
-                {/* Billing Routes */}
-                <Route path="/admin/billing" element={<InvoicesList />} />
-                <Route path="/admin/billing/new" element={<CreateInvoice />} />
-                <Route path="/admin/billing/invoices/:id" element={<InvoiceDetail />} />
-                <Route path="/admin/billing/payments" element={<PaymentsHistory />} />
+                  {/* Billing Routes */}
+                  <Route path="/admin/billing" element={<InvoicesList />} />
+                  <Route path="/admin/billing/new" element={<CreateInvoice />} />
+                  <Route path="/admin/billing/invoices/:id" element={<InvoiceDetail />} />
+                  <Route path="/admin/billing/payments" element={<PaymentsHistory />} />
 
-                {/* Super Admin Routes - Hospital Management */}
-                <Route path="/admin/hospital/profile" element={<HospitalProfile />} />
-                <Route path="/admin/hospital/departments" element={<Departments />} />
-                <Route path="/admin/hospital/infrastructure" element={<Infrastructure />} />
-                
-                {/* Financial Management */}
-                <Route path="/admin/finance/revenue" element={<FinanceRevenue />} />
-                <Route path="/admin/finance/insurance" element={<InsuranceClaims />} />
-                
-                {/* Lab & Diagnostics */}
-                <Route path="/admin/lab/pending" element={<LabPendingTests />} />
-                <Route path="/admin/lab/revenue" element={<LabRevenue />} />
-                
-                {/* Compliance & Security */}
-                <Route path="/admin/compliance/audit-logs" element={<AuditLogs />} />
-                <Route path="/admin/compliance/access-control" element={<AccessControl />} />
-                <Route path="/admin/compliance/data-access" element={<DataAccessLogs />} />
-                
-                {/* Notifications & Alerts */}
-                <Route path="/admin/notifications/system" element={<SystemAlerts />} />
-                <Route path="/admin/notifications/settings" element={<NotificationSettings />} />
-                
-                {/* Reports */}
-                <Route path="/admin/reports/daily" element={<DailyReports />} />
-                <Route path="/admin/reports/monthly" element={<MonthlyReports />} />
-                <Route path="/admin/reports/doctor-revenue" element={<DoctorRevenueReport />} />
-                <Route path="/admin/reports/department-revenue" element={<DepartmentRevenueReport />} />
-                
-                {/* Feedback & Quality Control */}
-                <Route path="/admin/feedback/patient" element={<PatientFeedback />} />
-                <Route path="/admin/feedback/doctor-ratings" element={<DoctorRatings />} />
-                <Route path="/admin/feedback/complaints" element={<ComplaintsManagement />} />
-                <Route path="/admin/feedback/quality-score" element={<ServiceQualityScore />} />
-                
-                {/* System Configuration */}
-                <Route path="/admin/config/appointment-rules" element={<AppointmentRules />} />
-                <Route path="/admin/config/pricing-rules" element={<PricingRules />} />
-                <Route path="/admin/config/tax-settings" element={<TaxSettings />} />
-                <Route path="/admin/config/payment-gateways" element={<PaymentGateways />} />
-                <Route path="/admin/config/messaging" element={<MessagingIntegrations />} />
-                <Route path="/admin/config/website" element={<WebsiteSettings />} />
+                  {/* Super Admin Routes - Hospital Management */}
+                  <Route path="/admin/hospital/profile" element={<HospitalProfile />} />
+                  <Route path="/admin/hospital/departments" element={<Departments />} />
+                  <Route path="/admin/hospital/infrastructure" element={<Infrastructure />} />
+                  
+                  {/* Financial Management */}
+                  <Route path="/admin/finance/revenue" element={<FinanceRevenue />} />
+                  <Route path="/admin/finance/insurance" element={<InsuranceClaims />} />
+                  
+                  {/* Lab & Diagnostics */}
+                  <Route path="/admin/lab/pending" element={<LabPendingTests />} />
+                  <Route path="/admin/lab/revenue" element={<LabRevenue />} />
+                  
+                  {/* Compliance & Security */}
+                  <Route path="/admin/compliance/audit-logs" element={<AuditLogs />} />
+                  <Route path="/admin/compliance/access-control" element={<AccessControl />} />
+                  <Route path="/admin/compliance/data-access" element={<DataAccessLogs />} />
+                  
+                  {/* Notifications & Alerts */}
+                  <Route path="/admin/notifications/system" element={<SystemAlerts />} />
+                  <Route path="/admin/notifications/settings" element={<NotificationSettings />} />
+                  
+                  {/* Reports */}
+                  <Route path="/admin/reports/daily" element={<DailyReports />} />
+                  <Route path="/admin/reports/monthly" element={<MonthlyReports />} />
+                  <Route path="/admin/reports/doctor-revenue" element={<DoctorRevenueReport />} />
+                  <Route path="/admin/reports/department-revenue" element={<DepartmentRevenueReport />} />
+                  
+                  {/* Feedback & Quality Control */}
+                  <Route path="/admin/feedback/patient" element={<PatientFeedback />} />
+                  <Route path="/admin/feedback/doctor-ratings" element={<DoctorRatings />} />
+                  <Route path="/admin/feedback/complaints" element={<ComplaintsManagement />} />
+                  <Route path="/admin/feedback/quality-score" element={<ServiceQualityScore />} />
+                  
+                  {/* System Configuration */}
+                  <Route path="/admin/config/appointment-rules" element={<AppointmentRules />} />
+                  <Route path="/admin/config/pricing-rules" element={<PricingRules />} />
+                  <Route path="/admin/config/tax-settings" element={<TaxSettings />} />
+                  <Route path="/admin/config/payment-gateways" element={<PaymentGateways />} />
+                  <Route path="/admin/config/messaging" element={<MessagingIntegrations />} />
+                  <Route path="/admin/config/website" element={<WebsiteSettings />} />
 
-                {/* Catch all - redirect to login */}
-                <Route path="*" element={<Navigate to="/login" replace />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+                  {/* Catch all - redirect to login */}
+                  <Route path="*" element={<Navigate to="/login" replace />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </TabAccessProvider>
         </AppointmentProvider>
       </CustomAuthProvider>
     </AuthProvider>
