@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { getPool, getConnection } from "../lib/tenant-db.js";
+import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-context.js';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ async function ensureTables(conn) {
     CREATE TABLE IF NOT EXISTS medicines (
       id INT AUTO_INCREMENT PRIMARY KEY,
       patient_id INT NULL,
+      doctor_id INT NULL,
       medicine_name VARCHAR(255) NOT NULL,
       dosage VARCHAR(100) NULL,
       frequency VARCHAR(100) NULL,
@@ -34,6 +36,18 @@ async function ensureTables(conn) {
       INDEX (patient_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+}
+
+/**
+ * Check if a column exists in a table
+ */
+async function columnExists(conn, tableName, columnName) {
+  const [rows] = await conn.execute(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [tableName, columnName]
+  );
+  return rows.length > 0;
 }
 
 /* ------------------- catalog: GET /catalog ------------------ */
@@ -94,23 +108,42 @@ router.post("/catalog", async (req, res) => {
 });
 
 /* --------------- prescribed: GET / (list all) --------------- */
-/** Admin listing of prescribed medicines (not the catalog) */
+/** Admin listing of prescribed medicines (filtered by doctor) */
 router.get("/", async (req, res) => {
+  let conn;
   try {
-    const pool = getPool(req);
-    const [rows] = await pool.query(
-      "SELECT * FROM medicines ORDER BY id DESC"
+    conn = await getConnection(req);
+    await ensureTables(conn);
+    
+    // Check if doctor_id column exists for filtering
+    const hasDoctorId = await columnExists(conn, 'medicines', 'doctor_id');
+    
+    let whereSql = '';
+    let params = [];
+    
+    if (hasDoctorId) {
+      const doctorFilter = getDoctorFilter(req, 'doctor_id');
+      whereSql = doctorFilter.whereSql ? `WHERE ${doctorFilter.whereSql}` : '';
+      params = doctorFilter.params;
+    }
+    
+    const [rows] = await conn.execute(
+      `SELECT * FROM medicines ${whereSql} ORDER BY id DESC`,
+      params
     );
     res.json({ items: rows });
   } catch (err) {
     console.error("Error fetching medicines:", err);
     res.status(500).json({ error: "Failed to fetch medicines", details: err.message });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
 /* --------------- prescribed: POST / (create) ---------------- */
 /**
- * Creates a prescription row. Two flows:
+ * Creates a prescription row (schema-resilient).
+ * Two flows:
  * 1) Provide patient_id
  * 2) Or provide full_name/email/phone → upsert into patients, then save prescription
  */
@@ -125,6 +158,7 @@ router.post("/", async (req, res) => {
     frequency,
     duration,
     instructions,
+    medicine_catalogue_id,
   } = req.body || {};
 
   if (!medicine_name || !String(medicine_name).trim()) {
@@ -137,6 +171,7 @@ router.post("/", async (req, res) => {
     await ensureTables(conn);
 
     let finalPatientId = patient_id || null;
+    const doctorId = getDoctorIdForInsert(req);
 
     if (!finalPatientId && (full_name || email || phone)) {
       // try match by email/phone
@@ -158,31 +193,34 @@ router.post("/", async (req, res) => {
         const [ins] = await conn.execute(
           `
             INSERT INTO patients
-              (full_name, email, phone, created_at)
-            VALUES (?, ?, ?, NOW())
+              (full_name, email, phone, doctor_id, created_at)
+            VALUES (?, ?, ?, ?, NOW())
           `,
-          [full_name || "Unknown", email || "", phone || ""]
+          [full_name || "Unknown", email || "", phone || "", doctorId]
         );
         finalPatientId = ins.insertId;
       }
     }
 
-    // insert prescription
-    await conn.execute(
-      `
-        INSERT INTO medicines
-          (patient_id, medicine_name, dosage, frequency, duration, instructions)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `,
-      [
-        finalPatientId,
-        medicine_name.trim(),
-        dosage || "",
-        frequency || "",
-        duration || "",
-        instructions || "",
-      ]
-    );
+    // Schema-resilient INSERT: check if doctor_id and medicine_catalogue_id columns exist
+    const hasDoctorId = await columnExists(conn, 'medicines', 'doctor_id');
+    const hasCatalogueId = await columnExists(conn, 'medicines', 'medicine_catalogue_id');
+    
+    let insertSql;
+    let insertParams;
+    
+    if (hasDoctorId && hasCatalogueId) {
+      insertSql = `INSERT INTO medicines (patient_id, doctor_id, medicine_catalogue_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+      insertParams = [finalPatientId, doctorId, medicine_catalogue_id || null, medicine_name.trim(), dosage || "", frequency || "", duration || "", instructions || ""];
+    } else if (hasDoctorId) {
+      insertSql = `INSERT INTO medicines (patient_id, doctor_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      insertParams = [finalPatientId, doctorId, medicine_name.trim(), dosage || "", frequency || "", duration || "", instructions || ""];
+    } else {
+      insertSql = `INSERT INTO medicines (patient_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?)`;
+      insertParams = [finalPatientId, medicine_name.trim(), dosage || "", frequency || "", duration || "", instructions || ""];
+    }
+
+    await conn.execute(insertSql, insertParams);
 
     await conn.commit();
     res.status(201).json({

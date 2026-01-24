@@ -25,16 +25,26 @@ async function ensureTables(conn) {
       id INT AUTO_INCREMENT PRIMARY KEY,
       patient_id INT NOT NULL,
       doctor_id INT NULL,
-      procedure_catalogue_id INT,
       procedure_name VARCHAR(150) NOT NULL,
       category VARCHAR(100),
       description TEXT,
       preparation_instructions TEXT,
       prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-      FOREIGN KEY (procedure_catalogue_id) REFERENCES procedure_catalogue(id) ON DELETE SET NULL
+      FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
     )
   `);
+}
+
+/**
+ * Check if a column exists in a table
+ */
+async function columnExists(conn, tableName, columnName) {
+  const [rows] = await conn.execute(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [tableName, columnName]
+  );
+  return rows.length > 0;
 }
 
 /**
@@ -70,10 +80,21 @@ router.post('/catalog', async (req, res) => {
     conn = await getConnection(req);
     await ensureTables(conn);
 
-    const [result] = await conn.execute(
-      'INSERT INTO procedure_catalogue (name, category, description, duration, preparation_instructions) VALUES (?, ?, ?, ?, ?)',
-      [name, category || null, description || null, duration || null, preparation_instructions || null]
-    );
+    // Schema-resilient: check if duration column exists in catalogue
+    const hasDuration = await columnExists(conn, 'procedure_catalogue', 'duration');
+    
+    let insertSql;
+    let insertParams;
+    
+    if (hasDuration) {
+      insertSql = 'INSERT INTO procedure_catalogue (name, category, description, duration, preparation_instructions) VALUES (?, ?, ?, ?, ?)';
+      insertParams = [name, category || null, description || null, duration || null, preparation_instructions || null];
+    } else {
+      insertSql = 'INSERT INTO procedure_catalogue (name, category, description, preparation_instructions) VALUES (?, ?, ?, ?)';
+      insertParams = [name, category || null, description || null, preparation_instructions || null];
+    }
+
+    const [result] = await conn.execute(insertSql, insertParams);
 
     res.status(201).json({ success: true, id: result.insertId });
   } catch (e) {
@@ -111,7 +132,7 @@ router.get('/', async (req, res) => {
 });
 
 /**
- * POST /api/procedures - Prescribe procedure to a patient
+ * POST /api/procedures - Prescribe procedure to a patient (schema-resilient)
  */
 router.post('/', async (req, res) => {
   const { 
@@ -146,17 +167,39 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: 'Either patient_id or patient details (name/email/phone) required' });
       }
 
-      const [patientResult] = await conn.execute(
-        'INSERT INTO patients (full_name, email, phone, doctor_id) VALUES (?, ?, ?, ?)',
-        [full_name || 'Unknown', email || null, phone || null, doctorId]
+      // Check if patient already exists
+      const [existingPatient] = await conn.execute(
+        'SELECT id FROM patients WHERE (email = ? AND email <> "") OR (phone = ? AND phone <> "") LIMIT 1',
+        [email || '', phone || '']
       );
-      finalPatientId = patientResult.insertId;
+
+      if (existingPatient.length > 0) {
+        finalPatientId = existingPatient[0].id;
+      } else {
+        const [patientResult] = await conn.execute(
+          'INSERT INTO patients (full_name, email, phone, doctor_id) VALUES (?, ?, ?, ?)',
+          [full_name || 'Unknown', email || null, phone || null, doctorId]
+        );
+        finalPatientId = patientResult.insertId;
+      }
     }
 
-    const [result] = await conn.execute(
-      'INSERT INTO procedures (patient_id, doctor_id, procedure_catalogue_id, procedure_name, category, description, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [finalPatientId, doctorId, procedure_catalogue_id || null, procedure_name, category || null, description || null, preparation_instructions || null]
-    );
+    // Schema-resilient INSERT: check if procedure_catalogue_id column exists
+    const hasCatalogueId = await columnExists(conn, 'procedures', 'procedure_catalogue_id');
+    
+    let insertSql;
+    let insertParams;
+    
+    if (hasCatalogueId) {
+      insertSql = 'INSERT INTO procedures (patient_id, doctor_id, procedure_catalogue_id, procedure_name, category, description, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)';
+      insertParams = [finalPatientId, doctorId, procedure_catalogue_id || null, procedure_name, category || null, description || null, preparation_instructions || null];
+    } else {
+      // Fallback for schemas without procedure_catalogue_id
+      insertSql = 'INSERT INTO procedures (patient_id, doctor_id, procedure_name, category, description, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?)';
+      insertParams = [finalPatientId, doctorId, procedure_name, category || null, description || null, preparation_instructions || null];
+    }
+
+    const [result] = await conn.execute(insertSql, insertParams);
 
     await conn.commit();
     res.status(201).json({ success: true, id: result.insertId, patient_id: finalPatientId });
