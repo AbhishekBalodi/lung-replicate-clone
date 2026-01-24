@@ -1,3 +1,4 @@
+// Custom Auth Context - Multi-tenant authentication
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
 import { supabase } from '@/integrations/supabase/client';
