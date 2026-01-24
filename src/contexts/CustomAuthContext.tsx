@@ -118,9 +118,25 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Try to hydrate user from localStorage on mount (for page refreshes)
   useEffect(() => {
-    fetchTenantInfo();
-    setLoading(false);
+    const hydrateFromStorage = async () => {
+      try {
+        const storedUser = localStorage.getItem('customUser');
+        const storedTenant = localStorage.getItem('customTenant');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+        if (storedTenant) {
+          setTenant(JSON.parse(storedTenant));
+        }
+      } catch {
+        // ignore parse errors
+      }
+      await fetchTenantInfo();
+      setLoading(false);
+    };
+    hydrateFromStorage();
   }, []);
 
   /* ============================================================
@@ -163,6 +179,9 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(data.user);
       setTenant(data.tenant || null);
+      // Persist for page refresh
+      localStorage.setItem('customUser', JSON.stringify(data.user));
+      if (data.tenant) localStorage.setItem('customTenant', JSON.stringify(data.tenant));
       return { user: data.user, error: null };
     } catch (e: any) {
       return { user: undefined, error: { message: e.message || 'Network error' } };
@@ -211,6 +230,8 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     });
     setUser(null);
     setTenant(null);
+    localStorage.removeItem('customUser');
+    localStorage.removeItem('customTenant');
   };
 
   /* ============================================================

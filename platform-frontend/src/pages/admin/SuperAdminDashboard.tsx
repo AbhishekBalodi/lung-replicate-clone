@@ -194,7 +194,7 @@ const NotificationsSection = () => (
 
 
 const SuperAdminDashboard = () => {
-  const { user, tenant, logout, isSuperAdmin } = useCustomAuth();
+  const { user, tenant, logout, isSuperAdmin, loading } = useCustomAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -278,8 +278,20 @@ const [chartsError, setChartsError] = useState<string | null>(null);
   };
 
   useEffect(() => {
-    if (!user || !isSuperAdmin) navigate('/login');
-  }, [user, isSuperAdmin, navigate]);
+    // Wait until loading is complete before checking auth
+    if (!loading && (!user || !isSuperAdmin)) {
+      navigate('/login');
+    }
+  }, [user, isSuperAdmin, navigate, loading]);
+
+  // Show loading state while hydrating
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Fetch all doctors
   const fetchDoctors = useCallback(async () => {
