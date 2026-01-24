@@ -38,8 +38,10 @@ import {
   Clock,
   Mail,
   Phone,
-  ArrowUpRight
+  ArrowUpRight,
+  Settings2
 } from 'lucide-react';
+import TabAccessDialog from '@/components/admin/TabAccessDialog';
 
 interface Doctor {
   id: number;
@@ -197,7 +199,18 @@ const SuperAdminDashboard = () => {
   const { toast } = useToast();
 
   // Main dashboard state
-  const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors'>('overview');
+  const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors' | 'patients'>('overview');
+  
+  // Tab Access Dialog state
+  const [tabAccessDialog, setTabAccessDialog] = useState<{
+    isOpen: boolean;
+    entityType: 'doctor' | 'patient';
+    entityId: number;
+    entityName: string;
+  }>({ isOpen: false, entityType: 'doctor', entityId: 0, entityName: '' });
+  
+  // Patient dashboard access toggle
+  const [togglingPatientId, setTogglingPatientId] = useState<number | null>(null);
 
   // Doctors state
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -234,6 +247,12 @@ const SuperAdminDashboard = () => {
   
   // Rooms state
   const [allRooms, setAllRooms] = useState<Room[]>([]);
+
+  // Backend-driven charts (Super Admin)
+const [superAdminCharts, setSuperAdminCharts] = useState<any>(null);
+const [chartsLoading, setChartsLoading] = useState(false);
+const [chartsError, setChartsError] = useState<string | null>(null);
+
   
   // Invoices state
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
@@ -281,6 +300,31 @@ const SuperAdminDashboard = () => {
       setDoctorsLoading(false);
     }
   }, []);
+
+  // fetch super admin charts
+  const fetchSuperAdminCharts = useCallback(async () => {
+  try {
+    setChartsLoading(true);
+    setChartsError(null);
+
+    const res = await apiFetch('/api/dashboard/superadmin/charts', {
+      method: 'GET'
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data?.error || 'Failed to load charts');
+    }
+
+    setSuperAdminCharts(data);
+  } catch (err: any) {
+    setChartsError(err.message || 'Charts API error');
+  } finally {
+    setChartsLoading(false);
+  }
+}, []);
+
 
   // Fetch all appointments (from all doctors in the hospital)
   const fetchAppointments = useCallback(async () => {
@@ -365,6 +409,11 @@ const SuperAdminDashboard = () => {
     fetchAllRooms();
     fetchAllInvoices();
   }, [fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices]);
+
+  useEffect(() => {
+  fetchSuperAdminCharts();
+}, [fetchSuperAdminCharts]);
+
 
   const resetForm = () => {
     setFormData({
@@ -710,7 +759,17 @@ const SuperAdminDashboard = () => {
       </div>
 
       {/* Main Tabs: Overview & Doctors Management */}
-      <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors')} className="w-full">
+      {/* Tab Access Dialog */}
+      <TabAccessDialog
+        isOpen={tabAccessDialog.isOpen}
+        onClose={() => setTabAccessDialog({ ...tabAccessDialog, isOpen: false })}
+        entityType={tabAccessDialog.entityType}
+        entityId={tabAccessDialog.entityId}
+        entityName={tabAccessDialog.entityName}
+      />
+
+      {/* Main Tabs: Overview, Doctors, Patients Management */}
+      <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors' | 'patients')} className="w-full">
         <TabsList className="bg-slate-100 border border-slate-200 p-1 rounded-lg mb-6">
           <TabsTrigger
             value="overview"
@@ -725,6 +784,13 @@ const SuperAdminDashboard = () => {
           >
             <Stethoscope className="h-4 w-4 mr-2" />
             Manage Doctors
+          </TabsTrigger>
+          <TabsTrigger
+            value="patients"
+            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
+          >
+            <Users className="h-4 w-4 mr-2" />
+            Manage Patients
           </TabsTrigger>
         </TabsList>
 
@@ -762,84 +828,31 @@ const SuperAdminDashboard = () => {
    DYNAMIC KPI CARDS (CALCULATED FROM DATA)
 ================================ */}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-            {/* Total Revenue */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Total Revenue</span>
-                  <span className="text-green-500">₹</span>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">
-                  ₹{allInvoices.reduce((sum, inv) => sum + ((inv.total_amount as number) || 0), 0).toLocaleString()}
-                </p>
-                <p className="text-sm text-green-400 mt-1">
-                  From {allInvoices.length} invoices
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Appointments */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Appointments</span>
-                  <Calendar className="h-4 w-4 text-blue-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{appointments.length}</p>
-                <p className="text-sm text-blue-400 mt-1">
-                  {todayAppointments.length} today
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Patients */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Patients</span>
-                  <Users className="h-4 w-4 text-orange-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{allPatients.length}</p>
-                <p className="text-sm text-orange-400 mt-1">
-                  {newPatients} new this week
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Staff */}
-            <Card className="bg-slate-900 text-white">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-400">Staff</span>
-                  <Users className="h-4 w-4 text-purple-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-3xl font-bold">{totalStaff}</p>
-                <p className="text-sm text-purple-400 mt-1">
-                  +{newStaffThisMonth} new this month
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          
 
           {/* ===============================
    PERFORMANCE METRICS GRAPHS
 ================================ */}
           <div className="mt-6">
-            <SuperAdminGraphs
-              appointments={appointments}
-              patients={allPatients}
-              invoices={allInvoices}
-              doctors={doctors}
-            />
+            {chartsLoading ? (
+  <div className="flex items-center justify-center h-[350px]">
+    <div className="animate-spin h-6 w-6 border-2 border-emerald-600 border-t-transparent rounded-full" />
+  </div>
+) : chartsError ? (
+  <div className="text-red-500 text-sm">
+    Failed to load charts data
+  </div>
+) : (
+  <SuperAdminGraphs
+    appointments={appointments}
+    patients={allPatients}
+    invoices={allInvoices}
+    doctors={doctors}
+    backendCharts={superAdminCharts}
+  />
+)}
+
+
           </div>
 
 
@@ -1456,6 +1469,109 @@ const SuperAdminDashboard = () => {
                     </Card>
                   ))}
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* PATIENTS MANAGEMENT TAB */}
+        <TabsContent value="patients">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  Manage Patients
+                </CardTitle>
+                <CardDescription>
+                  Control patient access to their dashboard and configure tab permissions
+                </CardDescription>
+              </div>
+            </CardHeader>
+
+            <CardContent>
+              {patientsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin h-6 w-6 border-2 border-purple-600 border-t-transparent rounded-full" />
+                </div>
+              ) : allPatients.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No patients registered yet</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Patient</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Assigned Doctor</TableHead>
+                      <TableHead className="text-center">Dashboard Access</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Tab Settings</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allPatients.map((patient) => (
+                      <TableRow key={patient.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                              <User className="h-5 w-5 text-purple-700" />
+                            </div>
+                            <p className="font-medium">{patient.full_name}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{patient.email || '-'}</TableCell>
+                        <TableCell>{patient.phone || '-'}</TableCell>
+                        <TableCell>{patient.doctor_name || 'Unassigned'}</TableCell>
+                        <TableCell className="text-center">
+                          <Switch
+                            checked={(patient as any).is_active !== false}
+                            onCheckedChange={async () => {
+                              setTogglingPatientId(patient.id);
+                              try {
+                                await apiFetch(`/api/access-control/patient/${patient.id}/access`, {
+                                  method: 'PUT',
+                                  body: JSON.stringify({ is_active: (patient as any).is_active === false })
+                                });
+                                fetchAllPatients();
+                                toast({ title: 'Success', description: 'Patient access updated' });
+                              } catch {
+                                toast({ title: 'Error', description: 'Failed to update access', variant: 'destructive' });
+                              }
+                              setTogglingPatientId(null);
+                            }}
+                            disabled={togglingPatientId === patient.id}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {(patient as any).is_active !== false ? (
+                            <Badge className="bg-green-100 text-green-800">Active</Badge>
+                          ) : (
+                            <Badge variant="secondary">Inactive</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setTabAccessDialog({
+                              isOpen: true,
+                              entityType: 'patient',
+                              entityId: patient.id,
+                              entityName: patient.full_name
+                            })}
+                          >
+                            <Settings2 className="h-4 w-4 mr-1" />
+                            Configure Tabs
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
             </CardContent>
           </Card>

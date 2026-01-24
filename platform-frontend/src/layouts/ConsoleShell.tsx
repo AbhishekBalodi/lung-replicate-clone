@@ -5,7 +5,8 @@ import {
   LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft, 
   Ambulance, Pill, Droplets, Receipt, Building2, Package, Users2, 
   FileText, DoorOpen, Star, MessageSquare, ChevronDown, ChevronRight,
-  ListTodo, FlaskConical, TrendingUp, Shield, Bell, Settings, BarChart3, Activity
+  ListTodo, FlaskConical, TrendingUp, Shield, Bell, Settings, BarChart3, Activity,
+  Palette, ClipboardList, Video, Calendar, Heart, Siren, User, Stethoscope
 } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import MedicinesContent from "@/pages/admin/MedicinesContent";
@@ -144,10 +145,94 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 Completed
               </button>
 
-              {/* Pending Tasks */}
-              <button onClick={() => { navigate('/admin/pending-tasks'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              {/* EMR / EHR - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('emr')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    Medical Records (EMR)
+                  </span>
+                  {expandedMenus['emr'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['emr'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button onClick={() => { navigate('/admin/emr/diagnosis'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Diagnosis Notes</button>
+                    <button onClick={() => { navigate('/admin/emr/treatment-plans'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Treatment Plans</button>
+                    <button onClick={() => { navigate('/admin/emr/progress-notes'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Progress Notes (SOAP)</button>
+                    <button onClick={() => { navigate('/admin/emr/documents'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Documents</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Follow-Ups & Care - Expandable */}
+              <div>
+                <button 
+                  onClick={() => toggleMenu('follow-ups')}
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">
+                    <Heart className="h-4 w-4" />
+                    Follow-Ups & Care
+                  </span>
+                  {expandedMenus['follow-ups'] ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                </button>
+                {expandedMenus['follow-ups'] && (
+                  <div className="ml-6 space-y-1 mt-1">
+                    <button onClick={() => { navigate('/admin/follow-ups'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Follow-Up Schedule</button>
+                    <button onClick={() => { navigate('/admin/care-plans'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Care Plans</button>
+                  </div>
+                )}
+              </div>
+
+              {/* Telemedicine */}
+              <button onClick={() => { navigate('/admin/telemedicine'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                Telemedicine
+              </button>
+
+              {/* Schedule & Availability */}
+              <button onClick={() => { navigate('/admin/schedule'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Schedule & Availability
+              </button>
+
+              {/* Tasks & Notifications */}
+              <button onClick={() => { navigate('/admin/tasks'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
                 <ListTodo className="h-4 w-4" />
-                Pending Tasks
+                Tasks & Notifications
+              </button>
+
+              {/* Analytics */}
+              <button onClick={() => { navigate('/admin/analytics'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Performance Analytics
+              </button>
+
+              {/* Communication */}
+              <button onClick={() => { navigate('/admin/communication'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Communication
+              </button>
+
+              {/* Emergency & Alerts */}
+              <button onClick={() => { navigate('/admin/emergency'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <Siren className="h-4 w-4" />
+                Emergency & Alerts
+              </button>
+
+              {/* Doctor Profile */}
+              <button onClick={() => { navigate('/admin/profile'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+                <User className="h-4 w-4" />
+                My Profile & Settings
+              </button>
+
+              {/* Theme & Templates */}
+              <button onClick={() => { navigate('/admin/config/theme-templates'); setSidebarOpen(false); }} className={`w-full text-left rounded-lg px-3 py-2 ${isActive('/admin/config/theme-templates')} flex items-center gap-2`}>
+                <Palette className="h-4 w-4" />
+                Theme & Templates
               </button>
 
               {/* Ambulance - Expandable */}
@@ -321,6 +406,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   {expandedMenus['system-config'] && (
                     <div className="ml-6 space-y-1 mt-1">
                       <button onClick={() => { navigate('/admin/config/website'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700 font-medium">Website Settings</button>
+                      <button onClick={() => { navigate('/admin/config/theme-templates'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700 flex items-center gap-1.5">
+                        <Palette className="h-3.5 w-3.5" />
+                        Theme & Templates
+                      </button>
                       <button onClick={() => { navigate('/admin/config/appointment-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Appointment Rules</button>
                       <button onClick={() => { navigate('/admin/config/pricing-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Pricing Rules</button>
                       <button onClick={() => { navigate('/admin/config/tax-settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Tax Settings</button>

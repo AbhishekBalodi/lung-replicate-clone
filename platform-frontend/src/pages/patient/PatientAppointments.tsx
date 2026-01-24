@@ -34,13 +34,15 @@ const PatientAppointments = () => {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const res = await api.apiGet(`/api/dashboard/patient/appointments?email=${encodeURIComponent(user?.email || '')}`);
+      const res = await api.apiGet(
+        `/api/dashboard/patient/appointments?email=${encodeURIComponent(user?.email || "")}`
+      );
       const data = await res.json();
-      
+
       if (res.ok) {
         setAppointments(data.appointments || []);
       } else {
-        throw new Error(data.error || 'Failed to load appointments');
+        throw new Error(data.error || "Failed to load appointments");
       }
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -51,8 +53,12 @@ const PatientAppointments = () => {
   };
 
   const today = new Date().toISOString().split('T')[0];
-  const upcomingAppointments = appointments.filter(a => a.appointment_date >= today && a.status !== 'cancelled');
-  const pastAppointments = appointments.filter(a => a.appointment_date < today || a.status === 'done');
+  const upcomingAppointments = appointments.filter(
+    (a) => a.appointment_date >= today && a.status !== 'cancelled'
+  );
+  const pastAppointments = appointments.filter(
+    (a) => a.appointment_date < today || a.status === 'done'
+  );
 
   const handleCancelAppointment = async (id: number) => {
     // Note: This would need an API endpoint to cancel appointments
@@ -72,7 +78,13 @@ const PatientAppointments = () => {
     return <Badge variant="secondary">{status}</Badge>;
   };
 
-  const AppointmentCard = ({ appointment, isUpcoming = false }: { appointment: Appointment; isUpcoming?: boolean }) => (
+  const AppointmentCard = ({
+    appointment,
+    isUpcoming = false,
+  }: {
+    appointment: Appointment;
+    isUpcoming?: boolean;
+  }) => (
     <Card className="mb-4">
       <CardContent className="pt-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

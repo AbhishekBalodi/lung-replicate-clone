@@ -22,7 +22,7 @@ interface Prescription {
   prescribed_at: string;
 }
 
-export default function TasksTab({ isHospital }: { isHospital?: boolean }) {
+export default function PrescriptionsTab({ isHospital }: { isHospital?: boolean }) {
   const [tasks, setTasks] = useState<Task[]>([
     {
       id: 1,
@@ -103,61 +103,61 @@ export default function TasksTab({ isHospital }: { isHospital?: boolean }) {
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       {/* Pending Tasks */}
-      <Card className={cardClass}>
+      
+
+      {/* Recent Prescriptions */}
+      <Card className="bg-emerald-700/80 border-emerald-600 text-white">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">Pending Tasks</CardTitle>
-          <p className={headerSubText}>Tasks requiring your attention</p>
+          <CardTitle className="text-xl font-semibold">Recent Prescriptions</CardTitle>
+          <p className="text-slate-400 text-sm">Prescriptions you've written recently</p>
         </CardHeader>
-        <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
-          {tasks.map((task) => (
+        <CardContent className="space-y-4 max-h-[400px] overflow-y-auto">
+          {prescriptions.map((prescription) => (
             <div 
-              key={task.id} 
-              className={`flex items-start gap-3 p-4 rounded-lg transition-colors ${
-                task.completed 
-                  ? (isHosp ? "bg-emerald-600/30 opacity-60" : "bg-slate-700/30 opacity-60") 
-                  : (isHosp ? "bg-emerald-600/50 hover:bg-emerald-600" : "bg-slate-700/50 hover:bg-slate-700")
-              }`}
+              key={prescription.id} 
+              className="p-4 rounded-lg bg-slate-700/50"
             >
-              <Checkbox 
-                checked={task.completed}
-                onCheckedChange={() => toggleTask(task.id)}
-                className="mt-1 border-slate-500 data-[state=checked]:bg-emerald-600"
-              />
-              <div className="flex-1">
-                <p className={`font-medium ${task.completed ? "line-through text-slate-400" : ""}`}>
-                  {task.title}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Clock className="h-3.5 w-3.5 text-slate-100" />
-                  <span className="text-sm text-slate-100">{task.due_time}</span>
-                  <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
-                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
-                  </Badge>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Avatar className={getAvatarColor(prescription.patient_name) + " h-8 w-8"}>
+                    <AvatarFallback className="text-white text-xs font-medium">
+                      {getInitials(prescription.patient_name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{prescription.patient_name}</span>
                 </div>
+                <span className="text-xs text-slate-400">{prescription.prescribed_at}</span>
               </div>
-              <div className="flex gap-1">
+              <ul className="space-y-1 mb-3">
+                {prescription.medicines.map((med, i) => (
+                  <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
+                    <span className="text-slate-500">•</span>
+                    {med}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-2">
                 <Button 
                   variant="ghost" 
-                  size="icon"
-                  className="h-8 w-8 text-slate-400 hover:text-white hover:bg-slate-600"
+                  size="sm"
+                  className="text-slate-400 hover:text-white hover:bg-slate-600"
                 >
-                  <FileText className="h-4 w-4" />
+                  <Eye className="h-4 w-4 mr-1" />
+                  View
                 </Button>
                 <Button 
                   variant="ghost" 
-                  size="icon"
-                  className="h-8 w-8 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/20"
+                  size="sm"
+                  className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/20"
                 >
-                  <CheckCircle className="h-4 w-4" />
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  Renew
                 </Button>
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
-
-      {/* Recent Prescriptions */}
-      
     </div>
   );
 }
