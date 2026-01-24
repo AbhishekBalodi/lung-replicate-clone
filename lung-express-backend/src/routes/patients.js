@@ -29,30 +29,57 @@ function makeKey(r) {
 
 /**
  * GET /api/patients (?q=search)
- * Returns the full patients list (optionally filtered by ?q=) sorted by name.
+ * Returns patients filtered by the logged-in doctor (for hospital tenants).
+ * Includes patients who have appointments with this doctor, plus patients explicitly assigned.
  */
 router.get('/', async (req, res) => {
-  const q = (req.query.q || '').toString().trim().toLowerCase();
+  const q = (req.query.q || req.query.search || '').toString().trim().toLowerCase();
   const config = getSchemaConfig(req);
 
+  let conn;
   try {
-    const pool = getPool(req);
+    conn = await getConnection(req);
     
-    // Build query with doctor filter (only for hospital tenants)
-    let whereSql = '';
-    let params = [];
+    // Get doctor ID from headers for filtering
+    const doctorId = req.headers['x-doctor-id'];
+    const userRole = req.headers['x-user-role'];
+    const isSuperAdmin = userRole === 'super_admin';
     
-    if (config.isHospital) {
-      const doctorFilter = getDoctorFilter(req, 'doctor_id');
-      whereSql = doctorFilter.whereSql ? `WHERE ${doctorFilter.whereSql}` : '';
-      params = doctorFilter.params;
+    let patients = [];
+    
+    if (config.isHospital && doctorId && !isSuperAdmin) {
+      // For hospital doctors: get patients who have appointments with this doctor
+      // OR patients explicitly assigned to this doctor
+      const [rows] = await conn.execute(`
+        SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
+        FROM patients p
+        WHERE p.doctor_id = ?
+        UNION
+        SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
+        FROM patients p
+        INNER JOIN appointments a ON (
+          (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
+          OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> '')
+        )
+        WHERE a.doctor_id = ?
+        ORDER BY full_name ASC
+      `, [doctorId, doctorId]);
+      patients = rows;
+    } else if (config.isHospital) {
+      // Super admin: see all patients
+      const [rows] = await conn.execute(
+        `SELECT id, full_name, email, phone, doctor_id FROM patients ORDER BY full_name ASC`
+      );
+      patients = rows;
+    } else {
+      // Individual doctor tenant: all patients belong to this tenant
+      const [rows] = await conn.execute(
+        `SELECT id, full_name, email, phone, doctor_assigned FROM patients ORDER BY full_name ASC`
+      );
+      patients = rows;
     }
-    
-    const [patients] = await pool.execute(
-      `SELECT id, full_name, email, phone${config.isHospital ? ', doctor_id' : ', doctor_assigned'} FROM patients ${whereSql} ORDER BY full_name ASC`,
-      params
-    );
 
+    // Apply search filter if provided
     let out = patients;
     if (q) {
       out = patients.filter((r) =>
@@ -66,6 +93,65 @@ router.get('/', async (req, res) => {
   } catch (e) {
     console.error('GET /api/patients failed:', e);
     res.status(500).json({ error: e.message || 'Failed to load patients' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+/**
+ * GET /api/patients/search?term=xyz
+ * Search patients by name, email, or phone (filtered by doctor for hospital tenants)
+ */
+router.get('/search', async (req, res) => {
+  const term = (req.query.term || '').toString().trim().toLowerCase();
+  const config = getSchemaConfig(req);
+  
+  if (!term) {
+    return res.status(400).json({ error: 'Search term is required' });
+  }
+
+  let conn;
+  try {
+    conn = await getConnection(req);
+    
+    const doctorId = req.headers['x-doctor-id'];
+    const userRole = req.headers['x-user-role'];
+    const isSuperAdmin = userRole === 'super_admin';
+    
+    let patients = [];
+    
+    if (config.isHospital && doctorId && !isSuperAdmin) {
+      // For hospital doctors: search only their patients
+      const [rows] = await conn.execute(`
+        SELECT DISTINCT p.id, p.full_name, p.email, p.phone
+        FROM patients p
+        WHERE (p.doctor_id = ? OR EXISTS (
+          SELECT 1 FROM appointments a 
+          WHERE a.doctor_id = ? 
+          AND ((p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
+               OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> ''))
+        ))
+        AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ?)
+        ORDER BY p.full_name ASC
+      `, [doctorId, doctorId, `%${term}%`, `%${term}%`, `%${term}%`]);
+      patients = rows;
+    } else {
+      // Super admin or individual doctor: search all patients
+      const [rows] = await conn.execute(
+        `SELECT id, full_name, email, phone FROM patients 
+         WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ?
+         ORDER BY full_name ASC`,
+        [`%${term}%`, `%${term}%`, `%${term}%`]
+      );
+      patients = rows;
+    }
+    
+    res.json(patients);
+  } catch (e) {
+    console.error('GET /api/patients/search failed:', e);
+    res.status(500).json({ error: e.message || 'Failed to search patients' });
+  } finally {
+    if (conn) conn.release();
   }
 });
 
@@ -112,10 +198,17 @@ router.get('/:id', async (req, res) => {
       [id]
     );
 
-    const [lab_tests] = await conn.execute(
-      'SELECT * FROM labs_test WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
-      [id]
-    );
+    // Schema-resilient: check if labs_test table exists
+    let lab_tests = [];
+    try {
+      const [rows] = await conn.execute(
+        'SELECT * FROM labs_test WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
+        [id]
+      );
+      lab_tests = rows;
+    } catch (e) {
+      console.log('labs_test table may not exist:', e.message);
+    }
 
     const [procedures] = await conn.execute(
       'SELECT * FROM procedures WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC',
@@ -125,9 +218,9 @@ router.get('/:id', async (req, res) => {
     // Get all appointments for this patient (by email AND phone)
     const [appointments] = await conn.execute(
       `SELECT * FROM appointments 
-       WHERE email = ? AND phone = ? 
+       WHERE email = ? OR phone = ? 
        ORDER BY appointment_date DESC, appointment_time DESC`,
-      [patient.email, patient.phone]
+      [patient.email || '', patient.phone || '']
     );
 
     res.json({ ...patient, medicines, lab_tests, procedures, appointments });
@@ -157,44 +250,6 @@ router.get('/:id/prescriptions', async (req, res) => {
   } catch (e) {
     console.error('GET /api/patients/:id/prescriptions failed:', e);
     res.status(500).json({ error: e.message || 'Failed to load prescriptions' });
-  }
-});
-
-/**
- * GET /api/patients/search?term=xyz
- * Search patients by name, email, or phone
- */
-router.get('/search', async (req, res) => {
-  const term = (req.query.term || '').toString().trim().toLowerCase();
-  const config = getSchemaConfig(req);
-  
-  if (!term) {
-    return res.status(400).json({ error: 'Search term is required' });
-  }
-
-  try {
-    const pool = getPool(req);
-    
-    // Build query with doctor filter (only for hospital tenants)
-    let whereSql = '(LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ?)';
-    let params = [`%${term}%`, `%${term}%`, `%${term}%`];
-    
-    if (config.isHospital) {
-      const doctorFilter = getDoctorFilter(req, 'doctor_id');
-      if (doctorFilter.whereSql) {
-        whereSql = `${doctorFilter.whereSql} AND ${whereSql}`;
-        params = [...doctorFilter.params, ...params];
-      }
-    }
-    
-    const [patients] = await pool.execute(
-      `SELECT id, full_name, email, phone FROM patients WHERE ${whereSql} ORDER BY full_name ASC`,
-      params
-    );
-    res.json(patients);
-  } catch (e) {
-    console.error('GET /api/patients/search failed:', e);
-    res.status(500).json({ error: e.message || 'Failed to search patients' });
   }
 });
 
