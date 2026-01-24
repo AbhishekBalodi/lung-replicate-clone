@@ -284,14 +284,7 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     }
   }, [user, isSuperAdmin, navigate, loading]);
 
-  // Show loading state while hydrating
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  // Note: Loading check moved after all hooks to follow React rules of hooks
 
   // Fetch all doctors
   const fetchDoctors = useCallback(async () => {
@@ -750,6 +743,15 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     });
     return grouped;
   }, [allPatients]);
+
+  // Show loading state while hydrating auth
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (!user || !isSuperAdmin) return null;
 
