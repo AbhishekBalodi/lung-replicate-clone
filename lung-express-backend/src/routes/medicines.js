@@ -36,6 +36,20 @@ async function ensureTables(conn) {
       INDEX (patient_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
+
+  // Backwards-compatible columns
+  await ensureColumn(conn, 'medicines_catalog', 'form', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'medicines_catalog', 'strength', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'medicines_catalog', 'default_frequency', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'medicines_catalog', 'duration', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'medicines_catalog', 'route', 'VARCHAR(100) NULL');
+
+  await ensureColumn(conn, 'medicines', 'doctor_id', 'INT NULL');
+  await ensureColumn(conn, 'medicines', 'dosage', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'medicines', 'frequency', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'medicines', 'duration', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'medicines', 'instructions', 'TEXT NULL');
+  await ensureColumn(conn, 'medicines', 'prescribed_date', 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP');
 }
 
 /**
@@ -48,6 +62,16 @@ async function columnExists(conn, tableName, columnName) {
     [tableName, columnName]
   );
   return rows.length > 0;
+}
+
+async function ensureColumn(conn, tableName, columnName, columnSqlDef) {
+  const exists = await columnExists(conn, tableName, columnName);
+  if (exists) return;
+  try {
+    await conn.execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnSqlDef}`);
+  } catch (e) {
+    console.log(`ensureColumn skipped for ${tableName}.${columnName}:`, e.message);
+  }
 }
 
 /* ------------------- catalog: GET /catalog ------------------ */
@@ -89,13 +113,40 @@ router.post("/catalog", async (req, res) => {
   const conn = await getConnection(req);
   try {
     await ensureTables(conn);
+
+    // Schema-resilient INSERT for older schemas that might not have duration/route/etc
+    const hasForm = await columnExists(conn, 'medicines_catalog', 'form');
+    const hasStrength = await columnExists(conn, 'medicines_catalog', 'strength');
+    const hasDefaultFrequency = await columnExists(conn, 'medicines_catalog', 'default_frequency');
+    const hasDuration = await columnExists(conn, 'medicines_catalog', 'duration');
+    const hasRoute = await columnExists(conn, 'medicines_catalog', 'route');
+
+    const cols = ['name'];
+    const vals = [name.trim()];
+    if (hasForm) {
+      cols.push('form');
+      vals.push(form);
+    }
+    if (hasStrength) {
+      cols.push('strength');
+      vals.push(strength);
+    }
+    if (hasDefaultFrequency) {
+      cols.push('default_frequency');
+      vals.push(default_frequency);
+    }
+    if (hasDuration) {
+      cols.push('duration');
+      vals.push(duration);
+    }
+    if (hasRoute) {
+      cols.push('route');
+      vals.push(route);
+    }
+
     await conn.execute(
-      `
-      INSERT INTO medicines_catalog
-        (name, form, strength, default_frequency, duration, route)
-      VALUES (?, ?, ?, ?, ?, ?)
-      `,
-      [name.trim(), form, strength, default_frequency, duration, route]
+      `INSERT INTO medicines_catalog (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+      vals
     );
 
     res.status(201).json({ success: true, message: "Catalog item added" });

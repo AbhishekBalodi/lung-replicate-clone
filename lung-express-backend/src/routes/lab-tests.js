@@ -33,6 +33,19 @@ async function ensureTables(conn) {
       FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
     )
   `);
+
+  // Backwards-compatible: older tenant schemas may exist without newer columns.
+  await ensureColumn(conn, 'labs_test', 'doctor_id', 'INT NULL');
+  await ensureColumn(conn, 'labs_test', 'test_name', 'VARCHAR(150) NOT NULL');
+  await ensureColumn(conn, 'labs_test', 'category', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'labs_test', 'sample_type', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'labs_test', 'preparation_instructions', 'TEXT NULL');
+  await ensureColumn(conn, 'labs_test', 'prescribed_date', 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP');
+
+  await ensureColumn(conn, 'lab_catalogue', 'category', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'lab_catalogue', 'sample_type', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'lab_catalogue', 'preparation_instructions', 'TEXT NULL');
+  await ensureColumn(conn, 'lab_catalogue', 'turnaround_time', 'VARCHAR(50) NULL');
 }
 
 /**
@@ -45,6 +58,20 @@ async function columnExists(conn, tableName, columnName) {
     [tableName, columnName]
   );
   return rows.length > 0;
+}
+
+/**
+ * Ensure a column exists (safe for older schemas where CREATE TABLE IF NOT EXISTS won't add new columns).
+ */
+async function ensureColumn(conn, tableName, columnName, columnSqlDef) {
+  const exists = await columnExists(conn, tableName, columnName);
+  if (exists) return;
+  try {
+    await conn.execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnSqlDef}`);
+  } catch (e) {
+    // In case of race conditions or limited privileges, don't crash the request.
+    console.log(`ensureColumn skipped for ${tableName}.${columnName}:`, e.message);
+  }
 }
 
 /**
@@ -172,20 +199,41 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Schema-resilient INSERT: check if lab_catalogue_id column exists
+    // Schema-resilient INSERT: check if optional columns exist
     const hasLabCatalogueId = await columnExists(conn, 'labs_test', 'lab_catalogue_id');
+    const hasCategory = await columnExists(conn, 'labs_test', 'category');
+    const hasSampleType = await columnExists(conn, 'labs_test', 'sample_type');
+    const hasPrep = await columnExists(conn, 'labs_test', 'preparation_instructions');
     
     let insertSql;
     let insertParams;
     
+    const cols = ['patient_id', 'doctor_id'];
+    const vals = [finalPatientId, doctorId];
+
     if (hasLabCatalogueId) {
-      insertSql = 'INSERT INTO labs_test (patient_id, doctor_id, lab_catalogue_id, test_name, category, sample_type, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)';
-      insertParams = [finalPatientId, doctorId, lab_catalogue_id || null, test_name, category || null, sample_type || null, preparation_instructions || null];
-    } else {
-      // Fallback for schemas without lab_catalogue_id
-      insertSql = 'INSERT INTO labs_test (patient_id, doctor_id, test_name, category, sample_type, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?)';
-      insertParams = [finalPatientId, doctorId, test_name, category || null, sample_type || null, preparation_instructions || null];
+      cols.push('lab_catalogue_id');
+      vals.push(lab_catalogue_id || null);
     }
+
+    cols.push('test_name');
+    vals.push(test_name);
+
+    if (hasCategory) {
+      cols.push('category');
+      vals.push(category || null);
+    }
+    if (hasSampleType) {
+      cols.push('sample_type');
+      vals.push(sample_type || null);
+    }
+    if (hasPrep) {
+      cols.push('preparation_instructions');
+      vals.push(preparation_instructions || null);
+    }
+
+    insertSql = `INSERT INTO labs_test (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`;
+    insertParams = vals;
 
     const [result] = await conn.execute(insertSql, insertParams);
 
