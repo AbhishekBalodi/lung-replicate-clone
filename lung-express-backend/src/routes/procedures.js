@@ -33,6 +33,18 @@ async function ensureTables(conn) {
       FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
     )
   `);
+
+  // Backwards-compatible column enforcement (older tenant schemas won't get new cols from CREATE TABLE IF NOT EXISTS)
+  await ensureColumn(conn, 'procedure_catalogue', 'category', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'procedure_catalogue', 'description', 'TEXT NULL');
+  await ensureColumn(conn, 'procedure_catalogue', 'duration', 'VARCHAR(50) NULL');
+  await ensureColumn(conn, 'procedure_catalogue', 'preparation_instructions', 'TEXT NULL');
+
+  await ensureColumn(conn, 'procedures', 'doctor_id', 'INT NULL');
+  await ensureColumn(conn, 'procedures', 'category', 'VARCHAR(100) NULL');
+  await ensureColumn(conn, 'procedures', 'description', 'TEXT NULL');
+  await ensureColumn(conn, 'procedures', 'preparation_instructions', 'TEXT NULL');
+  await ensureColumn(conn, 'procedures', 'prescribed_date', 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP');
 }
 
 /**
@@ -45,6 +57,16 @@ async function columnExists(conn, tableName, columnName) {
     [tableName, columnName]
   );
   return rows.length > 0;
+}
+
+async function ensureColumn(conn, tableName, columnName, columnSqlDef) {
+  const exists = await columnExists(conn, tableName, columnName);
+  if (exists) return;
+  try {
+    await conn.execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnSqlDef}`);
+  } catch (e) {
+    console.log(`ensureColumn skipped for ${tableName}.${columnName}:`, e.message);
+  }
 }
 
 /**
@@ -184,20 +206,38 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Schema-resilient INSERT: check if procedure_catalogue_id column exists
+    // Schema-resilient INSERT: include only columns that exist
     const hasCatalogueId = await columnExists(conn, 'procedures', 'procedure_catalogue_id');
-    
-    let insertSql;
-    let insertParams;
-    
+    const hasCategory = await columnExists(conn, 'procedures', 'category');
+    const hasDescription = await columnExists(conn, 'procedures', 'description');
+    const hasPrep = await columnExists(conn, 'procedures', 'preparation_instructions');
+
+    const cols = ['patient_id', 'doctor_id'];
+    const vals = [finalPatientId, doctorId];
+
     if (hasCatalogueId) {
-      insertSql = 'INSERT INTO procedures (patient_id, doctor_id, procedure_catalogue_id, procedure_name, category, description, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)';
-      insertParams = [finalPatientId, doctorId, procedure_catalogue_id || null, procedure_name, category || null, description || null, preparation_instructions || null];
-    } else {
-      // Fallback for schemas without procedure_catalogue_id
-      insertSql = 'INSERT INTO procedures (patient_id, doctor_id, procedure_name, category, description, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?)';
-      insertParams = [finalPatientId, doctorId, procedure_name, category || null, description || null, preparation_instructions || null];
+      cols.push('procedure_catalogue_id');
+      vals.push(procedure_catalogue_id || null);
     }
+
+    cols.push('procedure_name');
+    vals.push(procedure_name);
+
+    if (hasCategory) {
+      cols.push('category');
+      vals.push(category || null);
+    }
+    if (hasDescription) {
+      cols.push('description');
+      vals.push(description || null);
+    }
+    if (hasPrep) {
+      cols.push('preparation_instructions');
+      vals.push(preparation_instructions || null);
+    }
+
+    const insertSql = `INSERT INTO procedures (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`;
+    const insertParams = vals;
 
     const [result] = await conn.execute(insertSql, insertParams);
 
