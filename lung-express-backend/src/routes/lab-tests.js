@@ -5,7 +5,7 @@ import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-cont
 const router = Router();
 
 /**
- * Ensure lab_catalogue and labs_test tables exist
+ * Ensure lab_catalogue and labs_test tables exist with schema-resilient approach
  */
 async function ensureTables(conn) {
   await conn.execute(`
@@ -25,16 +25,26 @@ async function ensureTables(conn) {
       id INT AUTO_INCREMENT PRIMARY KEY,
       patient_id INT NOT NULL,
       doctor_id INT NULL,
-      lab_catalogue_id INT,
       test_name VARCHAR(150) NOT NULL,
       category VARCHAR(100),
       sample_type VARCHAR(100),
       preparation_instructions TEXT,
       prescribed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE,
-      FOREIGN KEY (lab_catalogue_id) REFERENCES lab_catalogue(id) ON DELETE SET NULL
+      FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
     )
   `);
+}
+
+/**
+ * Check if a column exists in a table
+ */
+async function columnExists(conn, tableName, columnName) {
+  const [rows] = await conn.execute(
+    `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+    [tableName, columnName]
+  );
+  return rows.length > 0;
 }
 
 /**
@@ -111,7 +121,7 @@ router.get('/', async (req, res) => {
 });
 
 /**
- * POST /api/lab-tests - Prescribe lab test to a patient
+ * POST /api/lab-tests - Prescribe lab test to a patient (schema-resilient)
  */
 router.post('/', async (req, res) => {
   const { 
@@ -162,11 +172,22 @@ router.post('/', async (req, res) => {
       }
     }
 
-    // Insert the prescribed lab test with doctor_id
-    const [result] = await conn.execute(
-      'INSERT INTO labs_test (patient_id, doctor_id, lab_catalogue_id, test_name, category, sample_type, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [finalPatientId, doctorId, lab_catalogue_id || null, test_name, category || null, sample_type || null, preparation_instructions || null]
-    );
+    // Schema-resilient INSERT: check if lab_catalogue_id column exists
+    const hasLabCatalogueId = await columnExists(conn, 'labs_test', 'lab_catalogue_id');
+    
+    let insertSql;
+    let insertParams;
+    
+    if (hasLabCatalogueId) {
+      insertSql = 'INSERT INTO labs_test (patient_id, doctor_id, lab_catalogue_id, test_name, category, sample_type, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?, ?)';
+      insertParams = [finalPatientId, doctorId, lab_catalogue_id || null, test_name, category || null, sample_type || null, preparation_instructions || null];
+    } else {
+      // Fallback for schemas without lab_catalogue_id
+      insertSql = 'INSERT INTO labs_test (patient_id, doctor_id, test_name, category, sample_type, preparation_instructions) VALUES (?, ?, ?, ?, ?, ?)';
+      insertParams = [finalPatientId, doctorId, test_name, category || null, sample_type || null, preparation_instructions || null];
+    }
+
+    const [result] = await conn.execute(insertSql, insertParams);
 
     await conn.commit();
     res.status(201).json({ success: true, id: result.insertId, patient_id: finalPatientId });
