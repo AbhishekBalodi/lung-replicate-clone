@@ -6,38 +6,203 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
-type Review = { id: number; resource_type: string; resource_id: string | number; rating: number; comment?: string | null };
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-export default function Reviews(){
-  const [items,setItems]=useState<Review[]>([]);
-  const [form,setForm]=useState<{ resource_type:string; resource_id:string; rating:string; comment:string }>({ resource_type:'doctor', resource_id:'', rating:'5', comment:'' });
+type Review = {
+  id: number;
+  resource_type: string;
+  resource_id: number;
+  patient_user_id?: number | null;
+  rating: number;
+  comment?: string | null;
+  created_at: string;
+};
 
-  const load = async()=>{ try{ const res = await api.apiGet('/api/reviews'); const js=await res.json(); if(!res.ok) throw new Error(js?.error||'Failed'); setItems(js.items||[]); } catch (err: unknown) { const e = err as Error; toast.error('Failed to load: '+(e?.message ?? String(err))); } }
-  const handleAdd = async()=>{ if(!form.resource_type||!form.resource_id) return toast.error('resource required'); try{ const res = await api.apiPost('/api/reviews',{ ...form, rating: Number(form.rating) }); const js=await res.json(); if(!res.ok) throw new Error(js?.error||'Failed'); toast.success('Added'); setForm({ resource_type:'doctor', resource_id:'', rating:'5', comment:'' }); load(); } catch (err: unknown) { const e = err as Error; toast.error('Error: '+(e?.message ?? String(err))); } }
+export default function Reviews() {
+  const [items, setItems] = useState<Review[]>([]);
+  const [open, setOpen] = useState(false);
 
-  useEffect(()=>{ load(); },[]);
+  const [form, setForm] = useState({
+    resource_type: '',
+    resource_id: '',
+    rating: '',
+    comment: '',
+  });
+
+  // -------- LOAD --------
+  const load = async () => {
+    try {
+      const res = await api.apiGet('/api/reviews');
+      const js = await res.json();
+      if (!res.ok) throw new Error(js?.error || 'Failed');
+      setItems(js.items || []);
+    } catch (err: any) {
+      toast.error('Failed to load reviews: ' + err.message);
+    }
+  };
+
+  // -------- ADD --------
+  const handleAdd = async () => {
+    if (!form.resource_type || !form.resource_id || !form.rating) {
+      toast.error('All required fields must be filled');
+      return;
+    }
+
+    try {
+      const res = await api.apiPost('/api/reviews', {
+        resource_type: form.resource_type,
+        resource_id: Number(form.resource_id),
+        rating: Number(form.rating),
+        comment: form.comment,
+      });
+
+      const js = await res.json();
+      if (!res.ok) throw new Error(js?.error || 'Failed');
+
+      toast.success('Review added');
+      setOpen(false);
+      setForm({
+        resource_type: '',
+        resource_id: '',
+        rating: '',
+        comment: '',
+      });
+      load();
+    } catch (err: any) {
+      toast.error('Failed to add review: ' + err.message);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <ConsoleShell>
-      <h1 className="text-2xl font-semibold text-emerald-900">Reviews</h1>
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Reviews</h1>
 
-      <Card className="p-4 mt-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-          <Input placeholder="Resource Type (doctor/hospital/service)" value={form.resource_type} onChange={(e)=>setForm({...form,resource_type:e.target.value})} />
-          <Input placeholder="Resource ID" value={form.resource_id} onChange={(e)=>setForm({...form,resource_id:e.target.value})} />
-          <Input placeholder="Rating 1-5" value={form.rating} onChange={(e)=>setForm({...form,rating:e.target.value})} />
-          <Input placeholder="Comment" value={form.comment} onChange={(e)=>setForm({...form,comment:e.target.value})} />
-        </div>
-        <Button className="bg-emerald-700" onClick={handleAdd}>Add Review</Button>
-      </Card>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button>Add Review</Button>
+          </DialogTrigger>
 
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add Review</DialogTitle>
+              <DialogDescription>
+                Create a new review
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              {/* Resource Type */}
+              <div className="space-y-2">
+                <Label>Resource Type *</Label>
+                <Select
+                  value={form.resource_type}
+                  onValueChange={(v) =>
+                    setForm({ ...form, resource_type: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select resource type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="doctor">Doctor</SelectItem>
+                    <SelectItem value="hospital">Hospital</SelectItem>
+                    <SelectItem value="service">Service</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Resource ID */}
+              <div className="space-y-2">
+                <Label>Resource ID *</Label>
+                <Input
+                  placeholder="Numeric ID"
+                  value={form.resource_id}
+                  onChange={(e) =>
+                    setForm({ ...form, resource_id: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* Rating */}
+              <div className="space-y-2">
+                <Label>Rating (1–5) *</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={5}
+                  placeholder="Enter rating"
+                  value={form.rating}
+                  onChange={(e) =>
+                    setForm({ ...form, rating: e.target.value })
+                  }
+                />
+              </div>
+
+              {/* Comment */}
+              <div className="space-y-2">
+                <Label>Comment</Label>
+                <Input
+                  placeholder="Optional comment"
+                  value={form.comment}
+                  onChange={(e) =>
+                    setForm({ ...form, comment: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAdd}>Save Review</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* LIST */}
       <div className="mt-4 space-y-3">
-        {items.map(it=> (
-          <Card key={it.id} className="p-3">
-            <div className="font-medium text-emerald-900">{it.resource_type}#{it.resource_id} • {it.rating}★</div>
-            <div className="text-sm text-emerald-700">{it.comment}</div>
+        {items.length === 0 ? (
+          <Card className="p-4 text-sm text-muted-foreground">
+            No reviews yet
           </Card>
-        ))}
+        ) : (
+          items.map((it) => (
+            <Card key={it.id} className="p-3">
+              <div className="font-medium">
+                {it.resource_type} #{it.resource_id} • {it.rating}★
+              </div>
+              {it.comment && (
+                <div className="text-sm text-muted-foreground">
+                  {it.comment}
+                </div>
+              )}
+            </Card>
+          ))
+        )}
       </div>
     </ConsoleShell>
   );

@@ -37,6 +37,19 @@ async function ensureTables(conn) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   `);
 
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS pharmacy_medicines (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      brand VARCHAR(255),
+      sku VARCHAR(100),
+      unit_type VARCHAR(50) DEFAULT 'tablet',
+      unit_price DECIMAL(10,2) DEFAULT 0,
+      description TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `);
+
   // Backwards-compatible columns
   await ensureColumn(conn, 'medicines_catalog', 'form', 'VARCHAR(100) NULL');
   await ensureColumn(conn, 'medicines_catalog', 'strength', 'VARCHAR(100) NULL');
@@ -54,6 +67,17 @@ async function ensureTables(conn) {
   // Fix ENUM columns - convert to VARCHAR to support any value
   await fixEnumColumn(conn, 'medicines_catalog', 'form', 'VARCHAR(100) NULL');
   await fixEnumColumn(conn, 'medicines_catalog', 'route', 'VARCHAR(100) NULL');
+
+
+
+  //added by gaurav
+  // Backwards-safe column checks
+  await ensureColumn(conn, 'pharmacy_medicines', 'brand', 'VARCHAR(255)');
+  await ensureColumn(conn, 'pharmacy_medicines', 'sku', 'VARCHAR(100)');
+  await ensureColumn(conn, 'pharmacy_medicines', 'unit_type', "VARCHAR(50) DEFAULT 'tablet'");
+  await ensureColumn(conn, 'pharmacy_medicines', 'unit_price', 'DECIMAL(10,2) DEFAULT 0');
+  await ensureColumn(conn, 'pharmacy_medicines', 'description', 'TEXT');
+
 }
 
 /**
@@ -90,7 +114,7 @@ async function fixEnumColumn(conn, tableName, columnName, newDef) {
       [tableName, columnName]
     );
     if (rows.length === 0) return;
-    
+
     // Check if it's an ENUM type
     if (rows[0].DATA_TYPE === 'enum') {
       console.log(`Converting ENUM column ${tableName}.${columnName} to VARCHAR...`);
@@ -193,19 +217,19 @@ router.get("/", async (req, res) => {
   try {
     conn = await getConnection(req);
     await ensureTables(conn);
-    
+
     // Check if doctor_id column exists for filtering
     const hasDoctorId = await columnExists(conn, 'medicines', 'doctor_id');
-    
+
     let whereSql = '';
     let params = [];
-    
+
     if (hasDoctorId) {
       const doctorFilter = getDoctorFilter(req, 'doctor_id');
       whereSql = doctorFilter.whereSql ? `WHERE ${doctorFilter.whereSql}` : '';
       params = doctorFilter.params;
     }
-    
+
     const [rows] = await conn.execute(
       `SELECT * FROM medicines ${whereSql} ORDER BY id DESC`,
       params
@@ -284,10 +308,10 @@ router.post("/", async (req, res) => {
     // Schema-resilient INSERT: check if doctor_id and medicine_catalogue_id columns exist
     const hasDoctorId = await columnExists(conn, 'medicines', 'doctor_id');
     const hasCatalogueId = await columnExists(conn, 'medicines', 'medicine_catalogue_id');
-    
+
     let insertSql;
     let insertParams;
-    
+
     if (hasDoctorId && hasCatalogueId) {
       insertSql = `INSERT INTO medicines (patient_id, doctor_id, medicine_catalogue_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
       insertParams = [finalPatientId, doctorId, medicine_catalogue_id || null, medicine_name.trim(), dosage || "", frequency || "", duration || "", instructions || ""];
@@ -315,5 +339,101 @@ router.post("/", async (req, res) => {
     conn.release();
   }
 });
+
+
+
+
+/* ------------ pharmacy: GET /pharmacy/medicines ------------ */
+/** Returns pharmacy inventory medicines */
+router.get("/pharmacy/medicines", async (req, res) => {
+  let conn;
+  try {
+    conn = await getConnection(req);
+    await ensurePharmacyTable(conn);
+
+    const [rows] = await conn.query(`
+      SELECT 
+        id,
+        name,
+        brand,
+        sku,
+        unit_type,
+        unit_price,
+        description,
+        created_at
+      FROM pharmacy_medicines
+      ORDER BY name ASC
+    `);
+
+    res.json({ items: rows });
+  } catch (err) {
+    console.error("GET /api/pharmacy/medicines error:", err);
+    res.status(500).json({
+      error: "Failed to fetch pharmacy medicines",
+      details: err.message,
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
+
+
+
+
+/* ------------ pharmacy: POST /pharmacy/medicines ------------ */
+/** Adds a medicine to pharmacy inventory */
+router.post("/pharmacy/medicines", async (req, res) => {
+  const {
+    name,
+    brand = "",
+    sku = "",
+    unit_type = "tablet",
+    unit_price = 0,
+    description = "",
+  } = req.body || {};
+
+  if (!name || !String(name).trim()) {
+    return res.status(400).json({
+      error: "Medicine name is required.",
+    });
+  }
+
+  let conn;
+  try {
+    conn = await getConnection(req);
+    await ensurePharmacyTable(conn);
+
+    await conn.execute(
+      `
+      INSERT INTO pharmacy_medicines
+        (name, brand, sku, unit_type, unit_price, description)
+      VALUES (?, ?, ?, ?, ?, ?)
+      `,
+      [
+        name.trim(),
+        brand || null,
+        sku || null,
+        unit_type || 'tablet',
+        Number(unit_price) || 0,
+        description || null,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Pharmacy medicine added",
+    });
+  } catch (err) {
+    console.error("POST /api/pharmacy/medicines error:", err);
+    res.status(500).json({
+      error: "Failed to add pharmacy medicine",
+      details: err.message,
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 
 export default router;
