@@ -31,6 +31,7 @@ interface Claim {
   status: "pending" | "submitted" | "approved" | "rejected" | "partially_approved";
   submitted_date: string;
   treatment: string;
+  treatment_type: string;
 }
 
 export default function InsuranceClaims() {

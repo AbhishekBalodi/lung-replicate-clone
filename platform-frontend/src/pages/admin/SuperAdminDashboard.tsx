@@ -1313,6 +1313,7 @@ const [chartsError, setChartsError] = useState<string | null>(null);
                         <TableHead>Consultation Fee</TableHead>
                         <TableHead className="text-center">Dashboard Access</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Tab Settings</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1357,6 +1358,22 @@ const [chartsError, setChartsError] = useState<string | null>(null);
                             ) : (
                               <Badge variant="secondary">Inactive</Badge>
                             )}
+                          </TableCell>
+
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => setTabAccessDialog({
+                                isOpen: true,
+                                entityType: 'doctor',
+                                entityId: doctor.id,
+                                entityName: doctor.name
+                              })}
+                            >
+                              <Settings2 className="h-4 w-4 mr-1" />
+                              Configure Tabs
+                            </Button>
                           </TableCell>
 
                           <TableCell>
