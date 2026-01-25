@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { Search, RefreshCw, Download, Plus, Users, Calendar, Phone, Mail } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { apiFetch } from '@/lib/api';
+import api from '@/lib/api';
 
 type Donor = {
   id: number;
@@ -70,12 +71,13 @@ export default function BloodDonors() {
   const fetchData = async () => {
     try {
       const [donorsRes, summaryRes, chartsRes, groupsRes] = await Promise.all([
-        apiFetch(`/api/dashboard/blood-bank/donors?search=${searchQuery}&bloodType=${bloodTypeFilter}`).then(r => r.json()),
+        apiFetch(`/api/blood-bank/donors?search=${searchQuery}&bloodType=${bloodTypeFilter}`).then(r => r.json()),
         apiFetch('/api/dashboard/blood-bank/donors/summary').then(r => r.json()),
         apiFetch('/api/dashboard/blood-bank/donors/charts').then(r => r.json()),
         apiFetch('/api/dashboard/blood-bank/blood-groups').then(r => r.json())
       ]);
-      setDonors(donorsRes.donors || []);
+      // setDonors(donorsRes.donors || []);
+      setDonors(donorsRes.items || []);
       setSummary(summaryRes);
       setBloodTypeData(chartsRes.bloodTypeData || []);
       setDonationFrequencyData(chartsRes.donationFrequencyData || []);
@@ -89,23 +91,51 @@ export default function BloodDonors() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.name) {
+    if (!formData.name.trim()) {
       toast.error('Donor name is required');
       return;
     }
+
     try {
-      await apiFetch('/api/dashboard/blood-bank/donors', {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      });
+      const res = await api.apiPost(
+        '/api/blood-bank/donors',
+        {
+          name: formData.name,
+          phone: formData.phone,
+          email: formData.email,
+          dob: formData.dob || null,
+          gender: formData.gender,
+          blood_group_id: formData.blood_group_id || null,
+          last_donation_date: formData.last_donation_date || null,
+          notes: formData.notes,
+        }
+      );
+
+      const js = await res.json();
+      if (!res.ok) throw new Error(js?.error || 'Failed');
+
       toast.success('Donor registered successfully');
       setIsModalOpen(false);
-      setFormData({ name: '', phone: '', email: '', dob: '', gender: 'male', blood_group_id: '', last_donation_date: '', notes: '', address: '', emergency_contact: '' });
-      fetchData();
-    } catch (error) {
-      toast.error('Failed to register donor');
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        dob: '',
+        gender: 'male',
+        blood_group_id: '',
+        last_donation_date: '',
+        notes: '',
+        address: '',
+        emergency_contact: '',
+      });
+
+      fetchData(); // reload donors from DB
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to register donor');
     }
   };
+
+
 
   const exportToCSV = () => {
     const headers = ['ID', 'Name', 'Blood Type', 'Phone', 'Email', 'Last Donation', 'Gender'];
@@ -121,7 +151,7 @@ export default function BloodDonors() {
   };
 
   const filteredDonors = donors.filter(donor => {
-    const matchesTab = activeTab === 'all' || 
+    const matchesTab = activeTab === 'all' ||
       (activeTab === 'eligible' && (!donor.last_donation_date || new Date(donor.last_donation_date) < new Date(Date.now() - 56 * 24 * 60 * 60 * 1000))) ||
       (activeTab === 'ineligible' && donor.last_donation_date && new Date(donor.last_donation_date) >= new Date(Date.now() - 56 * 24 * 60 * 60 * 1000)) ||
       (activeTab === 'new' && !donor.last_donation_date);
@@ -166,11 +196,11 @@ export default function BloodDonors() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Full Name *</Label>
-                    <Input id="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="blood_group_id">Blood Group</Label>
-                    <Select value={formData.blood_group_id} onValueChange={(v) => setFormData({...formData, blood_group_id: v})}>
+                    <Select value={formData.blood_group_id} onValueChange={(v) => setFormData({ ...formData, blood_group_id: v })}>
                       <SelectTrigger><SelectValue placeholder="Select blood group" /></SelectTrigger>
                       <SelectContent>
                         {bloodGroups.map(bg => (
@@ -183,21 +213,21 @@ export default function BloodDonors() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                    <Input id="phone" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                    <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="dob">Date of Birth</Label>
-                    <Input id="dob" type="date" value={formData.dob} onChange={(e) => setFormData({...formData, dob: e.target.value})} />
+                    <Input id="dob" type="date" value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="gender">Gender</Label>
-                    <Select value={formData.gender} onValueChange={(v) => setFormData({...formData, gender: v})}>
+                    <Select value={formData.gender} onValueChange={(v) => setFormData({ ...formData, gender: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="male">Male</SelectItem>
@@ -210,20 +240,20 @@ export default function BloodDonors() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="last_donation_date">Last Donation Date</Label>
-                    <Input id="last_donation_date" type="date" value={formData.last_donation_date} onChange={(e) => setFormData({...formData, last_donation_date: e.target.value})} />
+                    <Input id="last_donation_date" type="date" value={formData.last_donation_date} onChange={(e) => setFormData({ ...formData, last_donation_date: e.target.value })} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="emergency_contact">Emergency Contact</Label>
-                    <Input id="emergency_contact" value={formData.emergency_contact} onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})} />
+                    <Input id="emergency_contact" value={formData.emergency_contact} onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })} />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>
-                  <Input id="address" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} />
+                  <Input id="address" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
-                  <Input id="notes" value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} />
+                  <Input id="notes" value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
                 </div>
               </div>
               <DialogFooter>

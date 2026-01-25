@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5050',
+        target: 'http://localhost:5053',
         changeOrigin: true,
         secure: false,
         // This ensures cookies are properly forwarded in dev
