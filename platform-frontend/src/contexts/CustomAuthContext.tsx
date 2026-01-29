@@ -57,6 +57,46 @@ interface CustomAuthContextType {
 const CustomAuthContext = createContext<CustomAuthContextType | undefined>(undefined);
 
 /* ============================================================
+   🔹 HELPER: Single API URL builder
+   ============================================================ */
+
+/**
+ * Build API URL that works correctly in both DEV and PROD:
+ * - DEV: returns relative path (e.g., '/api/auth/login') for Vite proxy
+ * - PROD: prepends VITE_API_BASE_URL (e.g., 'https://api.example.com/api/auth/login')
+ */
+const api = (path: string): string => {
+  // In development, return relative path for Vite proxy
+  if (import.meta.env.DEV) {
+    return path;
+  }
+  // In production, prepend the base URL
+  const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+  return `${base}${path}`;
+};
+
+/**
+ * Get headers for API calls including tenant code in development
+ */
+const getHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const tenantCode = getDevTenantCode();
+  if (tenantCode) {
+    headers['X-Tenant-Code'] = tenantCode;
+  }
+  return headers;
+};
+
+/**
+ * Check if running on legacy Dr Mann site
+ */
+const isLegacyDrMannSite = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname.toLowerCase();
+  return hostname.includes('delhichestphysician') || hostname.includes('drmann');
+};
+
+/* ============================================================
    🔹 PROVIDER
    ============================================================ */
 
@@ -65,28 +105,6 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [tenantInfo, setTenantInfo] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const isLegacyDrMannSite = () => {
-    if (typeof window === 'undefined') return false;
-    const hostname = window.location.hostname.toLowerCase();
-    return hostname.includes('delhichestphysician') || hostname.includes('drmann');
-  };
-
-  const getApiBaseUrl = () => {
-    // DEV: use same-origin '/api' via Vite proxy so cookies appear on localhost:8080
-    if (import.meta.env.DEV) return '';
-    if (isLegacyDrMannSite()) return '';
-    const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
-    if (!envUrl) return '';
-    return envUrl.replace(/\/+$/, '');
-  };
-
-  const getHeaders = () => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const tenantCode = getDevTenantCode();
-    if (tenantCode) headers['X-Tenant-Code'] = tenantCode;
-    return headers;
-  };
 
   /* ============================================================
      🔹 TENANT INFO
@@ -103,20 +121,25 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      const baseUrl = getApiBaseUrl();
       const tenantCode = getDevTenantCode();
-      // In development we allow relative requests (baseUrl may be empty), so build URL accordingly
-      const url = `${baseUrl || ''}/api/platform/auth/tenant-info${tenantCode ? `?tenantCode=${tenantCode}` : ''}`;
-      const res = await fetch(url, { headers: getHeaders(), credentials: 'include' });
+      const queryParam = tenantCode ? `?tenantCode=${tenantCode}` : '';
+      
+      const res = await fetch(api(`/api/platform/auth/tenant-info${queryParam}`), {
+        headers: getHeaders(),
+        credentials: 'include'
+      });
 
       if (res.ok) {
         const data = await res.json();
-        if (data.tenant) setTenantInfo(data.tenant);
+        if (data.tenant) {
+          setTenantInfo(data.tenant);
+        }
       }
-    } catch {
-      // silent
+    } catch (err) {
+      console.error('Failed to fetch tenant info:', err);
     }
   };
+
   // Try to hydrate user from localStorage on mount (for page refreshes)
   useEffect(() => {
     const hydrateFromStorage = async () => {
@@ -159,28 +182,34 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       };
 
       setUser(userData);
+      localStorage.setItem('customUser', JSON.stringify(userData));
       return { user: userData, error: null };
     }
 
     try {
       const tenantCode = getDevTenantCode();
-      const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
+      
+      const res = await fetch(api('/api/platform/auth/tenant-login'), {
         method: 'POST',
         headers: getHeaders(),
         credentials: 'include',
         body: JSON.stringify({ email, password, tenantCode, loginType: 'admin' })
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        return { user: undefined, error: { message: data.error || 'Login failed' } };
+        const err = await res.json();
+        return { user: undefined, error: { message: err.error || 'Login failed' } };
       }
+
+      const data = await res.json();
 
       setUser(data.user);
       setTenant(data.tenant || null);
       // Persist for page refresh
       localStorage.setItem('customUser', JSON.stringify(data.user));
-      if (data.tenant) localStorage.setItem('customTenant', JSON.stringify(data.tenant));
+      if (data.tenant) {
+        localStorage.setItem('customTenant', JSON.stringify(data.tenant));
+      }
       return { user: data.user, error: null };
     } catch (e: any) {
       return { user: undefined, error: { message: e.message || 'Network error' } };
@@ -197,25 +226,22 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginAsPatient = async (email: string, phone: string): Promise<AuthResult> => {
     try {
-      const tenantCode = getDevTenantCode();
-      const res = await fetch(`${getApiBaseUrl()}/api/auth/login`, {
+      const res = await fetch(api('/api/auth/login'), {
         method: 'POST',
         headers: getHeaders(),
         credentials: 'include',
-        body: JSON.stringify({
-           email,
-          password: phone,
-          loginType: 'patient' 
-            })
+        body: JSON.stringify({ email, password: phone, loginType: 'patient' })
       });
 
-      const data = await res.json();
       if (!res.ok) {
-        return { user: undefined, error: { message: data.error || 'Login failed' } };
+        const err = await res.json();
+        return { user: undefined, error: { message: err.error || 'Login failed' } };
       }
 
+      const data = await res.json();
+
       setUser(data.user);
-      //setTenant(data.tenant || null);
+      localStorage.setItem('customUser', JSON.stringify(data.user));
       return { user: data.user, error: null };
     } catch (e: any) {
       return { user: undefined, error: { message: e.message || 'Network error' } };
@@ -223,10 +249,15 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
-      method: 'POST',
-      credentials: 'include'
-    });
+    try {
+      await fetch(api('/api/auth/logout'), {
+        method: 'POST',
+        headers: getHeaders(),
+        credentials: 'include'
+      });
+    } catch {
+      // Silent fail on logout
+    }
     setUser(null);
     setTenant(null);
     localStorage.removeItem('customUser');
