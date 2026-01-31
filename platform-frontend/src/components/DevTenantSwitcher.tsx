@@ -36,8 +36,13 @@ const isLocalhost = () => {
   }
 };
 
+/**
+ * Get the tenant code from localStorage.
+ * In the platform-frontend, this is used during login flow and must work in production.
+ * The DevTenantSwitcher UI itself is hidden in production, but the tenant code
+ * set during login must still be accessible.
+ */
 export const getDevTenantCode = (): string | null => {
-  if (import.meta.env.PROD && !isLocalhost()) return null;
   return localStorage.getItem(TENANT_STORAGE_KEY);
 };
 
