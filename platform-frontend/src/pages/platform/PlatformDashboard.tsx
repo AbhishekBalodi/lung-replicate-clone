@@ -18,15 +18,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const getApiBaseUrl = () => {
-  // In development, use localhost:5050 directly
+/**
+ * Build API URL - uses relative paths in dev (for Vite proxy) and VITE_API_BASE_URL in production
+ */
+const api = (path: string): string => {
   if (import.meta.env.DEV) {
-    return 'http://localhost:5050';
+    return path; // Relative path works with Vite proxy
   }
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  return '';
+  const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+  return `${base}${path}`;
 };
 
 interface Tenant {
@@ -81,7 +81,7 @@ const PlatformDashboard = () => {
       if (statusFilter) params.append('status', statusFilter);
       if (typeFilter) params.append('type', typeFilter);
 
-      const response = await fetch(`${getApiBaseUrl()}/api/tenants?${params}`);
+      const response = await fetch(api(`/api/tenants?${params}`), { credentials: 'include' });
       const data = await response.json();
       
       if (response.ok) {
@@ -107,9 +107,10 @@ const PlatformDashboard = () => {
 
   const handleStatusChange = async (tenantId: number, newStatus: string) => {
     try {
-      const response = await fetch(`${getApiBaseUrl()}/api/tenants/${tenantId}/status`, {
+      const response = await fetch(api(`/api/tenants/${tenantId}/status`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
 
