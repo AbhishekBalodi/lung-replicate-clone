@@ -13,11 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
-
-const API_ROOT = (import.meta as any).env.VITE_API_URL
-  ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, '')}/api`
-  : '/api';
+import { apiFetch } from '@/lib/api';
 
 type RoomAllotment = {
   id: number;
@@ -40,7 +36,7 @@ export default function RoomsAlloted() {
   const load = async () => {
     try {
       setLoading(true);
-      const res = await api.apiGet(`${API_ROOT}/rooms/allotments`);
+      const res = await apiFetch('/api/rooms/allotments');
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || 'Failed');
       setItems(js.items || []);

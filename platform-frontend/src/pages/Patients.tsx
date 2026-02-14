@@ -56,10 +56,7 @@ type Procedure = {
   created_at?: string | null;
 };
 
-const API_ROOT =
-  (import.meta as any)?.env?.VITE_API_URL
-    ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, "")}/api`
-    : "/api";
+import { apiFetch } from "@/lib/api";
 
 export default function PatientsPage() {
   const { user, loading: authLoading } = useCustomAuth();
@@ -83,7 +80,7 @@ export default function PatientsPage() {
   /** Load all patients (server merges patients + appointments and upserts) */
   const loadPatients = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/patients`);
+      const res = await apiFetch("/api/patients");
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to load patients");
       setPatients(Array.isArray(data) ? data : data.items || []);
@@ -117,7 +114,7 @@ export default function PatientsPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${API_ROOT}/patients?q=${encodeURIComponent(q)}`);
+      const res = await apiFetch(`/api/patients?q=${encodeURIComponent(q)}`);
       const data: Patient[] = res.ok ? await res.json() : [];
       if (!data.length) {
         toast.error("Patient not found");
@@ -148,7 +145,7 @@ export default function PatientsPage() {
 
     // 1) Appointments (from MySQL backend)
     try {
-      let appointmentsUrl = `${API_ROOT}/appointment?`;
+      let appointmentsUrl = `/api/appointment?`;
 
       // Try email first if available
       if (patient.email) {
@@ -163,7 +160,7 @@ export default function PatientsPage() {
         appointmentsUrl += `q=${encodeURIComponent(patient.full_name)}`;
       }
 
-      const apptRes = await fetch(appointmentsUrl);
+      const apptRes = await apiFetch(appointmentsUrl);
       if (!apptRes.ok) throw new Error("Failed to fetch appointments");
 
       const apptData = await apptRes.json();
@@ -181,7 +178,7 @@ export default function PatientsPage() {
         setMedicines([]);
         return;
       }
-      const res = await fetch(`${API_ROOT}/patients/${patient.id}`);
+      const res = await apiFetch(`/api/patients/${patient.id}`);
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || "Failed to load patient details");
       setMedicines(js.medicines || []);

@@ -5,11 +5,9 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 type Ambulance = { id: number; vehicle_number: string; model?: string | null; driver_name?: string | null; driver_contact?: string | null };
-
-const API_ROOT = (import.meta as any).env.VITE_API_URL ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, '')}/api` : '/api';
 
 export default function AmbulancesPage() {
   const [items, setItems] = useState<Ambulance[]>([]);
@@ -17,7 +15,7 @@ export default function AmbulancesPage() {
 
   const load = async () => {
     try {
-      const res = await api.apiGet(`${API_ROOT}/ambulances`);
+      const res = await apiFetch('/api/ambulances');
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || 'Failed');
       setItems(js.items || []);
@@ -27,7 +25,7 @@ export default function AmbulancesPage() {
   const handleAdd = async () => {
     if (!form.vehicle_number.trim()) return toast.error('Vehicle number required');
     try {
-      const res = await api.apiPost(`${API_ROOT}/ambulances`, form);
+      const res = await apiFetch('/api/ambulances', { method: 'POST', body: JSON.stringify(form) });
       const js = await res.json(); if (!res.ok) throw new Error(js?.error || 'Failed');
       toast.success('Added'); setForm({ vehicle_number: '', model: '', driver_name: '', driver_contact: '' }); load();
     } catch (err: unknown) { const e = err as Error; toast.error('Error: ' + (e?.message ?? String(err))); }

@@ -275,17 +275,6 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     consultation_fee: ''
   });
 
-  const getApiBaseUrl = () => {
-    if (import.meta.env.DEV) return '';
-    return import.meta.env.VITE_API_BASE_URL || '';
-  };
-
-  const getHeaders = () => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const tenantCode = getDevTenantCode();
-    if (tenantCode) headers['X-Tenant-Code'] = tenantCode;
-    return headers;
-  };
 
   useEffect(() => {
     // Wait until loading is complete before checking auth

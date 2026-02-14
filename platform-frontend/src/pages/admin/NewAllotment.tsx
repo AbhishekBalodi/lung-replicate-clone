@@ -20,17 +20,13 @@ import {
 } from '@/components/ui/select';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 type Room = {
   id: number;
   room_number: string;
   type?: string;
 };
-
-const API_ROOT = (import.meta as any).env.VITE_API_URL
-  ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, '')}/api`
-  : '/api';
 
 export default function NewAllotment() {
   const navigate = useNavigate();
@@ -55,7 +51,7 @@ export default function NewAllotment() {
 
   const loadRooms = async () => {
     try {
-      const res = await api.apiGet(`${API_ROOT}/rooms`);
+      const res = await apiFetch('/api/rooms');
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || 'Failed');
       setRooms(js.items || []);
@@ -75,7 +71,7 @@ export default function NewAllotment() {
     }
 
     try {
-      const res = await api.apiPost(`${API_ROOT}/rooms/allotments`, form);
+      const res = await apiFetch('/api/rooms/allotments', { method: 'POST', body: JSON.stringify(form) });
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || 'Failed');
       toast.success('Room allotment created');

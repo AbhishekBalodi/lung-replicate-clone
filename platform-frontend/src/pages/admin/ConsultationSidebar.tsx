@@ -45,7 +45,7 @@ type ProcedureCatalog = {
   preparation_instructions: string | null;
 };
 
-const API_ROOT = "/api";
+import { apiFetch } from "@/lib/api";
 
 export default function ConsultationSidebar() {
   const { user } = useCustomAuth();
@@ -94,7 +94,7 @@ export default function ConsultationSidebar() {
 
   const loadPatients = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/patients`);
+      const res = await apiFetch("/api/patients");
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to load patients");
       setPatients(Array.isArray(data) ? data : data.items || []);
@@ -105,7 +105,7 @@ export default function ConsultationSidebar() {
 
   const loadMedicinesCatalog = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/medicines/catalog`);
+      const res = await apiFetch("/api/medicines/catalog");
       const js = await res.json();
       if (!res.ok) throw new Error(js?.error || "Failed to load catalog");
       setMedicinesCatalog(js.items || []);
@@ -116,7 +116,7 @@ export default function ConsultationSidebar() {
 
   const loadLabCatalog = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/lab-tests/catalog`);
+      const res = await apiFetch("/api/lab-tests/catalog");
       const data = await res.json();
       setLabCatalog(data);
     } catch (e: any) {
@@ -126,7 +126,7 @@ export default function ConsultationSidebar() {
 
   const loadProceduresCatalog = async () => {
     try {
-      const res = await fetch(`${API_ROOT}/procedures/catalog`);
+      const res = await apiFetch("/api/procedures/catalog");
       if (!res.ok) throw new Error("Failed to load procedures");
       const data = await res.json();
       setProceduresCatalog(Array.isArray(data) ? data : []);
@@ -141,7 +141,7 @@ export default function ConsultationSidebar() {
       return;
     }
     try {
-      const res = await fetch(`${API_ROOT}/patients?q=${encodeURIComponent(searchTerm.trim())}`);
+      const res = await apiFetch(`/api/patients?q=${encodeURIComponent(searchTerm.trim())}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Search failed");
       const list: Patient[] = Array.isArray(data) ? data : data.items || [];
@@ -217,9 +217,8 @@ export default function ConsultationSidebar() {
       return;
     }
     try {
-      const res = await fetch(`${API_ROOT}/medicines`, {
+      const res = await apiFetch("/api/medicines", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patient_id: selectedPatient.id,
           full_name: selectedPatient.full_name,
@@ -256,9 +255,8 @@ export default function ConsultationSidebar() {
         ...labPrescription,
         lab_catalogue_id: labPrescription.lab_catalogue_id || null
       };
-      const res = await fetch(`${API_ROOT}/lab-tests`, {
+      const res = await apiFetch("/api/lab-tests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
@@ -288,9 +286,8 @@ export default function ConsultationSidebar() {
         description: procedurePrescription.description.trim() || null,
         preparation_instructions: procedurePrescription.preparation_instructions.trim() || null
       };
-      const res = await fetch(`${API_ROOT}/procedures`, {
+      const res = await apiFetch("/api/procedures", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       if (!res.ok) {

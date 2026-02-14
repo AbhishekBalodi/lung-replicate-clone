@@ -8,13 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Loader2, Shield, Building2, User, Crown } from 'lucide-react';
 import { useCustomAuth } from '@/contexts/CustomAuthContext';
-
-const getApiBaseUrl = () => {
-  // Use same-origin /api in dev so cookies + proxy work reliably
-  if (import.meta.env.DEV) return '';
-  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  return '';
-};
+import { apiFetch } from '@/lib/api';
 
 type LoginMode = 'platform_admin' | 'tenant';
 type TenantLoginType = 'super_admin' | 'admin';
@@ -35,10 +29,8 @@ const PlatformLogin = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${getApiBaseUrl()}/api/platform/auth/login`, {
+      const response = await apiFetch('/api/platform/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
