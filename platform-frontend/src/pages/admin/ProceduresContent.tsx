@@ -154,6 +154,10 @@ export default function ProceduresContent() {
       setProcedureCategory("");
       setProcedureDescription("");
       setProcedurePreparation("");
+      // Notify other components (e.g., Patients.tsx) to refresh
+      if (selectedPatient?.id) {
+        window.dispatchEvent(new CustomEvent("procedure-prescribed", { detail: { patientId: selectedPatient.id } }));
+      }
     } catch (err: any) {
       toast.error("Error prescribing procedure: " + err.message);
     }

@@ -176,6 +176,10 @@ export default function LabTestsContent() {
         lab_catalogue_id: "",
       });
       selectPatient(selectedPatient);
+      // Notify other components (e.g., Patients.tsx) to refresh
+      if (selectedPatient?.id) {
+        window.dispatchEvent(new CustomEvent("lab-test-prescribed", { detail: { patientId: selectedPatient.id } }));
+      }
     } catch (e: any) {
       toast.error("Error: " + e.message);
     }
