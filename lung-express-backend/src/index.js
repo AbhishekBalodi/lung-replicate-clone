@@ -1,8 +1,26 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import session from 'express-session'; // ✅ ADDED
+import session from 'express-session';
+import expressMySqlSession from 'express-mysql-session';
 import { pool } from './lib/db.js';
+
+// Create MySQL session store (uses the same DB connection)
+const MySQLStore = expressMySqlSession(session);
+const sessionStore = new MySQLStore({
+  clearExpired: true,
+  checkExpirationInterval: 900000, // 15 min
+  expiration: 86400000,            // 1 day
+  createDatabaseTable: true,       // auto-create sessions table
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data'
+    }
+  }
+}, pool);
 
 // Middlewares
 import { tenantResolver } from './middleware/tenant-resolver.js';
@@ -105,14 +123,15 @@ const isProd = process.env.NODE_ENV === 'production';
 app.use(session({
   name: 'saas.sid',
   secret: process.env.SESSION_SECRET || 'dev-secret',
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: isProd,                        // true in production (HTTPS), false in dev
-    sameSite: isProd ? 'none' : 'lax',     // 'none' for cross-origin prod, 'lax' for dev
-    domain: process.env.COOKIE_DOMAIN || undefined, // Set in prod if you want to share cookies across subdomains
-    maxAge: 24 * 60 * 60 * 1000            // 1 day
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+    domain: process.env.COOKIE_DOMAIN || undefined,
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
