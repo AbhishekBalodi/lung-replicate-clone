@@ -246,7 +246,7 @@ const SuperAdminDashboard = () => {
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [patientFormLoading, setPatientFormLoading] = useState(false);
   const [patientFormData, setPatientFormData] = useState({
-    full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: ''
+    full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: ''
   });
 
   // Staff state
@@ -557,14 +557,17 @@ const [chartsError, setChartsError] = useState<string | null>(null);
           phone: patientFormData.phone,
           doctor_id: patientFormData.doctor_id ? Number(patientFormData.doctor_id) : null,
           date_of_birth: patientFormData.date_of_birth || null,
-          address: patientFormData.address || null
+          address: patientFormData.address || null,
+          age: patientFormData.age ? parseInt(patientFormData.age) : null,
+          gender: patientFormData.gender || null,
+          state: patientFormData.state || null,
         })
       });
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
         toast({ title: 'Success', description: 'Patient added successfully' });
         setIsAddPatientOpen(false);
-        setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '' });
+        setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' });
         await fetchAllPatients();
       } else {
         toast({ title: 'Error', description: data.error || 'Failed to add patient', variant: 'destructive' });
@@ -1545,7 +1548,7 @@ const [chartsError, setChartsError] = useState<string | null>(null);
 
               <Dialog open={isAddPatientOpen} onOpenChange={(open) => { if (!patientFormLoading) setIsAddPatientOpen(open); }}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => { setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '' }); setIsAddPatientOpen(true); }}>
+                  <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => { setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' }); setIsAddPatientOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" /> Add Patient
                   </Button>
                 </DialogTrigger>
@@ -1586,6 +1589,40 @@ const [chartsError, setChartsError] = useState<string | null>(null);
                     <div>
                       <Label>Address</Label>
                       <Input value={patientFormData.address} onChange={(e) => setPatientFormData({ ...patientFormData, address: e.target.value })} placeholder="Patient address" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label>Age</Label>
+                        <Input
+                          type="number"
+                          value={patientFormData.age}
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                            setPatientFormData({ ...patientFormData, age: val });
+                          }}
+                          placeholder="e.g. 25"
+                          min="1"
+                          max="99"
+                          maxLength={2}
+                        />
+                      </div>
+                      <div>
+                        <Label>Gender</Label>
+                        <select
+                          className="w-full border rounded-md px-3 py-2 text-sm"
+                          value={patientFormData.gender}
+                          onChange={(e) => setPatientFormData({ ...patientFormData, gender: e.target.value })}
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>State</Label>
+                      <Input value={patientFormData.state} onChange={(e) => setPatientFormData({ ...patientFormData, state: e.target.value })} placeholder="Enter state" />
                     </div>
                     <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={handleAddPatient} disabled={patientFormLoading}>
                       {patientFormLoading ? 'Adding...' : 'Add Patient'}

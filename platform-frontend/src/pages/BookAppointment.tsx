@@ -201,21 +201,18 @@ const BookAppointment = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    // Step 1 - Patient Details
     fullName: "",
     email: "",
     phone: "",
     age: "",
     gender: "",
+    state: "",
     address: "",
     medicalHistory: "",
     currentSymptoms: "",
-    // Step 2 - Date & Time
     preferredDate: "",
     preferredTime: "",
-    // Step 3 - Doctor (store the final string your backend expects)
     selectedDoctor: "",
-    // Step 4 - Additional
     reports: null as File | null,
     notes: ""
   });
@@ -344,14 +341,15 @@ const BookAppointment = () => {
         full_name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
+        age: formData.age ? parseInt(formData.age) : null,
+        gender: formData.gender || null,
+        state: formData.state || null,
+        address: formData.address || null,
         appointment_date: formData.preferredDate,
         appointment_time: formData.preferredTime,
         selected_doctor: formData.selectedDoctor || "Dr. Paramjeet Singh Mann - Pulmonologist",
         message:
           `${formData.notes || ""}\n` +
-          `Age: ${formData.age}\n` +
-          `Gender: ${formData.gender}\n` +
-          `Address: ${formData.address}\n` +
           `Medical History: ${formData.medicalHistory}\n` +
           `Symptoms: ${formData.currentSymptoms}`,
         reports_uploaded: !!formData.reports
@@ -399,6 +397,7 @@ const BookAppointment = () => {
       phone: "",
       age: "",
       gender: "",
+      state: "",
       address: "",
       medicalHistory: "",
       currentSymptoms: "",
@@ -503,15 +502,25 @@ const BookAppointment = () => {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="address" className="text-sm font-medium mb-2 block">Address</Label>
-                <Textarea
-                  id="address"
-                  placeholder="Enter your complete address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="min-h-20"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="state" className="text-sm font-medium mb-2 block">State</Label>
+                  <Input
+                    id="state"
+                    placeholder="Enter your state"
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="address" className="text-sm font-medium mb-2 block">Full Address</Label>
+                  <Input
+                    id="address"
+                    placeholder="Enter your complete address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  />
+                </div>
               </div>
 
               <div>
