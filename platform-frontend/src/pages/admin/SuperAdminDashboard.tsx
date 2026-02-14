@@ -242,6 +242,13 @@ const SuperAdminDashboard = () => {
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
   const [patientsLoading, setPatientsLoading] = useState(true);
 
+  // Add Patient modal state
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
+  const [patientFormLoading, setPatientFormLoading] = useState(false);
+  const [patientFormData, setPatientFormData] = useState({
+    full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: ''
+  });
+
   // Staff state
   const [allStaff, setAllStaff] = useState<Staff[]>([]);
   
@@ -547,6 +554,43 @@ const [chartsError, setChartsError] = useState<string | null>(null);
       });
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  // Add patient handler
+  const handleAddPatient = async () => {
+    if (!patientFormData.full_name || !patientFormData.email || !patientFormData.phone) {
+      toast({ title: 'Validation Error', description: 'Name, email, and phone are required', variant: 'destructive' });
+      return;
+    }
+    try {
+      setPatientFormLoading(true);
+      const response = await fetch(`${getApiBaseUrl()}/api/patients`, {
+        method: 'POST',
+        headers: getHeaders(),
+        credentials: 'include',
+        body: JSON.stringify({
+          full_name: patientFormData.full_name,
+          email: patientFormData.email,
+          phone: patientFormData.phone,
+          doctor_id: patientFormData.doctor_id ? Number(patientFormData.doctor_id) : null,
+          date_of_birth: patientFormData.date_of_birth || null,
+          address: patientFormData.address || null
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Patient added successfully' });
+        setIsAddPatientOpen(false);
+        setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '' });
+        await fetchAllPatients();
+      } else {
+        toast({ title: 'Error', description: data.error || 'Failed to add patient', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to add patient', variant: 'destructive' });
+    } finally {
+      setPatientFormLoading(false);
     }
   };
 
@@ -1518,6 +1562,57 @@ const [chartsError, setChartsError] = useState<string | null>(null);
                   Control patient access to their dashboard and configure tab permissions
                 </CardDescription>
               </div>
+
+              <Dialog open={isAddPatientOpen} onOpenChange={(open) => { if (!patientFormLoading) setIsAddPatientOpen(open); }}>
+                <DialogTrigger asChild>
+                  <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => { setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '' }); setIsAddPatientOpen(true); }}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Patient
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New Patient</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label>Full Name *</Label>
+                      <Input value={patientFormData.full_name} onChange={(e) => setPatientFormData({ ...patientFormData, full_name: e.target.value })} placeholder="Patient name" />
+                    </div>
+                    <div>
+                      <Label>Email *</Label>
+                      <Input type="email" value={patientFormData.email} onChange={(e) => setPatientFormData({ ...patientFormData, email: e.target.value })} placeholder="patient@example.com" />
+                    </div>
+                    <div>
+                      <Label>Phone *</Label>
+                      <Input value={patientFormData.phone} onChange={(e) => setPatientFormData({ ...patientFormData, phone: e.target.value })} placeholder="10-digit phone number" />
+                    </div>
+                    <div>
+                      <Label>Assign Doctor</Label>
+                      <select
+                        className="w-full border rounded-md px-3 py-2 text-sm"
+                        value={patientFormData.doctor_id}
+                        onChange={(e) => setPatientFormData({ ...patientFormData, doctor_id: e.target.value })}
+                      >
+                        <option value="">-- Unassigned --</option>
+                        {doctors.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name} {d.specialization ? `(${d.specialization})` : ''}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label>Date of Birth</Label>
+                      <Input type="date" value={patientFormData.date_of_birth} onChange={(e) => setPatientFormData({ ...patientFormData, date_of_birth: e.target.value })} />
+                    </div>
+                    <div>
+                      <Label>Address</Label>
+                      <Input value={patientFormData.address} onChange={(e) => setPatientFormData({ ...patientFormData, address: e.target.value })} placeholder="Patient address" />
+                    </div>
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={handleAddPatient} disabled={patientFormLoading}>
+                      {patientFormLoading ? 'Adding...' : 'Add Patient'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
 
             <CardContent>

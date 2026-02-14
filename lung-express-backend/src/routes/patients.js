@@ -327,4 +327,90 @@ router.get('/:id/prescriptions', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/patients
+ * Create a new patient in the tenant database AND platform tenant_users table
+ * Body: { full_name, email, phone, doctor_id?, date_of_birth?, address?, gender?, blood_group? }
+ */
+router.post('/', async (req, res) => {
+  let conn;
+  try {
+    const { full_name, email, phone, doctor_id, date_of_birth, address, gender, blood_group } = req.body;
+
+    if (!full_name || !email || !phone) {
+      return res.status(400).json({ error: 'Name, email, and phone are required' });
+    }
+
+    conn = await getConnection(req);
+
+    // Check if patient already exists in tenant DB
+    const [existing] = await conn.execute(
+      'SELECT id FROM patients WHERE email = ? AND phone = ?',
+      [email.trim(), phone.trim()]
+    );
+
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'A patient with this email and phone already exists' });
+    }
+
+    // Insert into tenant patients table
+    const config = getSchemaConfig(req);
+    const doctorValue = doctor_id || null;
+
+    // Build dynamic insert based on available columns
+    let insertSQL, insertParams;
+    if (config.isHospital) {
+      insertSQL = `INSERT INTO patients (full_name, email, phone, doctor_id, date_of_birth, address, is_active, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, 1, NOW())`;
+      insertParams = [full_name.trim(), email.trim(), phone.trim(), doctorValue, date_of_birth || null, address || null];
+    } else {
+      insertSQL = `INSERT INTO patients (full_name, email, phone, date_of_birth, address, is_active, created_at)
+                   VALUES (?, ?, ?, ?, ?, 1, NOW())`;
+      insertParams = [full_name.trim(), email.trim(), phone.trim(), date_of_birth || null, address || null];
+    }
+
+    const [result] = await conn.execute(insertSQL, insertParams);
+    const patientId = result.insertId;
+
+    // Also register in platform tenant_users table for login capability
+    if (req.tenant?.id) {
+      try {
+        const { platformPool } = await import('../lib/platform-db.js');
+        // Check if already exists in tenant_users
+        const [existingUser] = await platformPool.execute(
+          'SELECT id FROM tenant_users WHERE tenant_id = ? AND email = ? AND role = ?',
+          [req.tenant.id, email.trim(), 'patient']
+        );
+
+        if (existingUser.length === 0) {
+          await platformPool.execute(
+            `INSERT INTO tenant_users (tenant_id, email, phone, name, role, is_active)
+             VALUES (?, ?, ?, ?, 'patient', TRUE)`,
+            [req.tenant.id, email.trim(), phone.trim(), full_name.trim()]
+          );
+        }
+      } catch (platformErr) {
+        console.warn('Could not register patient in platform table:', platformErr.message);
+        // Non-fatal - patient is still created in tenant DB
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      patient: {
+        id: patientId,
+        full_name: full_name.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        doctor_id: doctorValue
+      }
+    });
+  } catch (e) {
+    console.error('POST /api/patients failed:', e);
+    res.status(500).json({ error: e.message || 'Failed to create patient' });
+  } finally {
+    if (conn) conn.release();
+  }
+});
+
 export default router;
