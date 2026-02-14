@@ -275,7 +275,10 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     consultation_fee: ''
   });
 
-  const getApiBaseUrl = () => import.meta.env.VITE_API_BASE_URL || '';
+  const getApiBaseUrl = () => {
+    if (import.meta.env.DEV) return '';
+    return import.meta.env.VITE_API_BASE_URL || '';
+  };
 
   const getHeaders = () => {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -297,11 +300,7 @@ const [chartsError, setChartsError] = useState<string | null>(null);
   const fetchDoctors = useCallback(async () => {
     try {
       setDoctorsLoading(true);
-      const response = await fetch(`${getApiBaseUrl()}/api/doctors`, {
-        headers: getHeaders(),
-        credentials: 'include'
-      });
-
+      const response = await apiFetch('/api/doctors');
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
         setDoctors(data.doctors || []);
@@ -455,10 +454,8 @@ const [chartsError, setChartsError] = useState<string | null>(null);
         consultation_fee: editingFormData.consultation_fee ? parseFloat(editingFormData.consultation_fee) : null
       };
 
-      const res = await fetch(`${getApiBaseUrl()}/api/doctors/${editingDoctor.id}`, {
+      const res = await apiFetch(`/api/doctors/${editingDoctor.id}`, {
         method: 'PUT',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify(payload)
       });
 
@@ -470,8 +467,8 @@ const [chartsError, setChartsError] = useState<string | null>(null);
       // If photo file selected, upload
       if (editPhotoFile) {
         const fd = new FormData(); fd.append('photo', editPhotoFile);
-        const uploadUrl = tenant?.id ? `${getApiBaseUrl()}/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo` : `${getApiBaseUrl()}/api/doctors/${editingDoctor.id}/photo`;
-        const uploadRes = await fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include' });
+        const uploadPath = tenant?.id ? `/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo` : `/api/doctors/${editingDoctor.id}/photo`;
+        const uploadRes = await apiFetch(uploadPath, { method: 'POST', body: fd, headers: {} });
         if (!uploadRes.ok) {
           const js = await uploadRes.json().catch(() => ({}));
           throw new Error(js.error || 'Failed to upload photo');
@@ -481,8 +478,8 @@ const [chartsError, setChartsError] = useState<string | null>(null);
       // If hero file selected, upload as assetType=hero
       if (editHeroFile) {
         const fd2 = new FormData(); fd2.append('photo', editHeroFile); fd2.append('assetType', 'hero');
-        const uploadUrl2 = tenant?.id ? `${getApiBaseUrl()}/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo?assetType=hero` : `${getApiBaseUrl()}/api/doctors/${editingDoctor.id}/photo?assetType=hero`;
-        const uploadRes2 = await fetch(uploadUrl2, { method: 'POST', body: fd2, credentials: 'include' });
+        const uploadPath2 = tenant?.id ? `/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo?assetType=hero` : `/api/doctors/${editingDoctor.id}/photo?assetType=hero`;
+        const uploadRes2 = await apiFetch(uploadPath2, { method: 'POST', body: fd2, headers: {} });
         if (!uploadRes2.ok) {
           const js = await uploadRes2.json().catch(() => ({}));
           throw new Error(js.error || 'Failed to upload hero image');
@@ -511,10 +508,8 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     try {
       setFormLoading(true);
 
-      const response = await fetch(`${getApiBaseUrl()}/api/doctors`, {
+      const response = await apiFetch('/api/doctors', {
         method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
@@ -565,10 +560,8 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     }
     try {
       setPatientFormLoading(true);
-      const response = await fetch(`${getApiBaseUrl()}/api/patients`, {
+      const response = await apiFetch('/api/patients', {
         method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify({
           full_name: patientFormData.full_name,
           email: patientFormData.email,
@@ -599,10 +592,8 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     try {
       setTogglingDoctorId(doctor.id);
 
-      const response = await fetch(`${getApiBaseUrl()}/api/doctors/${doctor.id}`, {
+      const response = await apiFetch(`/api/doctors/${doctor.id}`, {
         method: 'PUT',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify({
           is_active: !doctor.is_active
         })
