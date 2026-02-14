@@ -4,6 +4,16 @@ import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-cont
 
 const router = Router();
 
+/**
+ * Get the correct medicines table name based on tenant type.
+ * Hospital tenants use 'prescribed_medicines', individual doctors use 'medicines'.
+ * This must match the logic in patients.js so reads and writes use the same table.
+ */
+function getMedicinesTable(req) {
+  const isHospital = req.tenant?.type === 'hospital';
+  return isHospital ? 'prescribed_medicines' : 'medicines';
+}
+
 /* ------------------------- helpers ------------------------- */
 async function ensureTables(conn) {
   // create catalog table if missing (safe to call each request)
@@ -218,8 +228,10 @@ router.get("/", async (req, res) => {
     conn = await getConnection(req);
     await ensureTables(conn);
 
+    const tableName = getMedicinesTable(req);
+
     // Check if doctor_id column exists for filtering
-    const hasDoctorId = await columnExists(conn, 'medicines', 'doctor_id');
+    const hasDoctorId = await columnExists(conn, tableName, 'doctor_id');
 
     let whereSql = '';
     let params = [];
@@ -231,7 +243,7 @@ router.get("/", async (req, res) => {
     }
 
     const [rows] = await conn.execute(
-      `SELECT * FROM medicines ${whereSql} ORDER BY id DESC`,
+      `SELECT * FROM ${tableName} ${whereSql} ORDER BY id DESC`,
       params
     );
     res.json({ items: rows });
@@ -305,21 +317,22 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // Schema-resilient INSERT: check if doctor_id and medicine_catalogue_id columns exist
-    const hasDoctorId = await columnExists(conn, 'medicines', 'doctor_id');
-    const hasCatalogueId = await columnExists(conn, 'medicines', 'medicine_catalogue_id');
+    // Schema-resilient INSERT: use the correct table based on tenant type
+    const tableName = getMedicinesTable(req);
+    const hasDoctorId = await columnExists(conn, tableName, 'doctor_id');
+    const hasCatalogueId = await columnExists(conn, tableName, 'medicine_catalogue_id');
 
     let insertSql;
     let insertParams;
 
     if (hasDoctorId && hasCatalogueId) {
-      insertSql = `INSERT INTO medicines (patient_id, doctor_id, medicine_catalogue_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+      insertSql = `INSERT INTO ${tableName} (patient_id, doctor_id, medicine_catalogue_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
       insertParams = [finalPatientId, doctorId, medicine_catalogue_id || null, medicine_name.trim(), dosage || "", frequency || "", duration || "", instructions || ""];
     } else if (hasDoctorId) {
-      insertSql = `INSERT INTO medicines (patient_id, doctor_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+      insertSql = `INSERT INTO ${tableName} (patient_id, doctor_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?, ?)`;
       insertParams = [finalPatientId, doctorId, medicine_name.trim(), dosage || "", frequency || "", duration || "", instructions || ""];
     } else {
-      insertSql = `INSERT INTO medicines (patient_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?)`;
+      insertSql = `INSERT INTO ${tableName} (patient_id, medicine_name, dosage, frequency, duration, instructions) VALUES (?, ?, ?, ?, ?, ?)`;
       insertParams = [finalPatientId, medicine_name.trim(), dosage || "", frequency || "", duration || "", instructions || ""];
     }
 
