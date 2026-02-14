@@ -108,6 +108,24 @@ export default function PatientsPage() {
     init();
   }, [patientIdParam]);
 
+  // Listen for prescription events from sidebar components to refresh data
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (selectedPatient && detail?.patientId === selectedPatient.id) {
+        selectPatient(selectedPatient);
+      }
+    };
+    window.addEventListener("medicine-prescribed", handler);
+    window.addEventListener("lab-test-prescribed", handler);
+    window.addEventListener("procedure-prescribed", handler);
+    return () => {
+      window.removeEventListener("medicine-prescribed", handler);
+      window.removeEventListener("lab-test-prescribed", handler);
+      window.removeEventListener("procedure-prescribed", handler);
+    };
+  }, [selectedPatient]);
+
   /** Search using ?q= so matches from appointments are included */
   const handleSearch = async () => {
     const q = searchTerm.trim();
