@@ -76,6 +76,10 @@ export default function NewAppointment() {
     fullName: "",
     email: "",
     phone: "",
+    age: "",
+    gender: "",
+    state: "",
+    address: "",
     date: null as Date | null,
     time: "",
     message: "",
@@ -174,6 +178,18 @@ export default function NewAppointment() {
       });
       return false;
     }
+
+    if (formData.age) {
+      const age = parseInt(formData.age);
+      if (isNaN(age) || age < 1 || age > 99) {
+        toast({
+          title: "Invalid Age",
+          description: "Age must be between 1 and 99.",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
     
     return true;
   };
@@ -208,6 +224,10 @@ export default function NewAppointment() {
         full_name: formData.fullName,
         email: formData.email,
         phone: formData.phone,
+        age: formData.age ? parseInt(formData.age) : null,
+        gender: formData.gender || null,
+        state: formData.state || null,
+        address: formData.address || null,
         appointment_date: format(formData.date, 'yyyy-MM-dd'),
         appointment_time: formData.time,
         selected_doctor: doctor.name,
@@ -362,6 +382,63 @@ export default function NewAppointment() {
                     value={formData.phone}
                     onChange={(e) => updateFormData("phone", e.target.value)}
                     className="mt-1.5 h-12 rounded-full border-slate-300 px-4"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="age" className="text-sm font-medium">Age</Label>
+                    <Input
+                      id="age"
+                      type="number"
+                      placeholder="e.g. 25"
+                      value={formData.age}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 2);
+                        updateFormData("age", val);
+                      }}
+                      min="1"
+                      max="99"
+                      maxLength={2}
+                      className="mt-1.5 h-12 rounded-full border-slate-300 px-4"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="gender" className="text-sm font-medium">Gender</Label>
+                    <select
+                      id="gender"
+                      value={formData.gender}
+                      onChange={(e) => updateFormData("gender", e.target.value)}
+                      className="mt-1.5 w-full h-12 rounded-full border border-slate-300 px-4 text-sm bg-background"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="state" className="text-sm font-medium">State</Label>
+                  <Input
+                    id="state"
+                    placeholder="Enter state"
+                    value={formData.state}
+                    onChange={(e) => updateFormData("state", e.target.value)}
+                    className="mt-1.5 h-12 rounded-full border-slate-300 px-4"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="address" className="text-sm font-medium">Full Address</Label>
+                  <Textarea
+                    id="address"
+                    placeholder="Enter full address"
+                    value={formData.address}
+                    onChange={(e) => updateFormData("address", e.target.value)}
+                    className="mt-1.5 border-slate-300 rounded-2xl px-4 py-3"
+                    rows={2}
                   />
                 </div>
                 

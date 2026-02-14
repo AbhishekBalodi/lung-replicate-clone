@@ -37,6 +37,14 @@ const baseSchema = z.object({
   appointment_time: z.string().min(4),
   message: z.string().optional().default(''),
   reports_uploaded: z.boolean().optional().default(false),
+  age: z.union([z.number(), z.string()]).optional().nullable().transform(v => {
+    if (v === null || v === undefined || v === '') return null;
+    const num = Number(v);
+    return isNaN(num) ? null : num;
+  }),
+  gender: z.string().optional().nullable().default(null),
+  state: z.string().optional().nullable().default(null),
+  address: z.string().optional().nullable().default(null),
 });
 
 const doctorSchema = baseSchema.extend({
@@ -126,8 +134,8 @@ router.post('/', async (req, res) => {
         INSERT INTO \`${TBL}\`
           (doctor_id, full_name, email, phone,
            appointment_date, appointment_time,
-           message, reports_uploaded, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+           message, reports_uploaded, age, gender, state, address, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
       `;
 
       insertParams = [
@@ -139,6 +147,10 @@ router.post('/', async (req, res) => {
         normalizedTime,
         v.message,
         v.reports_uploaded ? 1 : 0,
+        v.age || null,
+        v.gender || null,
+        v.state || null,
+        v.address || null,
       ];
     } else {
       insertSql = `
@@ -146,8 +158,8 @@ router.post('/', async (req, res) => {
           (full_name, email, phone,
            appointment_date, appointment_time,
            selected_doctor, message,
-           reports_uploaded, status, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
+           reports_uploaded, age, gender, state, address, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW())
       `;
 
       insertParams = [
@@ -159,6 +171,10 @@ router.post('/', async (req, res) => {
         v.selected_doctor,
         v.message,
         v.reports_uploaded ? 1 : 0,
+        v.age || null,
+        v.gender || null,
+        v.state || null,
+        v.address || null,
       ];
     }
 
