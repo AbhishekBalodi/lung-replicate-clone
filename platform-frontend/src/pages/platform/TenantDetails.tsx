@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 export default function TenantDetails(){
   const { id } = useParams();
@@ -17,7 +17,7 @@ export default function TenantDetails(){
 
   const load = async()=>{
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}`);
+      const res = await apiFetch(`/api/tenants/${id}`);
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       setTenant(js);
       setForm({ name: js.tenant.name || '', email: js.tenant.email || '', phone: js.tenant.phone || '', address: js.tenant.address || '' });
@@ -28,7 +28,7 @@ export default function TenantDetails(){
 
   const handleSaveTenant = async()=>{
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify(form) });
+      const res = await apiFetch(`/api/tenants/${id}`, { method: 'PATCH', body: JSON.stringify(form) });
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       toast.success('Saved'); setEditing(false); load();
     }catch(err){ const e = err as Error; toast.error('Error: '+(e?.message ?? String(err))); }
@@ -38,7 +38,7 @@ export default function TenantDetails(){
   const cancelEditUser = ()=>{ setEditingUserId(null); setUserForm({ email:'', name:'', phone:'', password:'' }); }
   const saveUser = async(userId:number)=>{
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/users/${userId}`, { method: 'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify(userForm) });
+      const res = await apiFetch(`/api/tenants/${id}/users/${userId}`, { method: 'PATCH', body: JSON.stringify(userForm) });
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       toast.success('User updated'); cancelEditUser(); load();
     }catch(err){ const e = err as Error; toast.error('Error: '+(e?.message ?? String(err))); }

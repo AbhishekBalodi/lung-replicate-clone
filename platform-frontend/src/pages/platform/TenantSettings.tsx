@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 export default function TenantSettings(){
   const { id } = useParams();
@@ -13,7 +13,7 @@ export default function TenantSettings(){
 
   const load = async()=>{
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}`);
+      const res = await apiFetch(`/api/tenants/${id}`);
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       setTenant(js);
     }catch(err){ const e = err as Error; toast.error('Failed to load: '+(e?.message ?? String(err))); }
@@ -24,7 +24,7 @@ export default function TenantSettings(){
   const addDomain = async()=>{
     if(!domainVal) return toast.error('Enter domain');
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/domains`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ domain: domainVal, isPrimary: false }) });
+      const res = await apiFetch(`/api/tenants/${id}/domains`, { method:'POST', body: JSON.stringify({ domain: domainVal, isPrimary: false }) });
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       toast.success('Domain added'); setDomainVal(''); load();
     }catch(err){ const e = err as Error; toast.error('Error: '+(e?.message ?? String(err))); }
@@ -32,7 +32,7 @@ export default function TenantSettings(){
 
   const verifyDomain = async(domainId:number)=>{
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/domains/${domainId}/verify`, { method: 'POST' });
+      const res = await apiFetch(`/api/tenants/${id}/domains/${domainId}/verify`, { method: 'POST' });
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       toast.success('Domain verified (simulated)'); load();
     }catch(err){ const e = err as Error; toast.error('Error: '+(e?.message ?? String(err))); }
@@ -82,7 +82,7 @@ export default function TenantSettings(){
               const f = e.target.files && e.target.files[0]; if(!f) return;
               const fd = new FormData(); fd.append('file', f); fd.append('assetType', 'logo');
               try{
-                const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/assets`, { method: 'POST', body: fd });
+                const res = await apiFetch(`/api/tenants/${id}/assets`, { method: 'POST', body: fd, headers: {} });
                 const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Upload failed');
                 toast.success('Logo uploaded'); load();
               }catch(err){ const eerr = err as Error; toast.error('Upload failed: '+(eerr?.message||String(err))); }
@@ -101,7 +101,7 @@ export default function TenantSettings(){
               const f = e.target.files && e.target.files[0]; if(!f) return;
               const fd = new FormData(); fd.append('file', f); fd.append('assetType', 'doctor_photo');
               try{
-                const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/assets`, { method: 'POST', body: fd });
+                const res = await apiFetch(`/api/tenants/${id}/assets`, { method: 'POST', body: fd, headers: {} });
                 const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Upload failed');
                 toast.success('Doctor photo uploaded'); load();
               }catch(err){ const eerr = err as Error; toast.error('Upload failed: '+(eerr?.message||String(err))); }
@@ -120,7 +120,7 @@ export default function TenantSettings(){
               const f = e.target.files && e.target.files[0]; if(!f) return;
               const fd = new FormData(); fd.append('file', f); fd.append('assetType', 'hero');
               try{
-                const res = await fetch(`${api.getApiBaseUrl()}/api/tenants/${id}/assets`, { method: 'POST', body: fd });
+                const res = await apiFetch(`/api/tenants/${id}/assets`, { method: 'POST', body: fd, headers: {} });
                 const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Upload failed');
                 toast.success('Hero uploaded'); load();
               }catch(err){ const eerr = err as Error; toast.error('Upload failed: '+(eerr?.message||String(err))); }

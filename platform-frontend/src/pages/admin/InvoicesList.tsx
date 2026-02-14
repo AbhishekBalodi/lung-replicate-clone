@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Receipt, Plus, Eye } from 'lucide-react';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 type InvoiceStatus = 'ALL' | 'UNPAID' | 'PAID' | 'PARTIAL';
 
@@ -33,9 +33,7 @@ export default function InvoicesList() {
       if (search) params.append('q', search);
       if (status !== 'ALL') params.append('status', status);
 
-      const res = await fetch(
-        `${api.getApiBaseUrl()}/api/billing/invoices?${params.toString()}`
-      );
+      const res = await apiFetch(`/api/billing/invoices?${params.toString()}`);
       const js = await res.json();
 
       if (!res.ok) throw new Error(js?.error || 'Failed to load invoices');

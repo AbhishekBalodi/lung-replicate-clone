@@ -8,8 +8,7 @@ import { toast } from "sonner";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import { Loader2, Mail, Lock, Server, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const API_ROOT = import.meta.env.VITE_API_ROOT || "http://localhost:5050";
+import { apiFetch } from "@/lib/api";
 
 export default function SettingsContent() {
   const { user, loading: authLoading } = useCustomAuth();
@@ -34,9 +33,7 @@ export default function SettingsContent() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_ROOT}/api/smtp-settings`, {
-        credentials: "include",
-      });
+      const response = await apiFetch("/api/smtp-settings");
       if (response.ok) {
         const data = await response.json();
         if (data.settings) {
@@ -60,10 +57,8 @@ export default function SettingsContent() {
 
     setSaving(true);
     try {
-      const response = await fetch(`${API_ROOT}/api/smtp-settings`, {
+      const response = await apiFetch("/api/smtp-settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(formData),
       });
 
@@ -89,10 +84,8 @@ export default function SettingsContent() {
 
     setSaving(true);
     try {
-      const response = await fetch(`${API_ROOT}/api/smtp-settings/test`, {
+      const response = await apiFetch("/api/smtp-settings/test", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ test_email: formData.smtp_from }),
       });
 
