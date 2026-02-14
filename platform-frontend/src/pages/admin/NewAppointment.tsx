@@ -17,7 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import api from '@/lib/api';
-import drMannImage from "@/assets/dr-mann-passport.jpg";
 
 // Generate time slots for the allowed periods (15-min intervals)
 const generateTimeSlots = () => {
@@ -62,6 +61,14 @@ const formatTimeDisplay = (time: string) => {
 
 const ALL_TIME_SLOTS = generateTimeSlots();
 
+interface DoctorOption {
+  id: number;
+  name: string;
+  specialization: string | null;
+  consultation_fee: number | null;
+  profile_photo_url?: string | null;
+}
+
 export default function NewAppointment() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -71,6 +78,9 @@ export default function NewAppointment() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [doctorOptions, setDoctorOptions] = useState<DoctorOption[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState<DoctorOption | null>(null);
+  const [loadingDoctors, setLoadingDoctors] = useState(true);
   
   const [formData, setFormData] = useState({
     fullName: "",
@@ -84,12 +94,37 @@ export default function NewAppointment() {
   const timeSlotsRef = useRef<HTMLDivElement | null>(null);
 
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || 'doctor_mann';
-  const doctor = {
-    name: tenantInfo?.name || "Dr. Paramjeet Singh Mann",
-    specialty: "Pulmonologist",
-    image: `/tenants/${tenantCode}/dr-mann-passport.jpg`
-  };
+  const isSuperAdmin = user?.role === 'super_admin';
+
+  // Fetch doctors for selection
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoadingDoctors(true);
+        const res = await api.apiGet('/api/dashboard/patient/doctors');
+        if (res.ok) {
+          const data = await res.json();
+          const docs: DoctorOption[] = data.doctors || [];
+          setDoctorOptions(docs);
+
+          // If admin (individual doctor), auto-select their doctor
+          if (!isSuperAdmin && user?.doctorId) {
+            const myDoctor = docs.find(d => d.id === user.doctorId);
+            if (myDoctor) setSelectedDoctor(myDoctor);
+            else if (docs.length === 1) setSelectedDoctor(docs[0]);
+          } else if (!isSuperAdmin && docs.length === 1) {
+            // Single doctor tenant - auto select
+            setSelectedDoctor(docs[0]);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching doctors:', err);
+      } finally {
+        setLoadingDoctors(false);
+      }
+    };
+    if (!loading) fetchDoctors();
+  }, [loading, isSuperAdmin, user?.doctorId]);
 
   // DEBUG: log date/time changes
   useEffect(() => {
@@ -180,6 +215,10 @@ export default function NewAppointment() {
 
   const handleNext = () => {
     if (validateStep1()) {
+      if (!selectedDoctor) {
+        toast({ title: 'Validation Error', description: 'Please select a doctor', variant: 'destructive' });
+        return;
+      }
       setCurrentStep(2);
     }
   };
@@ -210,7 +249,8 @@ export default function NewAppointment() {
         phone: formData.phone,
         appointment_date: format(formData.date, 'yyyy-MM-dd'),
         appointment_time: formData.time,
-        selected_doctor: doctor.name,
+        selected_doctor: selectedDoctor?.name || 'Unassigned',
+        doctor_id: selectedDoctor?.id || null,
         message: formData.message || '',
         reports_uploaded: false
       });
@@ -376,6 +416,36 @@ export default function NewAppointment() {
                     rows={3}
                   />
                 </div>
+
+                {/* Doctor Selection - shown for super admin, auto-selected for individual doctor */}
+                {isSuperAdmin && (
+                  <div>
+                    <Label className="text-sm font-medium">Select Doctor *</Label>
+                    {loadingDoctors ? (
+                      <p className="text-sm text-muted-foreground mt-1">Loading doctors...</p>
+                    ) : (
+                      <select
+                        className="mt-1.5 w-full h-12 rounded-full border border-slate-300 px-4 text-sm"
+                        value={selectedDoctor?.id?.toString() || ''}
+                        onChange={(e) => {
+                          const doc = doctorOptions.find(d => d.id.toString() === e.target.value);
+                          setSelectedDoctor(doc || null);
+                        }}
+                      >
+                        <option value="">-- Select a doctor --</option>
+                        {doctorOptions.map(d => (
+                          <option key={d.id} value={d.id}>{d.name} {d.specialization ? `(${d.specialization})` : ''}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                )}
+                {!isSuperAdmin && selectedDoctor && (
+                  <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <p className="text-sm"><span className="text-muted-foreground">Doctor:</span> <span className="font-medium">{selectedDoctor.name}</span></p>
+                    {selectedDoctor.specialization && <p className="text-xs text-muted-foreground">{selectedDoctor.specialization}</p>}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-4 mt-8">
@@ -400,18 +470,20 @@ export default function NewAppointment() {
           <div className={currentStep === 2 ? "bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-8" : "hidden"}>
             <h2 className="text-2xl font-bold text-center mb-8">SELECT DATE & TIME</h2>
             
-            <div className="flex items-center gap-4 mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-              <img 
-                src={doctor.image} 
-                alt={doctor.name}
-                onError={(e: any) => { e.currentTarget.onerror = null; e.currentTarget.src = drMannImage; }}
-                className="w-14 h-14 rounded-full object-cover"
-              />
-              <div>
-                <h4 className="font-semibold">{doctor.name}</h4>
-                <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
+            {selectedDoctor && (
+              <div className="flex items-center gap-4 mb-6 p-4 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="w-14 h-14 rounded-full bg-emerald-200 flex items-center justify-center">
+                  <User className="w-7 h-7 text-emerald-700" />
+                </div>
+                <div>
+                  <h4 className="font-semibold">{selectedDoctor.name}</h4>
+                  <p className="text-sm text-muted-foreground">{selectedDoctor.specialization || 'Doctor'}</p>
+                  {selectedDoctor.consultation_fee && (
+                    <p className="text-xs text-muted-foreground">Fee: ₹{selectedDoctor.consultation_fee}</p>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               {/* Calendar */}
@@ -519,7 +591,7 @@ export default function NewAppointment() {
                     <span className="text-gray-600">Time:</span>
                     <span className="font-medium">{formatTimeDisplay(formData.time)}</span>
                     <span className="text-gray-600">Doctor:</span>
-                    <span className="font-medium">{doctor.name}</span>
+                    <span className="font-medium">{selectedDoctor?.name || 'Unassigned'}</span>
                   </div>
                 </div>
               )}
