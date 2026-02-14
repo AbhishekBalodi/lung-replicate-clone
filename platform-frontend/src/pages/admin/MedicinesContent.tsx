@@ -178,6 +178,8 @@ export default function MedicinesContent() {
       setMedicineInstructions("");
       // Reload patient medicines
       selectPatient(selectedPatient);
+      // Notify other components (e.g., Patients.tsx) to refresh
+      window.dispatchEvent(new CustomEvent("medicine-prescribed", { detail: { patientId: selectedPatient.id } }));
     } catch (err: any) {
       toast.error("Error: " + err.message);
     }
