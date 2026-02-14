@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Download, FileText, LogOut, Pill, Calendar } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { apiFetch } from "@/lib/api";
 
 interface PatientDashboardProps {
   adminPatientId?: number;   // <=== IMPORTANT
@@ -84,9 +85,7 @@ const PatientDashboard = ({ adminPatientId }: PatientDashboardProps) => {
   const fetchPatientData = async (patientId: number) => {
     try {
       // Load complete patient data including appointments
-      const patientRes = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || ''}/api/patients/${patientId}`
-      );
+      const patientRes = await apiFetch(`/api/patients/${patientId}`);
 
       if (patientRes.ok) {
         const data = await patientRes.json();

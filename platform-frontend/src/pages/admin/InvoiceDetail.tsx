@@ -4,7 +4,7 @@ import ConsoleShell from '@/layouts/ConsoleShell';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 export default function InvoiceDetail(){
   const { id } = useParams();
@@ -13,7 +13,7 @@ export default function InvoiceDetail(){
 
   const load = async()=>{
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/billing/invoices/${id}`);
+      const res = await apiFetch(`/api/billing/invoices/${id}`);
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       setInvoice(js);
     }catch(err){ const e = err as Error; toast.error('Failed to load invoice: '+e.message); }
@@ -24,7 +24,7 @@ export default function InvoiceDetail(){
   const pay = async()=>{
     if(!amount) return toast.error('Enter amount');
     try{
-      const res = await fetch(`${api.getApiBaseUrl()}/api/billing/payments`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ invoice_id: id, amount: parseFloat(amount) }) });
+      const res = await apiFetch('/api/billing/payments', { method:'POST', body: JSON.stringify({ invoice_id: id, amount: parseFloat(amount) }) });
       const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed');
       toast.success('Payment recorded'); load(); setAmount('');
     }catch(err){ const e = err as Error; toast.error('Payment failed: '+e.message); }

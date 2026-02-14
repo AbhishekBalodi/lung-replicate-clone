@@ -3,12 +3,12 @@ import ConsoleShell from '@/layouts/ConsoleShell';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import api from '@/lib/api';
+import { apiFetch } from '@/lib/api';
 
 export default function PaymentsHistory(){
   const [payments, setPayments] = useState<any[]>([]);
   const load = async()=>{
-    try{ const res = await fetch(`${api.getApiBaseUrl()}/api/billing/payments`); const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed'); setPayments(js.payments || []); }catch(err){ const e = err as Error; toast.error('Failed to load payments: '+e.message); }
+    try{ const res = await apiFetch('/api/billing/payments'); const js = await res.json(); if(!res.ok) throw new Error(js?.error||'Failed'); setPayments(js.payments || []); }catch(err){ const e = err as Error; toast.error('Failed to load payments: '+e.message); }
   }
   useEffect(()=>{ load(); },[]);
 
