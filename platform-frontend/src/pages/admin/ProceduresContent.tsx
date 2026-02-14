@@ -27,8 +27,7 @@ type Patient = {
   phone: string | null;
 };
 
-import api from '@/lib/api';
-const API_ROOT = "/api";
+import { apiFetch } from '@/lib/api';
 
 export default function ProceduresContent() {
   const { user } = useCustomAuth();
@@ -54,7 +53,7 @@ export default function ProceduresContent() {
 
   const loadCatalog = async () => {
     try {
-      const res = await api.apiGet(`${API_ROOT}/procedures/catalog`);
+      const res = await apiFetch("/api/procedures/catalog");
       if (!res.ok) throw new Error("Failed to load procedures");
       const data = await res.json();
       setItems(Array.isArray(data) ? data : []);
@@ -81,7 +80,7 @@ export default function ProceduresContent() {
         preparation_instructions: preparationInstructions.trim() || null,
       };
       
-      const res = await api.apiPost(`${API_ROOT}/procedures/catalog`, payload);
+      const res = await apiFetch("/api/procedures/catalog", { method: "POST", body: JSON.stringify(payload) });
       
       if (!res.ok) {
         const js = await res.json();
@@ -106,7 +105,7 @@ export default function ProceduresContent() {
       return;
     }
     try {
-      const res = await api.apiGet(`${API_ROOT}/patients?search=${encodeURIComponent(searchQuery)}`);
+      const res = await apiFetch(`/api/patients?search=${encodeURIComponent(searchQuery)}`);
       if (!res.ok) throw new Error("Failed to search patients");
       const data = await res.json();
       setPatients(Array.isArray(data) ? data : []);
@@ -144,7 +143,7 @@ export default function ProceduresContent() {
         description: procedureDescription.trim() || null,
         preparation_instructions: procedurePreparation.trim() || null,
       };
-      const res = await api.apiPost(`${API_ROOT}/procedures`, payload);
+      const res = await apiFetch("/api/procedures", { method: "POST", body: JSON.stringify(payload) });
       if (!res.ok) {
         const js = await res.json();
         throw new Error(js?.error || "Failed to prescribe procedure");

@@ -11,13 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Building2, User, Globe, ArrowRight, ArrowLeft, Check, Loader2, Layout, ExternalLink } from 'lucide-react';
-
-const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  return '';
-};
+import { apiFetch } from '@/lib/api';
 
 // Validation schema
 const onboardingSchema = z.object({
@@ -77,7 +71,7 @@ const TenantOnboarding = () => {
     if (!registrationResult?.tenant?.id) return;
     const fetchDetails = async () => {
       try {
-        const res = await fetch(`${getApiBaseUrl()}/api/tenants/${registrationResult.tenant.id}`);
+        const res = await apiFetch(`/api/tenants/${registrationResult.tenant.id}`);
         if (!res.ok) return;
         const json = await res.json();
         setTenantDetails(json.tenant || null);
@@ -196,9 +190,8 @@ const TenantOnboarding = () => {
       if (logoPreview) payload.logoBase64 = logoPreview;
       if (heroPreview) payload.heroBase64 = heroPreview;
 
-      const response = await fetch(`${getApiBaseUrl()}/api/tenants/register`, {
+      const response = await apiFetch('/api/tenants/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
