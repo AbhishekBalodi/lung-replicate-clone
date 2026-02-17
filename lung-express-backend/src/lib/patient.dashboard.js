@@ -20,7 +20,7 @@ export async function getPatientHome(req, res) {
 
     // Get patient record
     const [[patient]] = await db.query(
-      `SELECT id, full_name, email, phone, date_of_birth, gender, blood_group 
+      `SELECT id, full_name, email, phone, date_of_birth, gender, blood_group, patient_uid 
        FROM patients WHERE email = ? LIMIT 1`,
       [patientEmail]
     );

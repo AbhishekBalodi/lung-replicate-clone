@@ -14,6 +14,7 @@ interface DashboardStats {
   pendingLabReports: number;
   outstandingBills: number;
   activePrescriptions: number;
+  patientUid: string | null;
 }
 
 interface Appointment {
@@ -33,7 +34,8 @@ const PatientHome = () => {
     lastConsultation: null,
     pendingLabReports: 0,
     outstandingBills: 0,
-    activePrescriptions: 0
+    activePrescriptions: 0,
+    patientUid: null
   });
   const [nextAppointment, setNextAppointment] = useState<Appointment | null>(null);
   const [healthAlerts, setHealthAlerts] = useState<string[]>([]);
@@ -65,7 +67,8 @@ const PatientHome = () => {
           lastConsultation: data.lastConsultation || null,
           pendingLabReports: data.pendingLabReports || 0,
           outstandingBills: data.outstandingBills || 0,
-          activePrescriptions: data.activePrescriptions || 0
+          activePrescriptions: data.activePrescriptions || 0,
+          patientUid: data.patient?.patient_uid || null
         });
         
         setNextAppointment(resolvedNextAppointment);
@@ -116,6 +119,19 @@ const PatientHome = () => {
         </div>
         <Button variant="outline" size="icon" onClick={fetchDashboardData}><RefreshCw className="h-4 w-4" /></Button>
       </div>
+
+      {/* Patient UID Banner */}
+      {stats.patientUid && (
+        <Card className="border-2 border-emerald-200 bg-emerald-50/50">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-emerald-700 mb-1">Your Patient Unique Identification Number</p>
+              <p className="text-3xl font-bold font-mono text-emerald-900 tracking-wider">{stats.patientUid}</p>
+            </div>
+            <Badge className="bg-emerald-100 text-emerald-800 text-sm px-3 py-1">Patient UID</Badge>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">

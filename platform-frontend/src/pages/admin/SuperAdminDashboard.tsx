@@ -69,6 +69,7 @@ interface Appointment {
   created_at?: string | null;
   status?: string | null;
   doctor_id?: number;
+  patient_uid?: string;
 }
 
 interface Patient {
@@ -1095,7 +1096,12 @@ const [chartsError, setChartsError] = useState<string | null>(null);
                                 {a.appointment_time}
                               </div>
                             </div>
-                            <div className="font-medium">{a.full_name}</div>
+                            <div>
+                              <div className="font-medium">{a.full_name}</div>
+                              {a.patient_uid && (
+                                <span className="text-xs font-mono text-emerald-600">{a.patient_uid}</span>
+                              )}
+                            </div>
                             <div>
                               <Badge variant="outline" className="text-emerald-700 border-emerald-200">
                                 {a.selected_doctor}
