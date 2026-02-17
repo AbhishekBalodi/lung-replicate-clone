@@ -42,7 +42,7 @@ export default defineConfig({
     port: 5174, // Different port from tenant app (5173)
     proxy: {
       "/api": {
-        target: "http://localhost:5050",
+        target: "http://localhost:5053",
         changeOrigin: true,
       },
     },
