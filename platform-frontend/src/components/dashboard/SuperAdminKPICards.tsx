@@ -102,7 +102,7 @@ export default function SuperAdminKPICards({
           <p className="text-4xl font-bold">{staffFilter === "total" ? totalStaff : availableStaffToday}</p>
           <p className="text-sm text-muted-foreground mt-1">{staffFilter === "total" ? "Hospital employees" : "On-duty staff"}</p>
         </div>
-        <button onClick={() => openInNewTab("/admin/staff")} className="flex items-center gap-1 text-purple-600 text-sm mt-4 hover:text-purple-700 transition-colors font-medium">
+        <button onClick={() => openInNewTab("/admin/staffs/list")} className="flex items-center gap-1 text-purple-600 text-sm mt-4 hover:text-purple-700 transition-colors font-medium">
           Manage Staff <ArrowUpRight className="h-4 w-4" />
         </button>
       </Card>
@@ -158,7 +158,7 @@ export default function SuperAdminKPICards({
           <p className="text-4xl font-bold">{formatCurrency(getRevenueValue())}</p>
           <p className="text-sm text-muted-foreground mt-1">Revenue summary</p>
         </div>
-        <button onClick={() => openInNewTab("/admin/invoices")} className="flex items-center gap-1 text-amber-600 text-sm mt-4 hover:text-amber-700 transition-colors font-medium">
+        <button onClick={() => openInNewTab("/admin/billing")} className="flex items-center gap-1 text-amber-600 text-sm mt-4 hover:text-amber-700 transition-colors font-medium">
           View Invoices <ArrowUpRight className="h-4 w-4" />
         </button>
       </Card>

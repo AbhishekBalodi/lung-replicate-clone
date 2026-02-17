@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import { useAppointments } from "@/contexts/AppointmentContext";
@@ -56,6 +56,7 @@ export default function Dashboard() {
 
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [actionBusyId, setActionBusyId] = useState<number | null>(null);
+  const [kpiData, setKpiData] = useState<any>(null);
   
   // Reschedule modal state
   const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
@@ -161,6 +162,21 @@ export default function Dashboard() {
   useEffect(() => {
     if (user) fetchAppointments();
   }, [user, fetchAppointments]);
+
+  // Fetch KPI data from backend
+  const fetchKpiData = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/dashboard/superadmin', { method: 'GET' });
+      const data = await res.json();
+      if (res.ok) setKpiData(data);
+    } catch (err) {
+      console.error('Error fetching KPI data:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchKpiData();
+  }, [user, fetchKpiData]);
 
   // Refresh patient details when prescription update trigger changes
   useEffect(() => {
@@ -286,14 +302,19 @@ export default function Dashboard() {
 
         {/* Enhanced KPI Cards */}
         <DashboardKPICards
-          todayAppointments={todayAppointments.length}
+          todayAppointments={kpiData?.appointments?.today ?? todayAppointments.length}
           urgentAppointments={urgentAppointments}
-          pendingReports={7}
-          reportsReady={2}
-          activePatients={activePatients}
-          newPatients={newPatients}
-          pendingTasks={5}
-          highPriorityTasks={2}
+          pendingReports={kpiData?.labTests?.pending ?? 0}
+          reportsReady={0}
+          activePatients={kpiData?.patients?.total ?? activePatients}
+          newPatients={kpiData?.patients?.newLast7Days ?? newPatients}
+          pendingTasks={kpiData?.tasks?.pending ?? 0}
+          highPriorityTasks={kpiData?.tasks?.highPriority ?? 0}
+          completedAppointments={kpiData?.appointments?.completedThisMonth ?? appointments.filter(a => a.status === 'done').length}
+          cancelledAppointments={kpiData?.appointments?.cancelledThisMonth ?? 0}
+          unreadLabReports={kpiData?.labTests?.unread ?? 0}
+          emergencyAlerts={kpiData?.emergencyAlerts ?? 0}
+          pendingAppointments={kpiData?.appointments?.pending ?? 0}
         />
 
         {/* Tabbed Dashboard Section */}

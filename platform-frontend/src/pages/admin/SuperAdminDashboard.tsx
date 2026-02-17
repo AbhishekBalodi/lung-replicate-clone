@@ -262,6 +262,9 @@ const [superAdminCharts, setSuperAdminCharts] = useState<any>(null);
 const [chartsLoading, setChartsLoading] = useState(false);
 const [chartsError, setChartsError] = useState<string | null>(null);
 
+// Backend-driven KPI data
+const [kpiData, setKpiData] = useState<any>(null);
+
   
   // Invoices state
   const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
@@ -326,6 +329,19 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     setChartsLoading(false);
   }
 }, []);
+
+  // Fetch backend KPI data
+  const fetchKpiData = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/dashboard/superadmin', { method: 'GET' });
+      const data = await res.json();
+      if (res.ok) {
+        setKpiData(data);
+      }
+    } catch (err) {
+      console.error('Error fetching KPI data:', err);
+    }
+  }, []);
 
 
   // Fetch all appointments (from all doctors in the hospital)
@@ -410,7 +426,8 @@ const [chartsError, setChartsError] = useState<string | null>(null);
     fetchAllStaff();
     fetchAllRooms();
     fetchAllInvoices();
-  }, [fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices]);
+    fetchKpiData();
+  }, [fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices, fetchKpiData]);
 
   useEffect(() => {
   fetchSuperAdminCharts();
@@ -841,29 +858,41 @@ const [chartsError, setChartsError] = useState<string | null>(null);
         <TabsContent value="overview">
           {/* KPI Cards */}
           <DashboardKPICards
-            todayAppointments={todayAppointments.length}
+            todayAppointments={kpiData?.appointments?.today ?? todayAppointments.length}
             urgentAppointments={urgentAppointments}
-            pendingReports={7}
-            reportsReady={2}
-            activePatients={activePatients}
-            newPatients={newPatients}
-            pendingTasks={5}
-            highPriorityTasks={2}
+            pendingReports={kpiData?.labTests?.pending ?? 0}
+            reportsReady={0}
+            activePatients={kpiData?.patients?.total ?? activePatients}
+            newPatients={kpiData?.patients?.newLast7Days ?? newPatients}
+            pendingTasks={kpiData?.tasks?.pending ?? 0}
+            highPriorityTasks={kpiData?.tasks?.highPriority ?? 0}
+            completedAppointments={kpiData?.appointments?.completedThisMonth ?? appointments.filter(a => a.status === 'done').length}
+            cancelledAppointments={kpiData?.appointments?.cancelledThisMonth ?? 0}
+            unreadLabReports={kpiData?.labTests?.unread ?? 0}
+            emergencyAlerts={kpiData?.emergencyAlerts ?? 0}
+            pendingAppointments={kpiData?.appointments?.pending ?? 0}
           />
 
           {/* Super Admin KPI Cards - Staff, Occupancy, Payments, Cancelled */}
           <div className="mt-6">
             <SuperAdminKPICards
-              totalStaff={totalStaff}
-              newStaffThisMonth={newStaffThisMonth}
+              totalStaff={kpiData?.staff?.total ?? totalStaff}
+              newStaffThisMonth={kpiData?.staff?.newThisMonth ?? newStaffThisMonth}
               occupancyRate={occupancyRate}
               occupancyChange={occupancyChange}
-              pendingPayments={pendingPayments}
-              pendingPaymentsAmount={pendingPaymentsAmount}
-              cancelledAppointments={cancelledAppointments}
+              pendingPayments={kpiData?.billing?.unpaidInvoices ?? pendingPayments}
+              pendingPaymentsAmount={kpiData?.billing?.pendingPaymentsAmount ?? pendingPaymentsAmount}
+              cancelledAppointments={kpiData?.appointments?.cancelledThisMonth ?? cancelledAppointments}
               cancelledChange={cancelledChange}
-              totalRooms={totalRooms}
-              occupiedRooms={occupiedRooms}
+              totalRooms={kpiData?.rooms?.total ?? totalRooms}
+              occupiedRooms={kpiData?.rooms?.occupied ?? occupiedRooms}
+              totalPatients={kpiData?.patients?.total ?? allPatients.length}
+              todayPatients={kpiData?.patients?.today ?? 0}
+              totalAppointments={kpiData?.appointments?.total ?? appointments.length}
+              todayAppointments={kpiData?.appointments?.today ?? todayAppointments.length}
+              weeklyRevenue={kpiData?.billing?.revenueThisWeek ?? 0}
+              monthlyRevenue={kpiData?.billing?.revenueThisMonth ?? 0}
+              yearlyRevenue={kpiData?.billing?.revenueThisYear ?? 0}
             />
           </div>
 
