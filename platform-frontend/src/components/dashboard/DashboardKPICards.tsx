@@ -190,7 +190,7 @@ export default function DashboardKPICards({
         </div>
         <p className="text-4xl font-bold mt-4">{emergencyAlerts}</p>
         <p className="text-sm text-muted-foreground">Requires immediate action</p>
-        <button onClick={() => openInNewTab("/admin/emergency-alerts")} className="flex items-center gap-1 text-red-600 text-sm mt-4 hover:text-red-700 transition-colors font-medium">
+        <button onClick={() => openInNewTab("/admin/emergency")} className="flex items-center gap-1 text-red-600 text-sm mt-4 hover:text-red-700 transition-colors font-medium">
           View Alerts <ArrowUpRight className="h-4 w-4" />
         </button>
       </Card>
