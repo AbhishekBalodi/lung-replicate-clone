@@ -1,5 +1,5 @@
 (async ()=>{
-  const base = process.env.API_BASE_URL || 'http://localhost:5053';
+  const base = process.env.API_BASE_URL || 'http://localhost:5050';
   try{
     console.log('Listing invoices (should auto-create billing tables)');
     let res = await fetch(`${base}/api/billing/invoices`);
