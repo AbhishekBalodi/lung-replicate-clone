@@ -258,6 +258,18 @@ router.get('/', async (req, res) => {
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
+    // Check if patient_uid column exists in patients table
+    let hasPatientUid = false;
+    try {
+      const [cols] = await pool.execute(
+        `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'patients' AND COLUMN_NAME = 'patient_uid'`
+      );
+      hasPatientUid = cols.length > 0;
+    } catch {}
+
+    const uidSelect = hasPatientUid ? 'p.patient_uid,' : 'NULL AS patient_uid,';
+
     const sql = config.isHospital
       ? `
         SELECT
@@ -265,7 +277,7 @@ router.get('/', async (req, res) => {
           a.appointment_date, a.appointment_time,
           a.doctor_id,
           d.name AS doctor_name,
-          p.patient_uid,
+          ${uidSelect}
           a.message, a.status, a.created_at
         FROM appointments a
         LEFT JOIN doctors d ON d.id = a.doctor_id
@@ -278,7 +290,7 @@ router.get('/', async (req, res) => {
           a.id, a.full_name, a.email, a.phone,
           a.appointment_date, a.appointment_time,
           a.selected_doctor AS doctor_name,
-          p.patient_uid,
+          ${uidSelect}
           a.message, a.status, a.created_at
         FROM appointments a
         LEFT JOIN patients p ON (p.email = a.email AND p.email IS NOT NULL AND p.email <> '')
