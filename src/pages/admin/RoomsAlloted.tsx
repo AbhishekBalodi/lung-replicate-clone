@@ -15,9 +15,7 @@ import { Calendar, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 
-const API_ROOT = (import.meta as any).env.VITE_API_URL
-  ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, '')}/api`
-  : '/api';
+const API_ROOT = '/api';
 
 type RoomAllotment = {
   id: number;

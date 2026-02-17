@@ -9,7 +9,7 @@ import api from '@/lib/api';
 
 type Ambulance = { id: number; vehicle_number: string; model?: string | null; driver_name?: string | null; driver_contact?: string | null };
 
-const API_ROOT = (import.meta as any).env.VITE_API_URL ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, '')}/api` : '/api';
+const API_ROOT = '/api';
 
 export default function AmbulancesPage() {
   const [items, setItems] = useState<Ambulance[]>([]);
