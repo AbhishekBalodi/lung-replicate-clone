@@ -1,5 +1,5 @@
 (async ()=>{
-  const base = process.env.API_BASE_URL || 'http://localhost:5053';
+  const base = process.env.API_BASE_URL || 'http://localhost:5050';
   const ok = (r)=>{ if(!r.ok) return false; return true };
   try{
     console.log('Fetching tenants...');
