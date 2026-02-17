@@ -350,6 +350,13 @@ async function seed() {
     let doctorsInserted = 0;
     let doctorsSkipped = 0;
 
+    // Check once if platform_doctor_id column exists
+    const [pdCols] = await conn.execute(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors' AND COLUMN_NAME = 'platform_doctor_id'`
+    );
+    const hasPlatformDoctorId = pdCols.length > 0;
+
     for (const doc of doctors) {
       const [existing] = await conn.execute(
         'SELECT id FROM doctors WHERE email = ?', [doc.email]
@@ -360,11 +367,18 @@ async function seed() {
         continue;
       }
 
-      const [result] = await conn.execute(
-        `INSERT INTO doctors (name, email, phone, specialization, consultation_fee, is_active, created_at)
-         VALUES (?, ?, ?, ?, ?, 1, NOW())`,
-        [doc.name, doc.email, doc.phone, doc.specialization, doc.consultation_fee]
-      );
+      let insertSql, insertParams;
+      if (hasPlatformDoctorId) {
+        insertSql = `INSERT INTO doctors (name, email, phone, specialization, consultation_fee, is_active, platform_doctor_id, created_at)
+         VALUES (?, ?, ?, ?, ?, 1, 0, NOW())`;
+        insertParams = [doc.name, doc.email, doc.phone, doc.specialization, doc.consultation_fee];
+      } else {
+        insertSql = `INSERT INTO doctors (name, email, phone, specialization, consultation_fee, is_active, created_at)
+         VALUES (?, ?, ?, ?, ?, 1, NOW())`;
+        insertParams = [doc.name, doc.email, doc.phone, doc.specialization, doc.consultation_fee];
+      }
+
+      const [result] = await conn.execute(insertSql, insertParams);
       doctorIds.push(result.insertId);
       doctorsInserted++;
     }
