@@ -127,7 +127,7 @@ export default function SuperAdminKPICards({
         </div>
 
         <button
-          onClick={() => navigate("/admin/staff")}
+          onClick={() => navigate("/admin/staffs/list")}
           className="flex items-center gap-1 text-purple-600 text-sm mt-4"
         >
           Manage Staff
@@ -227,7 +227,7 @@ export default function SuperAdminKPICards({
         </div>
 
         <button
-          onClick={() => navigate("/admin/invoices")}
+          onClick={() => navigate("/admin/billing")}
           className="flex items-center gap-1 text-amber-600 text-sm mt-4"
         >
           View Invoices

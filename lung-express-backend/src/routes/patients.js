@@ -6,18 +6,63 @@ const router = Router();
 
 /**
  * Get schema-aware configuration based on tenant type
- * Hospital tenants use doctor_id (INT), individual doctors use doctor_assigned (VARCHAR)
  */
 function getSchemaConfig(req) {
   const isHospital = req.tenant?.type === 'hospital';
-  
   return {
     isHospital,
-    // Doctor column differs between hospital and doctor schemas
     doctorColumn: isHospital ? 'doctor_id' : 'doctor_assigned',
-    // Medicines table name differs (hospital uses prescribed_medicines, doctor uses medicines)
     medicinesTable: isHospital ? 'prescribed_medicines' : 'medicines',
   };
+}
+
+/**
+ * Generate a unique patient UID like "PT-2026-000042"
+ * Format: PT-YYYY-NNNNNN (year of registration + zero-padded sequence)
+ * The UID is tied to the patient's email – same email always gets the same UID.
+ */
+async function generatePatientUID(conn, patientId) {
+  const year = new Date().getFullYear();
+  const paddedId = String(patientId).padStart(6, '0');
+  return `PT-${year}-${paddedId}`;
+}
+
+/**
+ * Ensure patient_uid column exists (for existing tenants)
+ */
+async function ensurePatientUidColumn(conn) {
+  try {
+    const [cols] = await conn.execute(
+      `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'patients' AND COLUMN_NAME = 'patient_uid'`
+    );
+    if (cols.length === 0) {
+      await conn.execute(`ALTER TABLE patients ADD COLUMN patient_uid VARCHAR(20) DEFAULT NULL AFTER id`);
+      try {
+        await conn.execute(`ALTER TABLE patients ADD UNIQUE KEY unique_patient_uid (patient_uid)`);
+      } catch { /* index may already exist */ }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Backfill UIDs for patients that don't have one yet
+ */
+async function backfillPatientUIDs(conn) {
+  try {
+    const [rows] = await conn.execute(
+      `SELECT id FROM patients WHERE patient_uid IS NULL OR patient_uid = '' ORDER BY id ASC`
+    );
+    for (const row of rows) {
+      const uid = await generatePatientUID(conn, row.id);
+      await conn.execute(`UPDATE patients SET patient_uid = ? WHERE id = ? AND (patient_uid IS NULL OR patient_uid = '')`, [uid, row.id]);
+    }
+  } catch (e) {
+    console.warn('Backfill patient UIDs warning:', e.message);
+  }
 }
 
 function makeKey(r) {
@@ -29,8 +74,6 @@ function makeKey(r) {
 
 /**
  * GET /api/patients (?q=search)
- * Returns patients filtered by the logged-in doctor (for hospital tenants).
- * Includes patients who have appointments with this doctor, plus patients explicitly assigned.
  */
 router.get('/', async (req, res) => {
   const q = (req.query.q || req.query.search || '').toString().trim().toLowerCase();
@@ -40,37 +83,42 @@ router.get('/', async (req, res) => {
   try {
     conn = await getConnection(req);
     
-    // Get doctor ID from headers for filtering
+    // Ensure patient_uid column exists and backfill
+    const hasUidCol = await ensurePatientUidColumn(conn);
+    if (hasUidCol) {
+      await backfillPatientUIDs(conn);
+    }
+    
     const doctorId = req.headers['x-doctor-id'];
     const userRole = req.headers['x-user-role'];
     const isSuperAdmin = userRole === 'super_admin';
     
     let patients = [];
     
-    // Check if doctor_id column exists in appointments table
     const [doctorIdColCheck] = await conn.execute(
       `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointments' AND COLUMN_NAME = 'doctor_id'`
     );
     const hasAppointmentDoctorId = doctorIdColCheck.length > 0;
     
-    // Check if doctor_id column exists in patients table
     const [patientDoctorIdCheck] = await conn.execute(
       `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'patients' AND COLUMN_NAME = 'doctor_id'`
     );
     const hasPatientDoctorId = patientDoctorIdCheck.length > 0;
+
+    // Build SELECT columns including patient_uid
+    const uidCol = hasUidCol ? ', p.patient_uid' : '';
+    const uidColSimple = hasUidCol ? ', patient_uid' : '';
     
     if (config.isHospital && doctorId && !isSuperAdmin) {
-      // For hospital doctors: get patients who have appointments with this doctor
-      // OR patients explicitly assigned to this doctor
       if (hasAppointmentDoctorId && hasPatientDoctorId) {
         const [rows] = await conn.execute(`
-          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id${uidCol}
           FROM patients p
           WHERE p.doctor_id = ?
           UNION
-          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.doctor_id${uidCol}
           FROM patients p
           INNER JOIN appointments a ON (
             (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
@@ -81,9 +129,8 @@ router.get('/', async (req, res) => {
         `, [doctorId, doctorId]);
         patients = rows;
       } else if (hasAppointmentDoctorId) {
-        // Only appointments has doctor_id
         const [rows] = await conn.execute(`
-          SELECT DISTINCT p.id, p.full_name, p.email, p.phone
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone${uidCol}
           FROM patients p
           INNER JOIN appointments a ON (
             (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
@@ -94,34 +141,33 @@ router.get('/', async (req, res) => {
         `, [doctorId]);
         patients = rows;
       } else {
-        // Fallback: show all patients (legacy schema)
         const [rows] = await conn.execute(
-          `SELECT id, full_name, email, phone FROM patients ORDER BY full_name ASC`
+          `SELECT id, full_name, email, phone${uidColSimple} FROM patients ORDER BY full_name ASC`
         );
         patients = rows;
       }
     } else if (config.isHospital) {
-      // Super admin: see all patients
-      const selectCols = hasPatientDoctorId ? 'id, full_name, email, phone, doctor_id' : 'id, full_name, email, phone';
+      const selectCols = hasPatientDoctorId 
+        ? `id, full_name, email, phone, doctor_id${uidColSimple}` 
+        : `id, full_name, email, phone${uidColSimple}`;
       const [rows] = await conn.execute(
         `SELECT ${selectCols} FROM patients ORDER BY full_name ASC`
       );
       patients = rows;
     } else {
-      // Individual doctor tenant: all patients belong to this tenant
       const [rows] = await conn.execute(
-        `SELECT id, full_name, email, phone, doctor_assigned FROM patients ORDER BY full_name ASC`
+        `SELECT id, full_name, email, phone, doctor_assigned${uidColSimple} FROM patients ORDER BY full_name ASC`
       );
       patients = rows;
     }
 
-    // Apply search filter if provided
     let out = patients;
     if (q) {
       out = patients.filter((r) =>
         (r.full_name || '').toLowerCase().includes(q) ||
         (r.email || '').toLowerCase().includes(q) ||
-        (r.phone || '').toLowerCase().includes(q)
+        (r.phone || '').toLowerCase().includes(q) ||
+        (r.patient_uid || '').toLowerCase().includes(q)
       );
     }
 
@@ -136,7 +182,6 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/patients/search?term=xyz
- * Search patients by name, email, or phone (filtered by doctor for hospital tenants)
  */
 router.get('/search', async (req, res) => {
   const term = (req.query.term || '').toString().trim().toLowerCase();
@@ -154,7 +199,6 @@ router.get('/search', async (req, res) => {
     const userRole = req.headers['x-user-role'];
     const isSuperAdmin = userRole === 'super_admin';
     
-    // Check schema columns exist
     const [doctorIdColCheck] = await conn.execute(
       `SELECT COLUMN_NAME FROM information_schema.COLUMNS 
        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'appointments' AND COLUMN_NAME = 'doctor_id'`
@@ -170,10 +214,9 @@ router.get('/search', async (req, res) => {
     let patients = [];
     
     if (config.isHospital && doctorId && !isSuperAdmin) {
-      // For hospital doctors: search only their patients
       if (hasPatientDoctorId && hasAppointmentDoctorId) {
         const [rows] = await conn.execute(`
-          SELECT DISTINCT p.id, p.full_name, p.email, p.phone
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.patient_uid
           FROM patients p
           WHERE (p.doctor_id = ? OR EXISTS (
             SELECT 1 FROM appointments a 
@@ -181,41 +224,38 @@ router.get('/search', async (req, res) => {
             AND ((p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
                  OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> ''))
           ))
-          AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ?)
+          AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ? OR LOWER(p.patient_uid) LIKE ?)
           ORDER BY p.full_name ASC
-        `, [doctorId, doctorId, `%${term}%`, `%${term}%`, `%${term}%`]);
+        `, [doctorId, doctorId, `%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`]);
         patients = rows;
       } else if (hasAppointmentDoctorId) {
-        // Only appointments has doctor_id
         const [rows] = await conn.execute(`
-          SELECT DISTINCT p.id, p.full_name, p.email, p.phone
+          SELECT DISTINCT p.id, p.full_name, p.email, p.phone, p.patient_uid
           FROM patients p
           INNER JOIN appointments a ON (
             (p.email = a.email AND p.email IS NOT NULL AND p.email <> '') 
             OR (p.phone = a.phone AND p.phone IS NOT NULL AND p.phone <> '')
           )
           WHERE a.doctor_id = ?
-          AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ?)
+          AND (LOWER(p.full_name) LIKE ? OR LOWER(p.email) LIKE ? OR p.phone LIKE ? OR LOWER(p.patient_uid) LIKE ?)
           ORDER BY p.full_name ASC
-        `, [doctorId, `%${term}%`, `%${term}%`, `%${term}%`]);
+        `, [doctorId, `%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`]);
         patients = rows;
       } else {
-        // Fallback: search all patients
         const [rows] = await conn.execute(
-          `SELECT id, full_name, email, phone FROM patients 
-           WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ?
+          `SELECT id, full_name, email, phone, patient_uid FROM patients 
+           WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ? OR LOWER(patient_uid) LIKE ?
            ORDER BY full_name ASC`,
-          [`%${term}%`, `%${term}%`, `%${term}%`]
+          [`%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`]
         );
         patients = rows;
       }
     } else {
-      // Super admin or individual doctor: search all patients
       const [rows] = await conn.execute(
-        `SELECT id, full_name, email, phone FROM patients 
-         WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ?
+        `SELECT id, full_name, email, phone, patient_uid FROM patients 
+         WHERE LOWER(full_name) LIKE ? OR LOWER(email) LIKE ? OR phone LIKE ? OR LOWER(patient_uid) LIKE ?
          ORDER BY full_name ASC`,
-        [`%${term}%`, `%${term}%`, `%${term}%`]
+        [`%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`]
       );
       patients = rows;
     }
@@ -231,7 +271,6 @@ router.get('/search', async (req, res) => {
 
 /**
  * GET /api/patients/:id
- * Returns a single patient plus their medicines, newest first.
  */
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
@@ -241,7 +280,6 @@ router.get('/:id', async (req, res) => {
   try {
     conn = await getConnection(req);
     
-    // Ensure procedures table exists (for backwards compatibility)
     await conn.execute(`
       CREATE TABLE IF NOT EXISTS procedures (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -266,13 +304,11 @@ router.get('/:id', async (req, res) => {
 
     const patient = patients[0];
 
-    // Get medicines from the appropriate table based on schema
     const [medicines] = await conn.execute(
       `SELECT * FROM ${config.medicinesTable} WHERE patient_id = ? ORDER BY prescribed_date DESC, id DESC`,
       [id]
     );
 
-    // Schema-resilient: check if labs_test table exists
     let lab_tests = [];
     try {
       const [rows] = await conn.execute(
@@ -289,7 +325,6 @@ router.get('/:id', async (req, res) => {
       [id]
     );
 
-    // Get all appointments for this patient (by email AND phone)
     const [appointments] = await conn.execute(
       `SELECT * FROM appointments 
        WHERE email = ? OR phone = ? 
@@ -308,7 +343,6 @@ router.get('/:id', async (req, res) => {
 
 /**
  * GET /api/patients/:id/prescriptions
- * Standalone prescriptions list (same ordering).
  */
 router.get('/:id/prescriptions', async (req, res) => {
   const { id } = req.params;
@@ -329,8 +363,7 @@ router.get('/:id/prescriptions', async (req, res) => {
 
 /**
  * POST /api/patients
- * Create a new patient in the tenant database AND platform tenant_users table
- * Body: { full_name, email, phone, doctor_id?, date_of_birth?, address?, gender?, blood_group? }
+ * Create a new patient with auto-generated UID
  */
 router.post('/', async (req, res) => {
   let conn;
@@ -343,9 +376,12 @@ router.post('/', async (req, res) => {
 
     conn = await getConnection(req);
 
-    // Check if patient already exists in tenant DB
+    // Ensure patient_uid column exists
+    await ensurePatientUidColumn(conn);
+
+    // Check if patient already exists
     const [existing] = await conn.execute(
-      'SELECT id FROM patients WHERE email = ? AND phone = ?',
+      'SELECT id, patient_uid FROM patients WHERE email = ? AND phone = ?',
       [email.trim(), phone.trim()]
     );
 
@@ -353,11 +389,9 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'A patient with this email and phone already exists' });
     }
 
-    // Insert into tenant patients table
     const config = getSchemaConfig(req);
     const doctorValue = doctor_id || null;
 
-    // Build dynamic insert based on available columns
     let insertSQL, insertParams;
     if (config.isHospital) {
       insertSQL = `INSERT INTO patients (full_name, email, phone, doctor_id, date_of_birth, address, is_active, created_at)
@@ -372,11 +406,14 @@ router.post('/', async (req, res) => {
     const [result] = await conn.execute(insertSQL, insertParams);
     const patientId = result.insertId;
 
-    // Also register in platform tenant_users table for login capability
+    // Generate and assign UID
+    const patientUid = await generatePatientUID(conn, patientId);
+    await conn.execute('UPDATE patients SET patient_uid = ? WHERE id = ?', [patientUid, patientId]);
+
+    // Register in platform tenant_users table
     if (req.tenant?.id) {
       try {
         const { platformPool } = await import('../lib/platform-db.js');
-        // Check if already exists in tenant_users
         const [existingUser] = await platformPool.execute(
           'SELECT id FROM tenant_users WHERE tenant_id = ? AND email = ? AND role = ?',
           [req.tenant.id, email.trim(), 'patient']
@@ -391,7 +428,6 @@ router.post('/', async (req, res) => {
         }
       } catch (platformErr) {
         console.warn('Could not register patient in platform table:', platformErr.message);
-        // Non-fatal - patient is still created in tenant DB
       }
     }
 
@@ -399,6 +435,7 @@ router.post('/', async (req, res) => {
       success: true,
       patient: {
         id: patientId,
+        patient_uid: patientUid,
         full_name: full_name.trim(),
         email: email.trim(),
         phone: phone.trim(),
