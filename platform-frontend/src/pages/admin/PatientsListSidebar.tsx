@@ -52,6 +52,7 @@ export default function PatientsListSidebar({
             <User className="h-5 w-5 text-emerald-700" />
             <div>
               <div className="font-medium">{p.full_name}</div>
+              <div className="text-xs text-emerald-600 font-mono">{p.patient_uid || ''}</div>
               <div className="text-sm text-gray-600">{p.phone}</div>
             </div>
           </button>

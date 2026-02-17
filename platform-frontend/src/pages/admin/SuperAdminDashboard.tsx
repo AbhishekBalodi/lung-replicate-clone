@@ -73,6 +73,7 @@ interface Appointment {
 
 interface Patient {
   id: number;
+  patient_uid?: string;
   full_name: string;
   email: string;
   phone: string;
@@ -1005,6 +1006,7 @@ const [chartsError, setChartsError] = useState<string | null>(null);
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>UID</TableHead>
                         <TableHead>Patient Name</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
@@ -1015,6 +1017,11 @@ const [chartsError, setChartsError] = useState<string | null>(null);
                     <TableBody>
                       {allPatients.slice(0, 10).map((patient) => (
                         <TableRow key={patient.id}>
+                          <TableCell>
+                            <Badge variant="secondary" className="font-mono text-xs">
+                              {patient.patient_uid || '-'}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="font-medium">{patient.full_name}</TableCell>
                           <TableCell>{patient.email || '-'}</TableCell>
                           <TableCell>{patient.phone || '-'}</TableCell>
