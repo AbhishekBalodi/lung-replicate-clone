@@ -28,9 +28,7 @@ type Room = {
   type?: string;
 };
 
-const API_ROOT = (import.meta as any).env.VITE_API_URL
-  ? `${(import.meta as any).env.VITE_API_URL.replace(/\/$/, '')}/api`
-  : '/api';
+const API_ROOT = '/api';
 
 export default function NewAllotment() {
   const navigate = useNavigate();

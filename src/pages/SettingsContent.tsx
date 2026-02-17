@@ -9,7 +9,7 @@ import { useCustomAuth } from "@/contexts/CustomAuthContext";
 import { Loader2, Mail, Lock, Server, Info } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const API_ROOT = import.meta.env.VITE_API_ROOT || "http://localhost:5050";
+const API_ROOT = "/api";
 
 export default function SettingsContent() {
   const { user, loading: authLoading } = useCustomAuth();

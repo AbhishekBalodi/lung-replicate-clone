@@ -19,14 +19,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const getApiBaseUrl = () => {
-  // In development, use localhost:5050 directly
-  if (import.meta.env.DEV) {
-    return 'http://localhost:5050';
-  }
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  return '';
+  // DEV: use same-origin '/api' via Vite proxy
+  // PROD: use the configured API base URL
+  if (import.meta.env.DEV) return '';
+  return import.meta.env.VITE_API_BASE_URL || '';
 };
 
 interface Tenant {
