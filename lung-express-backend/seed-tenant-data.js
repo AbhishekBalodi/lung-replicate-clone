@@ -344,18 +344,53 @@ async function seed() {
     console.log('📋 Step 1: Ensuring required columns exist...');
     await ensureColumns(conn);
 
+    // ─── Introspect doctors table columns ───
+    const [doctorCols] = await conn.execute(
+      `SELECT COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors'`
+    );
+    const doctorColMap = {};
+    for (const c of doctorCols) doctorColMap[c.COLUMN_NAME] = c.COLUMN_TYPE;
+
+    const hasPlatformDoctorId = !!doctorColMap['platform_doctor_id'];
+
+    // ─── Introspect patients table columns ───
+    const [patientCols] = await conn.execute(
+      `SELECT COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'patients'`
+    );
+    const patientColMap = {};
+    for (const c of patientCols) patientColMap[c.COLUMN_NAME] = c.COLUMN_TYPE;
+
+    const hasIsActive = !!patientColMap['is_active'];
+    const hasNotes = !!patientColMap['notes'];
+    const hasDoctorId = !!patientColMap['doctor_id'];
+    const hasAge = !!patientColMap['age'];
+    const hasGender = !!patientColMap['gender'];
+    const hasState = !!patientColMap['state'];
+    const hasAddress = !!patientColMap['address'];
+
+    // Check if gender is ENUM (needs lowercase) or VARCHAR
+    const genderIsEnum = hasGender && patientColMap['gender'].toLowerCase().includes('enum');
+
+    // ─── Find highest existing negative platform_doctor_id to avoid conflicts ───
+    let nextPlatformId = -1;
+    if (hasPlatformDoctorId) {
+      try {
+        const [minRow] = await conn.execute(
+          `SELECT MIN(platform_doctor_id) AS min_id FROM doctors WHERE platform_doctor_id < 0`
+        );
+        if (minRow[0]?.min_id != null) {
+          nextPlatformId = minRow[0].min_id - 1;
+        }
+      } catch {}
+    }
+
     // ─── Seed Doctors ───
     console.log('\n👨‍⚕️ Step 2: Seeding doctors...');
     let doctorIds = [];
     let doctorsInserted = 0;
     let doctorsSkipped = 0;
-
-    // Check once if platform_doctor_id column exists
-    const [pdCols] = await conn.execute(
-      `SELECT COLUMN_NAME FROM information_schema.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'doctors' AND COLUMN_NAME = 'platform_doctor_id'`
-    );
-    const hasPlatformDoctorId = pdCols.length > 0;
 
     for (const doc of doctors) {
       const [existing] = await conn.execute(
@@ -370,8 +405,8 @@ async function seed() {
       let insertSql, insertParams;
       if (hasPlatformDoctorId) {
         insertSql = `INSERT INTO doctors (name, email, phone, specialization, consultation_fee, is_active, platform_doctor_id, created_at)
-         VALUES (?, ?, ?, ?, ?, 1, 0, NOW())`;
-        insertParams = [doc.name, doc.email, doc.phone, doc.specialization, doc.consultation_fee];
+         VALUES (?, ?, ?, ?, ?, 1, ?, NOW())`;
+        insertParams = [doc.name, doc.email, doc.phone, doc.specialization, doc.consultation_fee, nextPlatformId--];
       } else {
         insertSql = `INSERT INTO doctors (name, email, phone, specialization, consultation_fee, is_active, created_at)
          VALUES (?, ?, ?, ?, ?, 1, NOW())`;
@@ -400,15 +435,31 @@ async function seed() {
       }
 
       // Randomly assign a doctor
-      const doctorId = doctorIds.length > 0
+      const doctorId = (hasDoctorId && doctorIds.length > 0)
         ? doctorIds[Math.floor(Math.random() * doctorIds.length)]
         : null;
 
-      const [result] = await conn.execute(
-        `INSERT INTO patients (full_name, email, phone, age, gender, state, address, notes, doctor_id, is_active, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())`,
-        [p.full_name, p.email, p.phone, p.age, p.gender, p.state, p.address, p.concern, doctorId]
-      );
+      // Normalize gender for ENUM columns (lowercase)
+      const gender = genderIsEnum && p.gender
+        ? p.gender.toLowerCase()
+        : p.gender;
+
+      // Build dynamic columns & values
+      const cols = ['full_name', 'email', 'phone', 'created_at'];
+      const vals = [p.full_name, p.email, p.phone];
+      const placeholders = ['?', '?', '?', 'NOW()'];
+
+      if (hasAge) { cols.push('age'); vals.push(p.age); placeholders.push('?'); }
+      if (hasGender) { cols.push('gender'); vals.push(gender); placeholders.push('?'); }
+      if (hasState) { cols.push('state'); vals.push(p.state); placeholders.push('?'); }
+      if (hasAddress) { cols.push('address'); vals.push(p.address); placeholders.push('?'); }
+      if (hasNotes) { cols.push('notes'); vals.push(p.concern); placeholders.push('?'); }
+      if (hasDoctorId) { cols.push('doctor_id'); vals.push(doctorId); placeholders.push('?'); }
+      if (hasIsActive) { cols.push('is_active'); vals.push(1); placeholders.push('?'); }
+
+      const insertSql = `INSERT INTO patients (${cols.join(', ')}) VALUES (${placeholders.join(', ')})`;
+
+      const [result] = await conn.execute(insertSql, vals);
 
       // Generate and set UID
       const uid = generateUID(result.insertId);
