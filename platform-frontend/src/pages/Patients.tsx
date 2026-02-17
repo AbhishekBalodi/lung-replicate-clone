@@ -12,6 +12,7 @@ import { Search, User, Calendar, Pill, FlaskConical, Activity } from "lucide-rea
 
 type Patient = {
   id: number | null;
+  patient_uid?: string;
   full_name: string;
   phone: string | null;
   email: string | null;
@@ -258,6 +259,9 @@ export default function PatientsPage() {
                       <User className="h-5 w-5 text-emerald-700 shrink-0" />
                       <div>
                         <div className="font-medium text-emerald-900">{p.full_name}</div>
+                        {p.patient_uid && (
+                          <span className="text-xs font-mono text-emerald-600">{p.patient_uid}</span>
+                        )}
                         <div className="text-sm text-emerald-700 break-all">
                           {p.phone || "N/A"} • {p.email || "N/A"}
                         </div>
@@ -290,6 +294,12 @@ export default function PatientsPage() {
               </div>
 
               <div className="space-y-3">
+                {selectedPatient.patient_uid && (
+                  <div>
+                    <Label className="text-emerald-900">Patient UID</Label>
+                    <p className="text-base font-mono font-medium text-emerald-700">{selectedPatient.patient_uid}</p>
+                  </div>
+                )}
                 <div>
                   <Label className="text-emerald-900">Full Name</Label>
                   <p className="text-base md:text-lg font-medium break-words">{selectedPatient.full_name}</p>
