@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS appointments (
 -- ============================================
 CREATE TABLE IF NOT EXISTS patients (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  patient_uid VARCHAR(20) DEFAULT NULL,
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255),
   phone VARCHAR(20),
@@ -61,6 +62,7 @@ CREATE TABLE IF NOT EXISTS patients (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY unique_patient (email, phone),
+  UNIQUE KEY unique_patient_uid (patient_uid),
   INDEX idx_patients_name (full_name),
   INDEX idx_patients_phone (phone)
 );

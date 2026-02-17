@@ -219,6 +219,13 @@ export default function DashboardKPICards({
             Tasks requiring attention
           </p>
         </div>
+        <button
+          onClick={() => navigate("/admin/tasks")}
+          className="flex items-center gap-1 text-rose-600 text-sm mt-4 hover:text-rose-700 transition-colors font-medium"
+        >
+          View Tasks
+          <ArrowUpRight className="h-4 w-4" />
+        </button>
       </Card>
 
       {/* ==============================
@@ -237,6 +244,13 @@ export default function DashboardKPICards({
         <p className="text-sm text-muted-foreground">
           Reports not yet opened
         </p>
+        <button
+          onClick={() => navigate("/lab-tests")}
+          className="flex items-center gap-1 text-indigo-600 text-sm mt-4 hover:text-indigo-700 transition-colors font-medium"
+        >
+          View Reports
+          <ArrowUpRight className="h-4 w-4" />
+        </button>
       </Card>
 
       {/* ==============================
@@ -255,6 +269,13 @@ export default function DashboardKPICards({
         <p className="text-sm text-muted-foreground">
           Requires immediate action
         </p>
+        <button
+          onClick={() => navigate("/admin/emergency")}
+          className="flex items-center gap-1 text-red-600 text-sm mt-4 hover:text-red-700 transition-colors font-medium"
+        >
+          View Alerts
+          <ArrowUpRight className="h-4 w-4" />
+        </button>
       </Card>
 
       {/* ==============================
@@ -273,6 +294,13 @@ export default function DashboardKPICards({
         <p className="text-sm text-muted-foreground">
           Awaiting confirmation
         </p>
+        <button
+          onClick={() => navigate("/appointments")}
+          className="flex items-center gap-1 text-sky-600 text-sm mt-4 hover:text-sky-700 transition-colors font-medium"
+        >
+          View Appointments
+          <ArrowUpRight className="h-4 w-4" />
+        </button>
       </Card>
 
     </div>
