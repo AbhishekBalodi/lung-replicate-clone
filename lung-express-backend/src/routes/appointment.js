@@ -265,21 +265,25 @@ router.get('/', async (req, res) => {
           a.appointment_date, a.appointment_time,
           a.doctor_id,
           d.name AS doctor_name,
+          p.patient_uid,
           a.message, a.status, a.created_at
         FROM appointments a
         LEFT JOIN doctors d ON d.id = a.doctor_id
+        LEFT JOIN patients p ON (p.email = a.email AND p.email IS NOT NULL AND p.email <> '')
         ${whereSql}
         ORDER BY a.appointment_date, a.appointment_time, a.id DESC
       `
       : `
         SELECT
-          id, full_name, email, phone,
-          appointment_date, appointment_time,
-          selected_doctor AS doctor_name,
-          message, status, created_at
-        FROM appointments
+          a.id, a.full_name, a.email, a.phone,
+          a.appointment_date, a.appointment_time,
+          a.selected_doctor AS doctor_name,
+          p.patient_uid,
+          a.message, a.status, a.created_at
+        FROM appointments a
+        LEFT JOIN patients p ON (p.email = a.email AND p.email IS NOT NULL AND p.email <> '')
         ${whereSql}
-        ORDER BY appointment_date, appointment_time, id DESC
+        ORDER BY a.appointment_date, a.appointment_time, a.id DESC
       `;
 
     const [rows] = await pool.execute(sql, params);
