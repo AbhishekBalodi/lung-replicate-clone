@@ -60,8 +60,8 @@ const DevTenantSwitcher = () => {
   const [loading, setLoading] = useState(false);
   const [currentTenant, setCurrentTenant] = useState<string | null>(null);
   
-  // Treat localhost as a safe environment even if build mode is PROD.
-  const isProduction = import.meta.env.PROD && !isLocalhost();
+  // Always allow tenant switching (public feature)
+  const isProduction = false;
 
   useEffect(() => {
     if (!isProduction) {
@@ -111,7 +111,7 @@ const DevTenantSwitcher = () => {
   if (isProduction) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999]">
+    <div className="fixed top-2 right-4 z-[9999]">
       {!isOpen ? (
         <Button
           onClick={() => setIsOpen(true)}
