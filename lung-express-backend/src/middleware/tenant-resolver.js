@@ -30,7 +30,62 @@ export async function tenantResolver(req, res, next) {
     }
 
     /* ============================================================
-       🔹 Resolve domain
+       🔹 HEADER-BASED TENANT RESOLUTION (works everywhere)
+       Checked FIRST — allows SaaS platform (on any domain)
+       to override domain-based resolution via X-Tenant-Code header.
+       Individual tenant websites don't send this header,
+       so they fall through to domain-based resolution below.
+       ============================================================ */
+    const headerTenantCode =
+      req.headers['x-tenant-code'] || req.query.tenantCode;
+
+    if (headerTenantCode) {
+      const dbName = LEGACY_DB_MAP[headerTenantCode] || headerTenantCode;
+
+      try {
+        const [tenants] = await platformPool.execute(
+          'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
+          [headerTenantCode, 'active']
+        );
+
+        if (tenants.length > 0) {
+          req.tenant = tenants[0];
+          req.tenantPool = await getTenantPool(dbName);
+        } else {
+          // Legacy fallback (Doctor Mann before SaaS)
+          req.tenant = {
+            id: 0,
+            tenant_code: headerTenantCode,
+            name:
+              headerTenantCode === 'doctor_mann'
+                ? 'Dr. Mann Clinic'
+                : headerTenantCode,
+            type: 'doctor',
+            status: 'active'
+          };
+          req.tenantPool = await getTenantPool(dbName);
+        }
+      } catch (err) {
+        console.error(
+          '⚠ Platform DB lookup failed, using legacy fallback:',
+          err.message
+        );
+        req.tenant = {
+          id: 0,
+          tenant_code: headerTenantCode,
+          name: headerTenantCode,
+          type: 'doctor',
+          status: 'active'
+        };
+        req.tenantPool = await getTenantPool(dbName);
+      }
+
+      return next();
+    }
+
+    /* ============================================================
+       🌍 DOMAIN-BASED TENANT RESOLUTION (production fallback)
+       Used by individual tenant websites on their own domains.
        ============================================================ */
     let domain = req.hostname || req.headers.host;
 
@@ -44,73 +99,19 @@ export async function tenantResolver(req, res, next) {
       domain = domain.slice(4);
     }
 
-    /* ============================================================
-       🧪 LOCAL DEVELOPMENT (localhost)
-       ============================================================ */
+    // Skip domain resolution for localhost (no domain mapping)
     if (
       domain.includes('localhost') ||
       domain.includes('127.0.0.1')
     ) {
-      const tenantCode =
-        req.headers['x-tenant-code'] || req.query.tenantCode;
-
-      if (tenantCode) {
-        const dbName =
-          LEGACY_DB_MAP[tenantCode] || tenantCode;
-
-        try {
-          // Query PLATFORM DB for tenant metadata
-          const [tenants] = await platformPool.execute(
-            'SELECT * FROM tenants WHERE tenant_code = ? AND status = ?',
-            [tenantCode, 'active']
-          );
-
-          if (tenants.length > 0) {
-            req.tenant = tenants[0];
-            req.tenantPool = await getTenantPool(dbName);
-          } else {
-            // Legacy fallback (Doctor Mann before SaaS)
-            req.tenant = {
-              id: 0,
-              tenant_code: tenantCode,
-              name:
-                tenantCode === 'doctor_mann'
-                  ? 'Dr. Mann Clinic'
-                  : tenantCode,
-              type: 'doctor',
-              status: 'active'
-            };
-            req.tenantPool = await getTenantPool(dbName);
-          }
-        } catch (err) {
-          console.error(
-            '⚠ Platform DB lookup failed, using legacy fallback:',
-            err.message
-          );
-          req.tenant = {
-            id: 0,
-            tenant_code: tenantCode,
-            name: tenantCode,
-            type: 'doctor',
-            status: 'active'
-          };
-          req.tenantPool = await getTenantPool(dbName);
-        }
-      }
-
       return next();
     }
-
-    /* ============================================================
-       🌍 PRODUCTION (DOMAIN-BASED TENANT RESOLUTION)
-       ============================================================ */
 
     const tenant = await resolveTenantFromDomain(domain);
 
     if (tenant) {
       req.tenant = tenant;
 
-      // 🔥 CRITICAL FIX: Apply legacy DB mapping here too
       const dbName =
         LEGACY_DB_MAP[tenant.tenant_code] ||
         tenant.tenant_code;

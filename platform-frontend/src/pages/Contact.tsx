@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MapPin, Mail, Phone, ChevronRight, Send } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 type ContactProps = {
@@ -53,11 +54,8 @@ const Contact : React.FC<ContactProps> = ({ mapSrc }) => {
 
       // Send to Express.js API
       
-      const response = await fetch(`/api/contact`, {
+      const response = await apiFetch(`/api/contact`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           name: formData.name.trim(),
           email: formData.email.trim(),

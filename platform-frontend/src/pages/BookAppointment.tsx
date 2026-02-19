@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import { apiFetch } from "@/lib/api";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +82,7 @@ const DateTimeStepContent = ({
       setLoadingSlots(true);
       try {
         const dateStr = format(date, 'yyyy-MM-dd');
-        const response = await fetch(`/api/appointment?date=${dateStr}`);
+        const response = await apiFetch(`/api/appointment?date=${dateStr}`);
         if (response.ok) {
           const data = await response.json();
           const times = data.appointments?.map((apt: any) => apt.appointment_time) || [];
@@ -355,9 +356,8 @@ const BookAppointment = () => {
         reports_uploaded: !!formData.reports
       };
 
-      const res = await fetch(APPOINTMENTS_API, {
+      const res = await apiFetch(APPOINTMENTS_API, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 

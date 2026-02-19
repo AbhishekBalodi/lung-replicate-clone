@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/lib/api";
 import ConsoleShell from "../layouts/ConsoleShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +41,7 @@ export default function MedicinesPage() {
   const fetchPatients = async () => {
     try {
       // ✅ now pulls from backend that merges patients + appointments
-      const res = await fetch("/api/patients");
+      const res = await apiFetch("/api/patients");
       const data = await res.json();
       setPatients(data);
     } catch (e: any) {
@@ -72,9 +73,8 @@ export default function MedicinesPage() {
         payload.phone = selectedPatient.phone;
       }
 
-      const res = await fetch("/api/medicines", {
+      const res = await apiFetch("/api/medicines", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -92,7 +92,7 @@ export default function MedicinesPage() {
 
   const loadPatientMedicines = async (id: string) => {
     try {
-      const res = await fetch(`/api/patients/${id}`);
+      const res = await apiFetch(`/api/patients/${id}`);
       const data = await res.json();
       if (res.ok) setSavedList(data.medicines || []);
     } catch (e: any) {
