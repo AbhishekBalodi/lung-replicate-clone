@@ -45,14 +45,17 @@ export const getDevTenantCode = (): string | null => {
   return localStorage.getItem(TENANT_STORAGE_KEY);
 };
 
-export const setDevTenantCode = (code: string | null) => {
+export const setDevTenantCode = (code: string | null, reload = true) => {
+  const current = localStorage.getItem(TENANT_STORAGE_KEY);
   if (code) {
     localStorage.setItem(TENANT_STORAGE_KEY, code);
   } else {
     localStorage.removeItem(TENANT_STORAGE_KEY);
   }
-  // Reload to apply new tenant
-  window.location.reload();
+  // Only reload when the value actually changed and caller wants a reload
+  if (reload && code !== current) {
+    window.location.reload();
+  }
 };
 
 const DevTenantSwitcher = () => {
