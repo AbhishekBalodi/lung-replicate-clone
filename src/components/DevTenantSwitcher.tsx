@@ -38,11 +38,26 @@ const isLocalhost = () => {
 
 /**
  * Get the tenant code from localStorage.
- * This works in all environments (dev + production) since the tenant switcher
- * is a public feature allowing users to switch between tenant websites.
+ * Falls back to reading from customTenant if dev_tenant_code is not set.
  */
 export const getDevTenantCode = (): string | null => {
-  return localStorage.getItem(TENANT_STORAGE_KEY);
+  const direct = localStorage.getItem(TENANT_STORAGE_KEY);
+  if (direct) return direct;
+
+  // Fallback: read from customTenant (set during login)
+  try {
+    const stored = localStorage.getItem('customTenant');
+    if (stored) {
+      const tenant = JSON.parse(stored);
+      if (tenant?.code) {
+        localStorage.setItem(TENANT_STORAGE_KEY, tenant.code);
+        return tenant.code;
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return null;
 };
 
 export const setDevTenantCode = (code: string | null, reload = true) => {
