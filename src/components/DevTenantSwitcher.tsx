@@ -36,11 +36,12 @@ const isLocalhost = () => {
   }
 };
 
+/**
+ * Get the tenant code from localStorage.
+ * This works in all environments (dev + production) since the tenant switcher
+ * is a public feature allowing users to switch between tenant websites.
+ */
 export const getDevTenantCode = (): string | null => {
-  // Safety: never allow overriding tenant selection on real production domains.
-  // But in local dev/prod builds running on localhost, we still need this header
-  // so the backend can resolve the tenant schema correctly.
-  if (import.meta.env.PROD && !isLocalhost()) return null;
   return localStorage.getItem(TENANT_STORAGE_KEY);
 };
 
