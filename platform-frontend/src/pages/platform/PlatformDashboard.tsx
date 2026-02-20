@@ -17,17 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-/**
- * Build API URL - uses relative paths in dev (for Vite proxy) and VITE_API_BASE_URL in production
- */
-const api = (path: string): string => {
-  if (import.meta.env.DEV) {
-    return path; // Relative path works with Vite proxy
-  }
-  const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
-  return `${base}${path}`;
-};
+import { apiFetch } from '@/lib/api';
 
 interface Tenant {
   id: number;
@@ -81,7 +71,7 @@ const PlatformDashboard = () => {
       if (statusFilter) params.append('status', statusFilter);
       if (typeFilter) params.append('type', typeFilter);
 
-      const response = await fetch(api(`/api/tenants?${params}`), { credentials: 'include' });
+      const response = await apiFetch(`/api/tenants?${params}`);
       const data = await response.json();
       
       if (response.ok) {
@@ -107,10 +97,8 @@ const PlatformDashboard = () => {
 
   const handleStatusChange = async (tenantId: number, newStatus: string) => {
     try {
-      const response = await fetch(api(`/api/tenants/${tenantId}/status`), {
+      const response = await apiFetch(`/api/tenants/${tenantId}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ status: newStatus }),
       });
 
