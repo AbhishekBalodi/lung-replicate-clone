@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { getDevTenantCode, setDevTenantCode } from '@/components/DevTenantSwitcher';
 import { supabase } from '@/integrations/supabase/client';
 import { apiFetch } from '@/lib/api';
 
@@ -122,7 +122,10 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(JSON.parse(storedUser));
         }
         if (storedTenant) {
-          setTenant(JSON.parse(storedTenant));
+          const t = JSON.parse(storedTenant);
+          setTenant(t);
+          // ✅ Re-hydrate tenant code for apiFetch headers
+          if (t.code) setDevTenantCode(t.code);
         }
       } catch {
         // ignore parse errors
@@ -179,6 +182,9 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('customUser', JSON.stringify(data.user));
       if (data.tenant) {
         localStorage.setItem('customTenant', JSON.stringify(data.tenant));
+        // ✅ CRITICAL: Set tenant code so all subsequent apiFetch calls
+        // include X-Tenant-Code header for tenant-resolver middleware
+        setDevTenantCode(data.tenant.code || tenantCode);
       }
       return { user: data.user, error: null };
     } catch (e: any) {
@@ -226,6 +232,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     setTenant(null);
     localStorage.removeItem('customUser');
     localStorage.removeItem('customTenant');
+    setDevTenantCode(null);
   };
 
   /* ============================================================
