@@ -214,6 +214,17 @@ app.use('/api/schedule', scheduleRouter);
 
 const PORT = process.env.PORT || 5050;
 
+/* ============================================================
+   🛡️ GLOBAL ERROR HANDLERS – prevent process crashes
+   ============================================================ */
+process.on('uncaughtException', (err) => {
+  console.error('🔴 Uncaught Exception (process kept alive):', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🔴 Unhandled Rejection (process kept alive):', reason);
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API listening on http://localhost:${PORT}`);
 });
