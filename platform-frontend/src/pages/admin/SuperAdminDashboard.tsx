@@ -420,6 +420,9 @@ const [kpiData, setKpiData] = useState<any>(null);
   }, []);
 
   useEffect(() => {
+    // Wait for auth to finish loading before fetching data
+    // This ensures dev_tenant_code is hydrated from customTenant in localStorage
+    if (loading) return;
     fetchDoctors();
     fetchAppointments();
     fetchAllPatients();
@@ -427,11 +430,12 @@ const [kpiData, setKpiData] = useState<any>(null);
     fetchAllRooms();
     fetchAllInvoices();
     fetchKpiData();
-  }, [fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices, fetchKpiData]);
+  }, [loading, fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices, fetchKpiData]);
 
   useEffect(() => {
-  fetchSuperAdminCharts();
-}, [fetchSuperAdminCharts]);
+    if (loading) return;
+    fetchSuperAdminCharts();
+  }, [loading, fetchSuperAdminCharts]);
 
 
   const resetForm = () => {

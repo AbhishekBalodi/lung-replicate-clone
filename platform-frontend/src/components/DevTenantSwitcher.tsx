@@ -41,9 +41,29 @@ const isLocalhost = () => {
  * In the platform-frontend, this is used during login flow and must work in production.
  * The DevTenantSwitcher UI itself is hidden in production, but the tenant code
  * set during login must still be accessible.
+ * 
+ * Falls back to reading from customTenant in localStorage if dev_tenant_code
+ * is not set (handles race conditions during hydration).
  */
 export const getDevTenantCode = (): string | null => {
-  return localStorage.getItem(TENANT_STORAGE_KEY);
+  const direct = localStorage.getItem(TENANT_STORAGE_KEY);
+  if (direct) return direct;
+
+  // Fallback: read from customTenant (set during login)
+  try {
+    const stored = localStorage.getItem('customTenant');
+    if (stored) {
+      const tenant = JSON.parse(stored);
+      if (tenant?.code) {
+        // Re-sync dev_tenant_code for future reads
+        localStorage.setItem(TENANT_STORAGE_KEY, tenant.code);
+        return tenant.code;
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return null;
 };
 
 export const setDevTenantCode = (code: string | null, reload = true) => {
