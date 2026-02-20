@@ -140,7 +140,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <DevTenantSwitcher />
+          {/* DevTenantSwitcher removed - SaaS platform sets tenant via login flow */}
           <BrowserRouter>
             <Routes>
               {/* Tenant routes - this app serves individual tenant websites */}
