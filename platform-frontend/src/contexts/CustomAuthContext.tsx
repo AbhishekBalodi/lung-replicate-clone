@@ -125,7 +125,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
           const t = JSON.parse(storedTenant);
           setTenant(t);
           // ✅ Re-hydrate tenant code for apiFetch headers
-          if (t.code) setDevTenantCode(t.code);
+          if (t.code) setDevTenantCode(t.code, false);
         }
       } catch {
         // ignore parse errors
@@ -184,7 +184,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('customTenant', JSON.stringify(data.tenant));
         // ✅ CRITICAL: Set tenant code so all subsequent apiFetch calls
         // include X-Tenant-Code header for tenant-resolver middleware
-        setDevTenantCode(data.tenant.code || tenantCode);
+        setDevTenantCode(data.tenant.code || tenantCode, false);
       }
       return { user: data.user, error: null };
     } catch (e: any) {
@@ -232,7 +232,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     setTenant(null);
     localStorage.removeItem('customUser');
     localStorage.removeItem('customTenant');
-    setDevTenantCode(null);
+    setDevTenantCode(null, false);
   };
 
   /* ============================================================
