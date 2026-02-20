@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
 import { supabase } from '@/integrations/supabase/client';
+import { apiFetch } from '@/lib/api';
 
 /* ============================================================
    🔹 TYPES
@@ -57,35 +58,9 @@ interface CustomAuthContextType {
 const CustomAuthContext = createContext<CustomAuthContextType | undefined>(undefined);
 
 /* ============================================================
-   🔹 HELPER: Single API URL builder
+   🔹 HELPER: All API calls now use apiFetch from @/lib/api
+   which handles base URL, tenant headers, credentials, etc.
    ============================================================ */
-
-/**
- * Build API URL that works correctly in both DEV and PROD:
- * - DEV: returns relative path (e.g., '/api/auth/login') for Vite proxy
- * - PROD: prepends VITE_API_BASE_URL (e.g., 'https://api.example.com/api/auth/login')
- */
-const api = (path: string): string => {
-  // In development, return relative path for Vite proxy
-  if (import.meta.env.DEV) {
-    return path;
-  }
-  // In production, prepend the base URL
-  const base = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/+$/, '');
-  return `${base}${path}`;
-};
-
-/**
- * Get headers for API calls including tenant code in development
- */
-const getHeaders = (): Record<string, string> => {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const tenantCode = getDevTenantCode();
-  if (tenantCode) {
-    headers['X-Tenant-Code'] = tenantCode;
-  }
-  return headers;
-};
 
 /**
  * Check if running on legacy Dr Mann site
@@ -124,10 +99,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
       const tenantCode = getDevTenantCode();
       const queryParam = tenantCode ? `?tenantCode=${tenantCode}` : '';
       
-      const res = await fetch(api(`/api/platform/auth/tenant-info${queryParam}`), {
-        headers: getHeaders(),
-        credentials: 'include'
-      });
+      const res = await apiFetch(`/api/platform/auth/tenant-info${queryParam}`);
 
       if (res.ok) {
         const data = await res.json();
@@ -189,10 +161,8 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const tenantCode = getDevTenantCode();
       
-      const res = await fetch(api('/api/platform/auth/tenant-login'), {
+      const res = await apiFetch('/api/platform/auth/tenant-login', {
         method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify({ email, password, tenantCode, loginType: 'admin' })
       });
 
@@ -226,10 +196,8 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginAsPatient = async (email: string, phone: string): Promise<AuthResult> => {
     try {
-      const res = await fetch(api('/api/auth/login'), {
+      const res = await apiFetch('/api/auth/login', {
         method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify({ email, password: phone, loginType: 'patient' })
       });
 
@@ -250,11 +218,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await fetch(api('/api/auth/logout'), {
-        method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include'
-      });
+      await apiFetch('/api/auth/logout', { method: 'POST' });
     } catch {
       // Silent fail on logout
     }

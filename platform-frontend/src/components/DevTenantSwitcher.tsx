@@ -73,9 +73,8 @@ const DevTenantSwitcher = () => {
   const fetchTenants = async () => {
     setLoading(true);
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || "";
-      console.log("[DevTenantSwitcher] Fetching from:", `${apiBase}/api/tenants`);
-      const response = await fetch(`${apiBase}/api/tenants`);
+      const { apiFetch: apiFetchFn } = await import('@/lib/api');
+      const response = await apiFetchFn('/api/tenants');
       console.log("[DevTenantSwitcher] Response status:", response.status);
       if (response.ok) {
         const data = await response.json();
