@@ -63,18 +63,35 @@ export const apiFetch = async (
 ): Promise<Response> => {
   const url = `${getApiBaseUrl()}${endpoint}`;
   
-  const headers = getApiHeaders(
-    options.headers as Record<string, string> || {}
-  );
+  // For FormData uploads, don't set Content-Type (browser sets it with boundary)
+  const isFormData = options.body instanceof FormData;
+  const baseHeaders = isFormData ? {} : { "Content-Type": "application/json" };
 
-  // In development (with Vite proxy), requests go to same origin
-  // In production, we need credentials: 'include' for cross-origin cookies
+  const headers: Record<string, string> = {
+    ...baseHeaders,
+    ...(options.headers as Record<string, string> || {}),
+  };
+
+  // Add tenant code header
+  const tenantCode = getDevTenantCode();
+  if (tenantCode) {
+    headers["X-Tenant-Code"] = tenantCode;
+  }
+
+  // Add doctor context headers
+  const { doctorId, userRole } = getDoctorContext();
+  if (doctorId) {
+    headers["X-Doctor-Id"] = doctorId;
+  }
+  if (userRole) {
+    headers["X-User-Role"] = userRole;
+  }
+
   const isDev = import.meta.env.DEV;
   
   return fetch(url, {
     ...options,
     headers,
-    // Only include credentials for cross-origin in production
     credentials: isDev ? 'same-origin' : 'include',
   });
 };
