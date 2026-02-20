@@ -7,7 +7,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { CustomAuthProvider } from "./contexts/CustomAuthContext";
 import { AppointmentProvider } from "./contexts/AppointmentContext";
 import { TabAccessProvider } from "./contexts/TabAccessContext";
-import DevTenantSwitcher from "./components/DevTenantSwitcher";
+// DevTenantSwitcher import removed - not needed in SaaS platform
 import Index from "./pages/Index";
 import CustomAuth from "./pages/CustomAuth";
 import Dashboard from "./pages/Dashboard";

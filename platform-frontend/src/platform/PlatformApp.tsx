@@ -21,7 +21,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CustomAuthProvider } from "@/contexts/CustomAuthContext";
 import { AppointmentProvider } from "@/contexts/AppointmentContext";
 import { TabAccessProvider } from "@/contexts/TabAccessContext";
-import DevTenantSwitcher from "@/components/DevTenantSwitcher";
+// DevTenantSwitcher removed - SaaS platform sets tenant via login flow
 
 // Platform pages
 import TenantOnboarding from "@/pages/platform/TenantOnboarding";
@@ -114,7 +114,7 @@ const PlatformApp = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <DevTenantSwitcher />
+              {/* DevTenantSwitcher removed - not needed in SaaS platform */}
               <BrowserRouter>
                 <Routes>
                   {/* Platform routes */}
