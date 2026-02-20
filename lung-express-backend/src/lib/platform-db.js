@@ -4,7 +4,6 @@ import mysql from 'mysql2/promise';
 const PLATFORM_DB = process.env.PLATFORM_DB_NAME || 'saas_platform';
 
 // Platform database pool - for SaaS management (tenants, users, domains, settings)
-// This is SEPARATE from tenant databases
 export const platformPool = mysql.createPool({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT ?? 3306),
@@ -13,7 +12,16 @@ export const platformPool = mysql.createPool({
   database: PLATFORM_DB,
   waitForConnections: true,
   connectionLimit: 20,
-  queueLimit: 0
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  maxIdle: 5,
+  idleTimeout: 60000,
+});
+
+// Handle pool-level errors so they don't crash the process
+platformPool.pool.on('error', (err) => {
+  console.error('⚠ Platform MySQL pool error (non-fatal):', err.code || err.message);
 });
 
 // Cache for tenant database pools
@@ -37,7 +45,20 @@ export async function getTenantPool(tenantCode) {
     database: tenantCode,
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10000,
+    maxIdle: 3,
+    idleTimeout: 60000,
+  });
+
+  // Handle pool-level errors so they don't crash the process
+  pool.pool.on('error', (err) => {
+    console.error(`⚠ Tenant [${tenantCode}] MySQL pool error (non-fatal):`, err.code || err.message);
+    // If the pool is broken, remove it so a fresh one is created on next request
+    if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
+      tenantPools.delete(tenantCode);
+    }
   });
 
   tenantPools.set(tenantCode, pool);
@@ -51,7 +72,6 @@ export async function getTenantPool(tenantCode) {
  */
 export async function resolveTenantFromDomain(domain) {
   try {
-    // Remove port if present
     const cleanDomain = domain.split(':')[0];
     
     const [rows] = await platformPool.execute(
@@ -68,7 +88,7 @@ export async function resolveTenantFromDomain(domain) {
 
     return rows[0];
   } catch (error) {
-    console.error('Error resolving tenant:', error);
+    console.error('Error resolving tenant:', error.message);
     return null;
   }
 }
@@ -83,18 +103,15 @@ export async function createTenantSchema(tenantCode, tenantType = 'doctor') {
   const connection = await platformPool.getConnection();
   
   try {
-    // Read the appropriate template based on tenant type
     const fs = await import('fs');
     const path = await import('path');
     
-    // Select template based on tenant type
     const templateFile = tenantType === 'hospital' 
       ? 'hospital_schema_template.sql' 
       : 'doctor_schema_template.sql';
     
     const templatePath = path.join(process.cwd(), templateFile);
     
-    // Check if template exists, fallback to doctor template if not
     let template;
     try {
       template = fs.readFileSync(templatePath, 'utf8');
@@ -106,7 +123,6 @@ export async function createTenantSchema(tenantCode, tenantType = 'doctor') {
     
     template = template.replace(/\{\{TENANT_CODE\}\}/g, tenantCode);
 
-    // Split by semicolon and execute each statement
     const statements = template.split(';').filter(s => s.trim());
     
     for (const statement of statements) {
@@ -141,7 +157,6 @@ export async function generateTenantCode(name, type) {
   let code = `${prefix}_${base}`;
   let counter = 1;
 
-  // Check for uniqueness
   while (true) {
     const [rows] = await platformPool.execute(
       'SELECT id FROM tenants WHERE tenant_code = ?',

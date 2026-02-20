@@ -8,7 +8,16 @@ export const pool = mysql.createPool({
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  maxIdle: 5,
+  idleTimeout: 60000,
+});
+
+// Handle pool-level errors so they don't crash the process
+pool.pool.on('error', (err) => {
+  console.error('⚠ MySQL pool error (non-fatal):', err.code || err.message);
 });
 
 // Verify on startup (non-fatal)

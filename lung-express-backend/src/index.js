@@ -22,6 +22,11 @@ const sessionStore = new MySQLStore({
   }
 }, pool);
 
+// Handle session store errors gracefully (prevent ECONNRESET crashes)
+sessionStore.on('error', (err) => {
+  console.error('⚠ Session store error (non-fatal):', err.code || err.message);
+});
+
 // Middlewares
 import { tenantResolver } from './middleware/tenant-resolver.js';
 import { doctorContext } from './middleware/doctor-context.js';
