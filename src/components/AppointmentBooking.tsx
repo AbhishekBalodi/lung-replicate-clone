@@ -8,7 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { User, Calendar as CalendarIcon, UserCheck, CheckCircle, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+
 import {
   Dialog,
   DialogContent,

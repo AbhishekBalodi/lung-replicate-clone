@@ -1,7 +1,7 @@
 // Custom Auth Context - Multi-tenant authentication
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
-import { supabase } from '@/integrations/supabase/client';
+
 
 /* ============================================================
    🔹 TYPES
@@ -146,22 +146,34 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loginAsAdmin = async (email: string, password: string): Promise<AuthResult> => {
     if (isLegacyDrMannSite()) {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error || !data.user) {
-        return { user: undefined, error: { message: error?.message || 'Login failed' } };
+      // Legacy Dr. Mann site uses the Express backend directly
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ email, password, loginType: 'admin' })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          return { user: undefined, error: { message: data.error || 'Login failed' } };
+        }
+        const userData: CustomUser = {
+          id: data.user?.id || null,
+          email: data.user?.email || email,
+          phone: data.user?.phone || '',
+          name: data.user?.name || 'Admin',
+          role: data.user?.role || 'admin',
+          tenantType: 'doctor'
+        };
+        setUser(userData);
+        setTenant(data.tenant || null);
+        localStorage.setItem('customUser', JSON.stringify(userData));
+        if (data.tenant) localStorage.setItem('customTenant', JSON.stringify(data.tenant));
+        return { user: userData, error: null };
+      } catch (e: any) {
+        return { user: undefined, error: { message: e.message || 'Network error' } };
       }
-
-      const userData: CustomUser = {
-        id: null,
-        email: data.user.email || email,
-        phone: '',
-        name: data.user.user_metadata?.full_name || 'Admin',
-        role: 'admin',
-        tenantType: 'doctor'
-      };
-
-      setUser(userData);
-      return { user: userData, error: null };
     }
 
     try {
