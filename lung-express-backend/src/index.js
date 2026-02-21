@@ -133,8 +133,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: true,           // ALWAYS true — required for sameSite:'none' + HTTPS
-    sameSite: 'none',       // ALWAYS 'none' — required for cross-domain cookies
+    secure: isProd,              // true in production (HTTPS), false in dev (localhost)
+    sameSite: isProd ? 'none' : 'lax',  // 'none' for cross-domain prod, 'lax' for localhost dev
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
