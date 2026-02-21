@@ -39,6 +39,15 @@ export async function tenantResolver(req, res, next) {
     const headerTenantCode =
       req.headers['x-tenant-code'] || req.query.tenantCode;
 
+    // 🐞 DEBUG: Log tenant resolution details (remove after debugging)
+    console.log('🔍 TENANT DEBUG:', {
+      header: req.headers['x-tenant-code'] || null,
+      query: req.query.tenantCode || null,
+      hostname: req.hostname,
+      path: req.path,
+      resolved: headerTenantCode || 'NONE'
+    });
+
     if (headerTenantCode) {
       const dbName = LEGACY_DB_MAP[headerTenantCode] || headerTenantCode;
 
