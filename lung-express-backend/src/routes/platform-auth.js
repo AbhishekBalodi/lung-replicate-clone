@@ -125,8 +125,8 @@ router.post('/tenant-login', async (req, res) => {
     // If no tenant code, fall back to legacy Doctor Mann authentication
     if (!tenantCode) {
       // Legacy fallback for Doctor Mann (original system before SaaS)
-      const LEGACY_ADMIN_EMAIL = 'abhishekbalodi729@gmail.com';
-      const LEGACY_ADMIN_PASSWORD = '9560720890';
+      const LEGACY_ADMIN_EMAIL = process.env.LEGACY_ADMIN_EMAIL;
+      const LEGACY_ADMIN_PASSWORD = process.env.LEGACY_ADMIN_PASSWORD;
 
       if (email && password) {
         // Admin login for legacy Doctor Mann
