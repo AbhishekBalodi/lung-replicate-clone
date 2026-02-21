@@ -133,9 +133,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'none' : 'lax',
-    domain: process.env.COOKIE_DOMAIN || undefined,
+    secure: true,           // ALWAYS true — required for sameSite:'none' + HTTPS
+    sameSite: 'none',       // ALWAYS 'none' — required for cross-domain cookies
     maxAge: 24 * 60 * 60 * 1000
   }
 }));
