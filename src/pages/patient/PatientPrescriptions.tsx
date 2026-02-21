@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pill, Download, Printer, Calendar, Info, RefreshCw } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { apiGet } from "@/lib/api";
 
 interface Prescription {
   id: string;
@@ -27,13 +27,11 @@ const PatientPrescriptions = () => {
   const fetchPrescriptions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('prescribed_medicines')
-        .select('*')
-        .order('prescribed_date', { ascending: false });
-
-      if (error) throw error;
-      setPrescriptions(data || []);
+      const response = await apiGet('/api/dashboard/patient/prescriptions');
+      if (response.ok) {
+        const data = await response.json();
+        setPrescriptions(data.prescriptions || data || []);
+      }
     } catch (error) {
       console.error('Error fetching prescriptions:', error);
     } finally {

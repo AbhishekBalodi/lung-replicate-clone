@@ -4,8 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Download, Eye, Calendar, User } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
+import { apiGet } from "@/lib/api";
 
 interface Visit {
   id: string;
@@ -27,15 +27,10 @@ const PatientMedicalRecords = () => {
   const fetchMedicalRecords = async () => {
     try {
       setLoading(true);
-      
-      // Fetch patient visits
-      const { data: visitsData, error: visitsError } = await supabase
-        .from('patient_visits')
-        .select('*')
-        .order('visit_date', { ascending: false });
-
-      if (!visitsError && visitsData) {
-        setVisits(visitsData);
+      const response = await apiGet('/api/dashboard/patient/medical-records');
+      if (response.ok) {
+        const data = await response.json();
+        setVisits(data.visits || data || []);
       }
     } catch (error) {
       console.error('Error fetching medical records:', error);
