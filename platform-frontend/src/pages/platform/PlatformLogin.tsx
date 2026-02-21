@@ -64,6 +64,8 @@ const PlatformLogin = () => {
     try {
       // IMPORTANT: dashboards read tenant context via DevTenantSwitcher -> localStorage key
       localStorage.setItem('dev_tenant_code', code);
+      // Also store as customTenant for fallback compatibility
+      localStorage.setItem('customTenant', JSON.stringify({ code }));
 
       const result =
         tenantLoginType === 'super_admin'
