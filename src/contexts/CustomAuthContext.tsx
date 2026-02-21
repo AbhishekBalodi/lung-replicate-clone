@@ -93,7 +93,10 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
      🔹 TENANT INFO
      ============================================================ */
   const fetchTenantInfo = async () => {
-    if (isLegacyDrMannSite()) {
+    const devTenantCode = getDevTenantCode();
+    
+    // Only use legacy hardcoded info if on Dr Mann site AND no tenant override is active
+    if (isLegacyDrMannSite() && !devTenantCode) {
       setTenantInfo({
         id: 1,
         code: 'drmann',
