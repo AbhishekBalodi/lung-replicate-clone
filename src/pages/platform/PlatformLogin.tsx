@@ -92,6 +92,13 @@ const PlatformLogin = () => {
       localStorage.setItem('customUser', JSON.stringify(data.user));
       localStorage.setItem('tenantInfo', JSON.stringify(data.tenant));
       
+      // ✅ CRITICAL: Set dev_tenant_code so ALL subsequent API calls include X-Tenant-Code header
+      localStorage.setItem('dev_tenant_code', tenantCode.trim());
+      // Also store as customTenant for fallback compatibility
+      if (data.tenant) {
+        localStorage.setItem('customTenant', JSON.stringify({ ...data.tenant, code: tenantCode.trim() }));
+      }
+      
       toast.success('Login successful');
       
       // Redirect based on role
