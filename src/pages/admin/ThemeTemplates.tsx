@@ -200,7 +200,7 @@ const defaultSettings: ThemeSettings = {
 export default function ThemeTemplates() {
   const { toast } = useToast();
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || "";
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || "";
   const [settings, setSettings] = useState<ThemeSettings>(defaultSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("colors");

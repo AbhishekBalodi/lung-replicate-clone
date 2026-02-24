@@ -230,7 +230,7 @@ const BookAppointment = () => {
 
   // Tenant-aware doctor profile (falls back to Dr. Mann asset)
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || 'doctor_mann';
   const profileImage = `/tenants/${tenantCode}/dr-mann-passport.jpg`;
   const doctorDisplayName = tenantInfo?.name || 'Dr. Paramjeet Singh Mann';
 

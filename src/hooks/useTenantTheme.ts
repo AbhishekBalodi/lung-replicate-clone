@@ -95,7 +95,7 @@ const defaultSettings: ThemeSettings = {
 
 export function useTenantTheme() {
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || "";
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || "";
   const [themeSettings, setThemeSettings] = useState<ThemeSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
 

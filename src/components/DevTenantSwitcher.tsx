@@ -26,6 +26,7 @@ interface Tenant {
 }
 
 const TENANT_STORAGE_KEY = "dev_tenant_code";
+const TENANT_META_KEY = "dev_tenant_meta";
 
 const isLocalhost = () => {
   try {
@@ -118,10 +119,25 @@ const DevTenantSwitcher = () => {
 
   const handleTenantChange = (tenantCode: string) => {
     if (tenantCode === "none") {
+      localStorage.removeItem(TENANT_META_KEY);
       setDevTenantCode(null);
-    } else {
-      setDevTenantCode(tenantCode);
+      return;
     }
+
+    const selectedTenant = tenants.find((t) => t.tenant_code === tenantCode);
+    if (selectedTenant) {
+      localStorage.setItem(
+        TENANT_META_KEY,
+        JSON.stringify({
+          id: selectedTenant.id,
+          code: selectedTenant.tenant_code,
+          name: selectedTenant.name,
+          type: selectedTenant.type,
+        })
+      );
+    }
+
+    setDevTenantCode(tenantCode);
   };
 
   const currentTenantName = tenants.find(t => t.tenant_code === currentTenant)?.name;
