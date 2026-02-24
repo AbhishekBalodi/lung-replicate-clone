@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS patients (
 CREATE TABLE IF NOT EXISTS medicines_catalog (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  medicine_code VARCHAR(100),
   generic_name VARCHAR(255),
   form ENUM('tablet', 'capsule', 'syrup', 'injection', 'cream', 'ointment', 'drops', 'inhaler', 'other') DEFAULT 'tablet',
   strength VARCHAR(50),
@@ -115,7 +116,8 @@ CREATE TABLE IF NOT EXISTS medicines_catalog (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_medicines_name (name)
+  INDEX idx_medicines_name (name),
+  UNIQUE INDEX idx_medicine_code (medicine_code)
 );
 
 -- ============================================
@@ -149,6 +151,7 @@ CREATE TABLE IF NOT EXISTS prescribed_medicines (
 CREATE TABLE IF NOT EXISTS lab_catalogue (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  test_code VARCHAR(100),
   category VARCHAR(100),
   sample_type VARCHAR(100),
   preparation_instructions TEXT,
@@ -157,7 +160,8 @@ CREATE TABLE IF NOT EXISTS lab_catalogue (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_lab_name (name)
+  INDEX idx_lab_name (name),
+  UNIQUE INDEX idx_test_code (test_code)
 );
 
 -- ============================================
@@ -192,6 +196,8 @@ CREATE TABLE IF NOT EXISTS labs_test (
 CREATE TABLE IF NOT EXISTS procedure_catalogue (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
+  procedure_code VARCHAR(100),
+  department VARCHAR(100),
   category VARCHAR(100),
   description TEXT,
   duration_minutes INT,
@@ -200,7 +206,8 @@ CREATE TABLE IF NOT EXISTS procedure_catalogue (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_procedure_name (name)
+  INDEX idx_procedure_name (name),
+  UNIQUE INDEX idx_procedure_code (procedure_code)
 );
 
 -- ============================================

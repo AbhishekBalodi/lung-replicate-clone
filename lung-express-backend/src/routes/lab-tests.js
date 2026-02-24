@@ -96,7 +96,7 @@ router.get('/catalog', async (req, res) => {
  * POST /api/lab-tests/catalog - Add new lab test to catalog
  */
 router.post('/catalog', async (req, res) => {
-  const { name, category, sample_type, preparation_instructions, turnaround_time } = req.body || {};
+  const { name, test_code, category, sample_type, preparation_instructions, turnaround_time } = req.body || {};
   
   if (!name || !String(name).trim()) {
     return res.status(400).json({ error: 'Test name is required' });
@@ -107,9 +107,20 @@ router.post('/catalog', async (req, res) => {
     conn = await getConnection(req);
     await ensureTables(conn);
 
+    // Schema-resilient: check for test_code column
+    const hasTestCode = await columnExists(conn, 'lab_catalogue', 'test_code');
+
+    const cols = ['name', 'category', 'sample_type', 'preparation_instructions', 'turnaround_time'];
+    const vals = [name, category || null, sample_type || null, preparation_instructions || null, turnaround_time || null];
+
+    if (hasTestCode && test_code) {
+      cols.push('test_code');
+      vals.push(test_code.trim());
+    }
+
     const [result] = await conn.execute(
-      'INSERT INTO lab_catalogue (name, category, sample_type, preparation_instructions, turnaround_time) VALUES (?, ?, ?, ?, ?)',
-      [name, category || null, sample_type || null, preparation_instructions || null, turnaround_time || null]
+      `INSERT INTO lab_catalogue (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+      vals
     );
 
     res.status(201).json({ success: true, id: result.insertId });

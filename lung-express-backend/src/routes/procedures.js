@@ -91,7 +91,7 @@ router.get('/catalog', async (req, res) => {
  * POST /api/procedures/catalog - Add new procedure to catalog
  */
 router.post('/catalog', async (req, res) => {
-  const { name, category, description, duration, preparation_instructions } = req.body || {};
+  const { name, procedure_code, department, category, description, duration, preparation_instructions } = req.body || {};
   
   if (!name || !String(name).trim()) {
     return res.status(400).json({ error: 'Procedure name is required' });
@@ -102,21 +102,30 @@ router.post('/catalog', async (req, res) => {
     conn = await getConnection(req);
     await ensureTables(conn);
 
-    // Schema-resilient: check if duration column exists in catalogue
     const hasDuration = await columnExists(conn, 'procedure_catalogue', 'duration');
-    
-    let insertSql;
-    let insertParams;
-    
+    const hasProcedureCode = await columnExists(conn, 'procedure_catalogue', 'procedure_code');
+    const hasDepartment = await columnExists(conn, 'procedure_catalogue', 'department');
+
+    const cols = ['name', 'category', 'description', 'preparation_instructions'];
+    const vals = [name, category || null, description || null, preparation_instructions || null];
+
+    if (hasProcedureCode && procedure_code) {
+      cols.push('procedure_code');
+      vals.push(procedure_code.trim());
+    }
+    if (hasDepartment) {
+      cols.push('department');
+      vals.push(department || null);
+    }
     if (hasDuration) {
-      insertSql = 'INSERT INTO procedure_catalogue (name, category, description, duration, preparation_instructions) VALUES (?, ?, ?, ?, ?)';
-      insertParams = [name, category || null, description || null, duration || null, preparation_instructions || null];
-    } else {
-      insertSql = 'INSERT INTO procedure_catalogue (name, category, description, preparation_instructions) VALUES (?, ?, ?, ?)';
-      insertParams = [name, category || null, description || null, preparation_instructions || null];
+      cols.push('duration');
+      vals.push(duration || null);
     }
 
-    const [result] = await conn.execute(insertSql, insertParams);
+    const [result] = await conn.execute(
+      `INSERT INTO procedure_catalogue (${cols.join(', ')}) VALUES (${cols.map(() => '?').join(', ')})`,
+      vals
+    );
 
     res.status(201).json({ success: true, id: result.insertId });
   } catch (e) {

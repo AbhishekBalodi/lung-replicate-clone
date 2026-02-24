@@ -161,6 +161,7 @@ router.get("/catalog", async (req, res) => {
 router.post("/catalog", async (req, res) => {
   const {
     name,
+    medicine_code = "",
     form = "",
     strength = "",
     default_frequency = "",
@@ -176,15 +177,20 @@ router.post("/catalog", async (req, res) => {
   try {
     await ensureTables(conn);
 
-    // Schema-resilient INSERT for older schemas that might not have duration/route/etc
+    // Schema-resilient INSERT
     const hasForm = await columnExists(conn, 'medicines_catalog', 'form');
     const hasStrength = await columnExists(conn, 'medicines_catalog', 'strength');
     const hasDefaultFrequency = await columnExists(conn, 'medicines_catalog', 'default_frequency');
     const hasDuration = await columnExists(conn, 'medicines_catalog', 'duration');
     const hasRoute = await columnExists(conn, 'medicines_catalog', 'route');
+    const hasMedicineCode = await columnExists(conn, 'medicines_catalog', 'medicine_code');
 
     const cols = ['name'];
     const vals = [name.trim()];
+    if (hasMedicineCode && medicine_code) {
+      cols.push('medicine_code');
+      vals.push(medicine_code.trim());
+    }
     if (hasForm) {
       cols.push('form');
       vals.push(form);
