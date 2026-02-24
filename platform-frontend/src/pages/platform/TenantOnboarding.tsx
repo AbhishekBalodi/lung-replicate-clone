@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { Building2, User, Globe, ArrowRight, ArrowLeft, Check, Loader2, Layout, ExternalLink } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
+const SUBDOMAIN_SUFFIX = '.lungcare.in';
+
 // Validation schema
 const onboardingSchema = z.object({
   // Step 1: Tenant Type
@@ -31,33 +33,34 @@ const onboardingSchema = z.object({
   adminPasswordConfirm: z.string(),
   adminPhone: z.string().max(20).optional(),
 
-  // Optional doctor/hospital metadata (collected during onboarding)
+  // Optional doctor/hospital metadata
   doctorSpecialty: z.string().max(255).optional(),
-  doctorDegrees: z.string().optional(), // comma separated
+  doctorDegrees: z.string().optional(),
   doctorAwards: z.string().optional(),
   doctorYearsExperience: z.string().optional(),
   doctorAge: z.string().optional(),
   doctorGender: z.string().optional(),
   doctorBio: z.string().optional(),
   
-  // Step 4: Deployment Mode & Custom Domain
+  // Step 4: Deployment Mode (subdomain is auto-generated)
   deploymentMode: z.enum(['full_website', 'dashboard_only']),
-  customDomain: z.string().max(255).optional(),
 }).refine((data) => data.adminPassword === data.adminPasswordConfirm, {
   message: "Passwords don't match",
   path: ["adminPasswordConfirm"],
-}).refine((data) => {
-  // If full_website mode is selected, customDomain is required
-  if (data.deploymentMode === 'full_website' && !data.customDomain) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Domain is required for full website deployment",
-  path: ["customDomain"],
 });
 
 type OnboardingFormData = z.infer<typeof onboardingSchema>;
+
+/** Generate a subdomain slug from business name */
+function generateSubdomainSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 30);
+}
 
 const TenantOnboarding = () => {
   const navigate = useNavigate();
@@ -66,7 +69,6 @@ const TenantOnboarding = () => {
   const [registrationResult, setRegistrationResult] = useState<any>(null);
   const [tenantDetails, setTenantDetails] = useState<any>(null);
 
-  // After registration, fetch tenant details to surface uploaded assets
   useEffect(() => {
     if (!registrationResult?.tenant?.id) return;
     const fetchDetails = async () => {
@@ -81,7 +83,7 @@ const TenantOnboarding = () => {
     };
     fetchDetails();
   }, [registrationResult]);
-  // File previews for onboarding uploads
+
   const [doctorPhotoFile, setDoctorPhotoFile] = useState<File | null>(null);
   const [doctorPhotoPreview, setDoctorPhotoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -121,7 +123,6 @@ const TenantOnboarding = () => {
       adminPassword: '',
       adminPasswordConfirm: '',
       adminPhone: '',
-      // doctor metadata defaults
       doctorSpecialty: '',
       doctorDegrees: '',
       doctorAwards: '',
@@ -130,13 +131,17 @@ const TenantOnboarding = () => {
       doctorGender: '',
       doctorBio: '',
       deploymentMode: 'full_website',
-      customDomain: '',
     },
   });
 
   const { register, handleSubmit, watch, formState: { errors }, setValue } = form;
   const tenantType = watch('type');
   const deploymentMode = watch('deploymentMode');
+  const businessName = watch('name');
+
+  // Auto-generated subdomain preview
+  const subdomainSlug = generateSubdomainSlug(businessName || '');
+  const subdomainPreview = subdomainSlug ? `${subdomainSlug}${SUBDOMAIN_SUFFIX}` : '';
 
   const steps = [
     { number: 1, title: 'Type', description: 'Choose your account type' },
@@ -146,22 +151,17 @@ const TenantOnboarding = () => {
   ];
 
   const nextStep = () => {
-    if (currentStep < 4) {
-      setCurrentStep(currentStep + 1);
-    }
+    if (currentStep < 4) setCurrentStep(currentStep + 1);
   };
 
   const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const onSubmit = async (data: OnboardingFormData) => {
     setIsSubmitting(true);
     
     try {
-      // Build payload and attach optional metadata and base64 images (if provided)
       const payload: any = {
         type: data.type,
         name: data.name,
@@ -173,10 +173,9 @@ const TenantOnboarding = () => {
         adminPassword: data.adminPassword,
         adminPhone: data.adminPhone,
         deploymentMode: data.deploymentMode,
-        customDomain: data.deploymentMode === 'full_website' ? data.customDomain : undefined,
+        // No customDomain - backend auto-generates subdomain
       };
 
-      // Doctor-specific metadata
       if (data.doctorSpecialty) payload.doctorSpecialty = data.doctorSpecialty;
       if (data.doctorDegrees) payload.doctorDegrees = data.doctorDegrees;
       if (data.doctorAwards) payload.doctorAwards = data.doctorAwards;
@@ -185,7 +184,6 @@ const TenantOnboarding = () => {
       if (data.doctorGender) payload.doctorGender = data.doctorGender;
       if (data.doctorBio) payload.doctorBio = data.doctorBio;
 
-      // Attach images as data URLs if present (we use previews which are data URLs)
       if (doctorPhotoPreview) payload.doctorPhotoBase64 = doctorPhotoPreview;
       if (logoPreview) payload.logoBase64 = logoPreview;
       if (heroPreview) payload.heroBase64 = heroPreview;
@@ -232,14 +230,30 @@ const TenantOnboarding = () => {
                 <span>{registrationResult.tenant.name}</span>
                 <span className="text-muted-foreground">Type:</span>
                 <span className="capitalize">{registrationResult.tenant.type}</span>
-                <span className="text-muted-foreground">Deployment Mode:</span>
-                <span className="capitalize">{registrationResult.tenant.deploymentMode === 'dashboard_only' ? 'Dashboard Only' : 'Full Website'}</span>
                 <span className="text-muted-foreground">Status:</span>
                 <span className="text-green-600 capitalize">{registrationResult.tenant.status}</span>
               </div>
             </div>
 
-            {/* Show uploaded assets (if available) */}
+            {/* Show subdomain info */}
+            {registrationResult.subdomain && (
+              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
+                  <Globe className="w-4 h-4" />
+                  Your Website Subdomain
+                </h4>
+                <div className="bg-white dark:bg-background rounded p-3 font-mono text-sm break-all">
+                  <a href={`https://${registrationResult.subdomain}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                    {registrationResult.subdomain}
+                  </a>
+                </div>
+                <p className="text-sm text-green-700 dark:text-green-300">
+                  Your website is live at this subdomain. You can add a custom domain later from your dashboard settings.
+                </p>
+              </div>
+            )}
+
+            {/* Show uploaded assets */}
             {tenantDetails && (
               <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                 <h4 className="font-semibold">Uploaded Assets</h4>
@@ -266,21 +280,7 @@ const TenantOnboarding = () => {
               </div>
             )}
 
-            {registrationResult.domain && (
-              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-3">
-                <h4 className="font-semibold text-amber-800 dark:text-amber-200">Domain Verification Required</h4>
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                  To activate your custom domain <strong>{registrationResult.domain.domain}</strong>, 
-                  add the following DNS TXT record:
-                </p>
-                <div className="bg-white dark:bg-background rounded p-3 font-mono text-sm break-all">
-                  <p><strong>Host:</strong> _saas-verify.{registrationResult.domain.domain}</p>
-                  <p><strong>Value:</strong> {registrationResult.domain.verificationToken}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Dashboard Only specific info */}
+            {/* Dashboard Only info */}
             {registrationResult.tenant.deploymentMode === 'dashboard_only' && (
               <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 space-y-3">
                 <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
@@ -293,9 +293,6 @@ const TenantOnboarding = () => {
                 <div className="bg-white dark:bg-background rounded p-3 font-mono text-sm break-all">
                   <code>{window.location.origin}/login</code>
                 </div>
-                <p className="text-sm text-green-700 dark:text-green-300">
-                  Your staff can use their registered credentials to access the dashboard.
-                </p>
               </div>
             )}
 
@@ -439,6 +436,14 @@ const TenantOnboarding = () => {
                     {...register('name')}
                   />
                   {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                  
+                  {/* Auto subdomain preview */}
+                  {subdomainPreview && (
+                    <div className="bg-muted/50 rounded-lg p-3 mt-2">
+                      <p className="text-xs text-muted-foreground mb-1">Your auto-assigned subdomain:</p>
+                      <p className="font-mono text-sm text-primary font-medium">{subdomainPreview}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -474,34 +479,29 @@ const TenantOnboarding = () => {
                   {errors.address && <p className="text-sm text-destructive">{errors.address.message}</p>}
                 </div>
 
-                {/* Tenant-specific metadata & uploads */}
+                {/* Doctor-specific metadata */}
                 {tenantType === 'doctor' ? (
                   <div className="space-y-4 pt-4 border-t">
                     <h4 className="font-semibold">Doctor Profile (optional)</h4>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="doctorSpecialty">Specialty</Label>
                         <Input id="doctorSpecialty" placeholder="Pulmonology" {...register('doctorSpecialty')} />
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="doctorYearsExperience">Years of Experience</Label>
                         <Input id="doctorYearsExperience" placeholder="10" {...register('doctorYearsExperience')} />
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="doctorDegrees">Degrees (comma separated)</Label>
                       <Input id="doctorDegrees" placeholder="MBBS, MD, FCCP" {...register('doctorDegrees')} />
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="doctorAge">Age</Label>
                         <Input id="doctorAge" placeholder="55" {...register('doctorAge')} />
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="doctorGender">Gender</Label>
                         <select id="doctorGender" className="input" {...register('doctorGender')}>
@@ -512,12 +512,10 @@ const TenantOnboarding = () => {
                         </select>
                       </div>
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="doctorBio">Short Bio</Label>
                       <Textarea id="doctorBio" placeholder="Short bio for public site" {...register('doctorBio')} />
                     </div>
-
                     <div className="space-y-2">
                       <Label>Upload Doctor Photo</Label>
                       <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'doctor')} />
@@ -529,7 +527,6 @@ const TenantOnboarding = () => {
                 ) : (
                   <div className="space-y-4 pt-4 border-t">
                     <h4 className="font-semibold">Hospital Assets (optional)</h4>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Upload Logo</Label>
@@ -538,7 +535,6 @@ const TenantOnboarding = () => {
                           <img src={logoPreview} alt="logo" className="w-32 h-32 object-contain mt-2" />
                         )}
                       </div>
-
                       <div className="space-y-2">
                         <Label>Upload Hero Image</Label>
                         <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'hero')} />
@@ -564,54 +560,30 @@ const TenantOnboarding = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="adminName">Full Name *</Label>
-                  <Input 
-                    id="adminName" 
-                    placeholder="John Doe" 
-                    {...register('adminName')}
-                  />
+                  <Input id="adminName" placeholder="John Doe" {...register('adminName')} />
                   {errors.adminName && <p className="text-sm text-destructive">{errors.adminName.message}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="adminEmail">Email *</Label>
-                  <Input 
-                    id="adminEmail" 
-                    type="email"
-                    placeholder="admin@example.com" 
-                    {...register('adminEmail')}
-                  />
+                  <Input id="adminEmail" type="email" placeholder="admin@example.com" {...register('adminEmail')} />
                   {errors.adminEmail && <p className="text-sm text-destructive">{errors.adminEmail.message}</p>}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="adminPhone">Phone Number</Label>
-                  <Input 
-                    id="adminPhone" 
-                    placeholder="+91 9876543210" 
-                    {...register('adminPhone')}
-                  />
+                  <Input id="adminPhone" placeholder="+91 9876543210" {...register('adminPhone')} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="adminPassword">Password *</Label>
-                    <Input 
-                      id="adminPassword" 
-                      type="password"
-                      placeholder="Min 8 characters" 
-                      {...register('adminPassword')}
-                    />
+                    <Input id="adminPassword" type="password" placeholder="Min 8 characters" {...register('adminPassword')} />
                     {errors.adminPassword && <p className="text-sm text-destructive">{errors.adminPassword.message}</p>}
                   </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="adminPasswordConfirm">Confirm Password *</Label>
-                    <Input 
-                      id="adminPasswordConfirm" 
-                      type="password"
-                      placeholder="Confirm password" 
-                      {...register('adminPasswordConfirm')}
-                    />
+                    <Input id="adminPasswordConfirm" type="password" placeholder="Confirm password" {...register('adminPasswordConfirm')} />
                     {errors.adminPasswordConfirm && <p className="text-sm text-destructive">{errors.adminPasswordConfirm.message}</p>}
                   </div>
                 </div>
@@ -643,8 +615,13 @@ const TenantOnboarding = () => {
                       <div className="flex-1">
                         <p className="font-semibold">Full Website + Dashboard</p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          We deploy a complete medical website on your domain along with the admin dashboard.
+                          We deploy a complete medical website on an auto-assigned subdomain along with the admin dashboard.
                         </p>
+                        {subdomainPreview && (
+                          <p className="text-xs text-primary mt-2 font-mono">
+                            Your site: {subdomainPreview}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </Label>
@@ -668,11 +645,13 @@ const TenantOnboarding = () => {
                   </Label>
                 </RadioGroup>
 
-                {deploymentMode === 'full_website' && (
-                  <div className="space-y-2 pt-4 border-t">
-                    <Label htmlFor="customDomain">Your Domain Name *</Label>
-                    <Input id="customDomain" placeholder="www.yourwebsite.com" {...register('customDomain')} />
-                    {errors.customDomain && <p className="text-sm text-destructive">{errors.customDomain.message}</p>}
+                {deploymentMode === 'full_website' && subdomainPreview && (
+                  <div className="bg-muted/50 border rounded-lg p-4 space-y-2">
+                    <p className="text-sm font-medium">Your auto-assigned subdomain:</p>
+                    <p className="font-mono text-primary text-lg">{subdomainPreview}</p>
+                    <p className="text-xs text-muted-foreground">
+                      You can add a custom domain (e.g., www.yourclinic.com) later from your dashboard settings.
+                    </p>
                   </div>
                 )}
 
