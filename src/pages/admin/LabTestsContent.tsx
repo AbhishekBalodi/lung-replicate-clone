@@ -18,6 +18,7 @@ interface Patient {
 interface LabCatalog {
   id: number;
   name: string;
+  test_code: string | null;
   category: string | null;
   sample_type: string | null;
   preparation_instructions: string | null;
@@ -38,6 +39,7 @@ export default function LabTestsContent() {
   const [labCatalog, setLabCatalog] = useState<LabCatalog[]>([]);
   const [newLabTest, setNewLabTest] = useState({
     name: "",
+    test_code: "",
     category: "",
     sample_type: "",
     preparation_instructions: "",
@@ -93,6 +95,7 @@ export default function LabTestsContent() {
       toast.success("Lab test added to catalog!");
       setNewLabTest({
         name: "",
+        test_code: "",
         category: "",
         sample_type: "",
         preparation_instructions: "",
@@ -232,6 +235,15 @@ export default function LabTestsContent() {
               placeholder="e.g., Complete Blood Count"
               value={newLabTest.name}
               onChange={(e) => setNewLabTest({ ...newLabTest, name: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label htmlFor="test-code">Test Code / Short Code *</Label>
+            <Input
+              id="test-code"
+              placeholder="e.g., CBC001, LFT002"
+              value={newLabTest.test_code}
+              onChange={(e) => setNewLabTest({ ...newLabTest, test_code: e.target.value })}
             />
           </div>
           <div>
@@ -413,6 +425,7 @@ export default function LabTestsContent() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
+                <th className="text-left p-3 text-sm font-semibold text-foreground">Code</th>
                 <th className="text-left p-3 text-sm font-semibold text-foreground">Name</th>
                 <th className="text-left p-3 text-sm font-semibold text-foreground">Category</th>
                 <th className="text-left p-3 text-sm font-semibold text-foreground">Sample Type</th>
@@ -422,6 +435,7 @@ export default function LabTestsContent() {
             <tbody>
               {labCatalog.map((test) => (
                 <tr key={test.id} className="border-b border-border hover:bg-muted">
+                  <td className="p-3 text-sm text-muted-foreground">{test.test_code || "N/A"}</td>
                   <td className="p-3 text-sm text-foreground">{test.name}</td>
                   <td className="p-3 text-sm text-muted-foreground">{test.category || "N/A"}</td>
                   <td className="p-3 text-sm text-muted-foreground">{test.sample_type || "N/A"}</td>
@@ -438,6 +452,7 @@ export default function LabTestsContent() {
             <div key={test.id} className="p-4 bg-muted rounded-lg">
               <p className="font-semibold text-foreground mb-2">{test.name}</p>
               <div className="space-y-1 text-sm text-muted-foreground">
+                <p>Code: {test.test_code || "N/A"}</p>
                 <p>Category: {test.category || "N/A"}</p>
                 <p>Sample: {test.sample_type || "N/A"}</p>
                 <p>Turnaround: {test.turnaround_time || "N/A"}</p>

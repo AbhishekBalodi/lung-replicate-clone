@@ -13,6 +13,8 @@ import { Search, ChevronDown, Plus } from "lucide-react";
 type Procedure = {
   id: number;
   name: string;
+  procedure_code: string | null;
+  department: string | null;
   category: string | null;
   description: string | null;
   duration: string | null;
@@ -33,6 +35,8 @@ export default function ProceduresContent() {
   const { user } = useCustomAuth();
   // Catalog form states
   const [name, setName] = useState("");
+  const [procedureCode, setProcedureCode] = useState("");
+  const [department, setDepartment] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("");
@@ -74,6 +78,8 @@ export default function ProceduresContent() {
     try {
       const payload = {
         name: name.trim(),
+        procedure_code: procedureCode.trim() || null,
+        department: department.trim() || null,
         category: category.trim() || null,
         description: description.trim() || null,
         duration: duration.trim() || null,
@@ -89,6 +95,8 @@ export default function ProceduresContent() {
       
       toast.success("Procedure added to catalog");
       setName("");
+      setProcedureCode("");
+      setDepartment("");
       setCategory("");
       setDescription("");
       setDuration("");
@@ -185,6 +193,24 @@ export default function ProceduresContent() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g., Bronchoscopy"
+                  className="bg-white"
+                />
+              </div>
+              <div>
+                <Label className="text-emerald-900">Procedure Code / CPT Code *</Label>
+                <Input
+                  value={procedureCode}
+                  onChange={(e) => setProcedureCode(e.target.value)}
+                  placeholder="e.g., PROC001, CPT 45378"
+                  className="bg-white"
+                />
+              </div>
+              <div>
+                <Label className="text-emerald-900">Department *</Label>
+                <Input
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  placeholder="e.g., Cardiology, General Surgery"
                   className="bg-white"
                 />
               </div>
@@ -354,7 +380,9 @@ export default function ProceduresContent() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Code</TableHead>
                 <TableHead>Name</TableHead>
+                <TableHead>Department</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Duration</TableHead>
@@ -364,7 +392,9 @@ export default function ProceduresContent() {
             <TableBody>
               {items.map((proc) => (
                 <TableRow key={proc.id}>
+                  <TableCell>{proc.procedure_code || "N/A"}</TableCell>
                   <TableCell className="font-medium">{proc.name}</TableCell>
+                  <TableCell>{proc.department || "N/A"}</TableCell>
                   <TableCell>{proc.category || "N/A"}</TableCell>
                   <TableCell>{proc.description || "N/A"}</TableCell>
                   <TableCell>{proc.duration || "N/A"}</TableCell>

@@ -13,6 +13,7 @@ import api from '@/lib/api';
 type MedicineCatalog = { 
   id: number; 
   name: string; 
+  medicine_code: string;
   form: string; 
   strength: string; 
   default_frequency: string; 
@@ -42,6 +43,7 @@ export default function MedicinesContent() {
   
   // Catalog form states
   const [name, setName] = useState("");
+  const [medicineCode, setMedicineCode] = useState("");
   const [form, setForm] = useState("");
   const [strength, setStrength] = useState("");
   const [defaultFrequency, setDefaultFrequency] = useState("");
@@ -95,14 +97,14 @@ export default function MedicinesContent() {
     }
     
     try {
-      const payload = { name, form, strength, default_frequency: defaultFrequency, duration, route };
+      const payload = { name, medicine_code: medicineCode, form, strength, default_frequency: defaultFrequency, duration, route };
       const res = await api.apiPost('/api/medicines/catalog', payload);
       if (!res.ok) {
         const js = await res.json();
         throw new Error(js.error || "Failed to add");
       }
       toast.success("Medicine added to catalog");
-      setName(""); setForm(""); setStrength(""); setDefaultFrequency(""); setDuration(""); setRoute("");
+      setName(""); setMedicineCode(""); setForm(""); setStrength(""); setDefaultFrequency(""); setDuration(""); setRoute("");
       loadCatalog();
     } catch (err: any) {
       toast.error("Error: " + err.message);
@@ -208,6 +210,15 @@ export default function MedicinesContent() {
                   placeholder="Brand / Generic Name" 
                   value={name} 
                   onChange={e => setName(e.target.value)} 
+                  className="bg-background" 
+                />
+              </div>
+              <div>
+                <Label className="text-foreground">Medicine Code / SKU *</Label>
+                <Input 
+                  placeholder="e.g., MED001, PAR500TAB" 
+                  value={medicineCode} 
+                  onChange={e => setMedicineCode(e.target.value)} 
                   className="bg-background" 
                 />
               </div>
@@ -426,6 +437,7 @@ export default function MedicinesContent() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
+                    <th className="text-left p-3 text-sm font-semibold text-foreground">Code</th>
                     <th className="text-left p-3 text-sm font-semibold text-foreground">Name</th>
                     <th className="text-left p-3 text-sm font-semibold text-foreground">Form</th>
                     <th className="text-left p-3 text-sm font-semibold text-foreground">Strength</th>
@@ -437,6 +449,7 @@ export default function MedicinesContent() {
                 <tbody>
                   {catalogItems.map((med) => (
                     <tr key={med.id} className="border-b border-border hover:bg-muted">
+                      <td className="p-3 text-sm text-muted-foreground">{med.medicine_code || "N/A"}</td>
                       <td className="p-3 text-sm text-foreground font-medium">{med.name}</td>
                       <td className="p-3 text-sm text-muted-foreground">{med.form || "N/A"}</td>
                       <td className="p-3 text-sm text-muted-foreground">{med.strength || "N/A"}</td>
@@ -455,6 +468,7 @@ export default function MedicinesContent() {
                 <div key={med.id} className="p-4 bg-muted rounded-lg">
                   <p className="font-semibold text-foreground mb-2">{med.name}</p>
                   <div className="space-y-1 text-sm text-muted-foreground">
+                    <p>Code: {med.medicine_code || "N/A"}</p>
                     <p>Form: {med.form || "N/A"}</p>
                     <p>Strength: {med.strength || "N/A"}</p>
                     <p>Frequency: {med.default_frequency || "N/A"}</p>
