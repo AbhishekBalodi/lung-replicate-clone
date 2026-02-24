@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Activity, AlertCircle, ChevronRight, HeartPulse, Microscope, Star, Stethoscope, TestTube, User, Wind, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import SEOHead from "@/components/SEOHead";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const Treatments = () => {
   const conditions = [
@@ -89,7 +91,12 @@ const Treatments = () => {
 
   ];
 
-  const testimonials = [
+  // Tenant-aware: only show testimonials for Dr Mann
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || 'doctor_mann';
+  const isDrMann = tenantCode === 'doctor_mann' || tenantCode === 'drmann';
+
+  const testimonials = isDrMann ? [
     {
       text: "I was struggling with chronic asthma for years. Dr. Mann provided the right treatment and I finally feel relief. Best chest specialist in Delhi!",
       author: "Rajesh Kumar",
@@ -108,7 +115,7 @@ const Treatments = () => {
       location: "East Delhi",
       rating: 5
     }
-  ];
+  ] : [];
 
   return (
     <div className="min-h-screen">
@@ -169,7 +176,7 @@ const Treatments = () => {
           </div>
         </section>
 
-        {/* Patient Testimonials Section */}
+        {testimonials.length > 0 && (
         <section className="py-16 px-4">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
@@ -202,6 +209,7 @@ const Treatments = () => {
             </div>
           </div>
         </section>
+        )}
 
         <Footer />
       </div>

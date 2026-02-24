@@ -7,6 +7,8 @@ import {
   Stethoscope, User, Star, Search, Zap
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { getDevTenantCode } from '@/components/DevTenantSwitcher';
+import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const Services = () => {
   const services = [
@@ -104,9 +106,14 @@ const Services = () => {
 
   ];
 
-  const testimonials = [
+  // Tenant-aware: only show testimonials for Dr Mann
+  const { tenantInfo } = useCustomAuth();
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || 'doctor_mann';
+  const isDrMann = tenantCode === 'doctor_mann' || tenantCode === 'drmann';
+
+  const testimonials = isDrMann ? [
     {
-      text: "I was struggling with chronic asthma for years. Dr. Smith provided the right treatment and I finally feel relief. Best chest specialist in Delhi!",
+      text: "I was struggling with chronic asthma for years. Dr. Mann provided the right treatment and I finally feel relief. Best chest specialist in Delhi!",
       author: "Rajesh Kumar",
       location: "South Delhi",
       rating: 5
@@ -123,7 +130,7 @@ const Services = () => {
       location: "East Delhi",
       rating: 5
     }
-  ];
+  ] : [];
 
   return (
     <div className="min-h-screen">
@@ -179,7 +186,7 @@ const Services = () => {
         </div>
       </section>
 
-      {/* Patient Testimonials Section */}
+      {testimonials.length > 0 && (
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -212,6 +219,7 @@ const Services = () => {
           </div>
         </div>
       </section>
+      )}
 
       <Footer />
       </div>

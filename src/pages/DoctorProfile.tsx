@@ -63,16 +63,28 @@ const DoctorProfile = () => {
       }
     };
 
-    // If this tenant is a hospital, try to load doctors from tenant DB
     if (tenantInfo?.type === 'hospital') loadDoctors();
   }, [tenantInfo]);
 
-  const stats = [
+  // Tenant-aware stats
+  const stats = isDrMannTenant ? [
     { label: "Patients Treated", value: "50,000+", icon: Users, color: "text-lung-blue" },
     { label: "Years Experience", value: "40+", icon: Calendar, color: "text-lung-green" },
     { label: "Patient Rating", value: "4.9/5", icon: Star, color: "text-yellow-500" },
     { label: "Success Rate", value: "98%", icon: CheckCircle, color: "text-lung-green" }
+  ] : [
+    { label: "Patients Treated", value: "-", icon: Users, color: "text-lung-blue" },
+    { label: "Years Experience", value: content.experience || "-", icon: Calendar, color: "text-lung-green" },
+    { label: "Patient Rating", value: "-", icon: Star, color: "text-yellow-500" },
+    { label: "Success Rate", value: "-", icon: CheckCircle, color: "text-lung-green" }
   ];
+
+  // Tenant-aware testimonials
+  const testimonials = isDrMannTenant ? [
+    { text: "I was struggling with chronic asthma for years. Dr. Mann provided the right treatment and I finally feel relief. Best chest specialist in Delhi!", author: "Rajesh Kumar", location: "South Delhi", rating: 5 },
+    { text: "Highly professional and empathetic doctor. Got the best care for my father's COPD.", author: "Priya Sharma", location: "Delhi NCR", rating: 5 },
+    { text: "The lung rehabilitation program has been life-changing. I can now do activities I couldn't do before.", author: "Amit Patel", location: "East Delhi", rating: 5 }
+  ] : [];
 
   return (
     <div className="min-h-screen">
@@ -125,14 +137,16 @@ const DoctorProfile = () => {
                 )}
               </div>
               
-              <div className="flex items-center gap-2 mb-6">
-                <div className="flex text-yellow-400">
-                  {[1,2,3,4,5].map((star) => (
-                    <Star key={star} className="h-5 w-5 fill-current" />
-                  ))}
+              {isDrMannTenant && (
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="flex text-yellow-400">
+                    {[1,2,3,4,5].map((star) => (
+                      <Star key={star} className="h-5 w-5 fill-current" />
+                    ))}
+                  </div>
+                  <span className="text-white/90">(4.9/5 - 1500 reviews)</span>
                 </div>
-                <span className="text-white/90">(4.9/5 - 1500 reviews)</span>
-              </div>
+              )}
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/book-appointment">
@@ -140,11 +154,13 @@ const DoctorProfile = () => {
                     Book Appointment
                   </Button>
                 </Link>
-                <a href="tel:+91-555-123-4567">
-                  <Button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-lung-blue px-8 py-3 w-full">
-                    Call Now
-                  </Button>
-                </a>
+                {contactInfo.phone !== 'Not configured' && (
+                  <a href={`tel:${contactInfo.phone}`}>
+                    <Button className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-lung-blue px-8 py-3 w-full">
+                      Call Now
+                    </Button>
+                  </a>
+                )}
               </div>
             </div>
           </div>
@@ -168,16 +184,18 @@ const DoctorProfile = () => {
                 >
                   About
                 </button>
-                <button
-                  onClick={() => setActiveTab("reviews")}
-                  className={`py-4 px-2 font-medium transition-colors ${
-                    activeTab === "reviews" 
-                      ? "text-lung-blue border-b-2 border-lung-blue" 
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Reviews & Feedback
-                </button>
+                {testimonials.length > 0 && (
+                  <button
+                    onClick={() => setActiveTab("reviews")}
+                    className={`py-4 px-2 font-medium transition-colors ${
+                      activeTab === "reviews" 
+                        ? "text-lung-blue border-b-2 border-lung-blue" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Reviews & Feedback
+                  </button>
+                )}
               </div>
 
               {activeTab === "about" && (
@@ -193,143 +211,142 @@ const DoctorProfile = () => {
                     </p>
                   </div>
 
-                  {/* Work Experience */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-6">
-                      <Briefcase className="h-6 w-6 text-lung-blue" />
-                      <h2 className="text-2xl font-bold text-foreground font-lexend">Work Experience</h2>
-                    </div>
-                    <div className="space-y-6">
-                      <div className="border-l-4 border-lung-blue pl-6">
-                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Director, North Delhi Chest Centre</h3>
-                        <p className="text-lung-blue font-medium mb-2">Present</p>
-                        <p className="text-muted-foreground font-livvic">
-                          Leading comprehensive respiratory care, pulmonary function testing, bronchoscopy, sleep studies, and critical care services in North Delhi
-                        </p>
+                  {/* Work Experience - only for Dr Mann */}
+                  {isDrMannTenant && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <Briefcase className="h-6 w-6 text-lung-blue" />
+                        <h2 className="text-2xl font-bold text-foreground font-lexend">Work Experience</h2>
                       </div>
-                      <div className="border-l-4 border-lung-blue pl-6">
-                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Regional Tuberculosis Focal Point</h3>
-                        <p className="text-lung-blue font-medium mb-2">South Sharqia Region, Sultanate of Oman (1991-2004)</p>
-                        <p className="text-muted-foreground font-livvic">
-                          Recognized by WHO Tuberculosis Control Program for outstanding efforts in tuberculosis control and management. Coordinated regional TB control activities and implemented WHO guidelines
-                        </p>
+                      <div className="space-y-6">
+                        <div className="border-l-4 border-lung-blue pl-6">
+                          <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Director, North Delhi Chest Centre</h3>
+                          <p className="text-lung-blue font-medium mb-2">Present</p>
+                          <p className="text-muted-foreground font-livvic">
+                            Leading comprehensive respiratory care, pulmonary function testing, bronchoscopy, sleep studies, and critical care services in North Delhi
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-lung-blue pl-6">
+                          <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Regional Tuberculosis Focal Point</h3>
+                          <p className="text-lung-blue font-medium mb-2">South Sharqia Region, Sultanate of Oman (1991-2004)</p>
+                          <p className="text-muted-foreground font-livvic">
+                            Recognized by WHO Tuberculosis Control Program for outstanding efforts in tuberculosis control and management
+                          </p>
+                        </div>
+                        <div className="border-l-4 border-lung-blue pl-6">
+                          <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Medical Officer</h3>
+                          <p className="text-lung-blue font-medium mb-2">Rajan Babu Tuberculosis Hospital (1985-1990)</p>
+                          <p className="text-muted-foreground font-livvic">
+                            One of Asia's largest tuberculosis hospitals affiliated with Vallabhbhai Patel Chest Institute, University of Delhi
+                          </p>
+                        </div>
                       </div>
-                      <div className="border-l-4 border-lung-blue pl-6">
-                        <h3 className="text-xl font-bold text-foreground font-lexend mb-2">Medical Officer</h3>
-                        <p className="text-lung-blue font-medium mb-2">Rajan Babu Tuberculosis Hospital (1985-1990)</p>
-                        <p className="text-muted-foreground font-livvic">
-                          One of Asia's largest tuberculosis hospitals affiliated with Vallabhbhai Patel Chest Institute, University of Delhi. Played crucial role in diagnosing and treating numerous TB patients
-                        </p>
+                    </div>
+                  )}
+
+                  {/* Education & Training - only for Dr Mann */}
+                  {isDrMannTenant && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <GraduationCap className="h-6 w-6 text-lung-green" />
+                        <h2 className="text-2xl font-bold text-foreground font-lexend">Education & Training</h2>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Education & Training */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-6">
-                      <GraduationCap className="h-6 w-6 text-lung-green" />
-                      <h2 className="text-2xl font-bold text-foreground font-lexend">Education & Training</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Card className="p-6 bg-lung-green/5 border-lung-green/20">
-                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MD (Tuberculosis & Chest Diseases)</h3>
-                        <p className="text-lung-green font-medium mb-2">Vallabhbhai Patel Chest Institute, Delhi University</p>
-                        <p className="text-sm text-muted-foreground font-livvic">1988 | WHO Listed & MCI Recognized | Top Rank</p>
-                      </Card>
-                      <Card className="p-6 bg-lung-green/5 border-lung-green/20">
-                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">Diploma (TB & Chest Diseases)</h3>
-                        <p className="text-lung-green font-medium mb-2">Vallabhbhai Patel Chest Institute, Delhi University</p>
-                        <p className="text-sm text-muted-foreground font-livvic">1985 | WHO Listed & MCI Recognized</p>
-                      </Card>
-                      <Card className="p-6 bg-lung-green/5 border-lung-green/20">
-                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MBBS</h3>
-                        <p className="text-lung-green font-medium mb-2">Maulana Azad Medical College, Delhi University</p>
-                        <p className="text-sm text-muted-foreground font-livvic">1981 | WHO Listed & MCI Recognized</p>
-                      </Card>
-                      <Card className="p-6 bg-lung-green/5 border-lung-green/20">
-                        <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">FCCP</h3>
-                        <p className="text-lung-green font-medium mb-2">American College of Chest Physicians</p>
-                        <p className="text-sm text-muted-foreground font-livvic">2009 | Fellowship</p>
-                      </Card>
-                    </div>
-                  </div>
-
-                  {/* Specialty Interests */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-6">
-                      <Grid3X3 className="h-6 w-6 text-lung-purple" />
-                      <h2 className="text-2xl font-bold text-foreground font-lexend">Specialty Interests</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        { name: "Tuberculosis Management", link: "/conditions/tb-treatment" },
-                        { name: "COPD Treatment", link: "/conditions/copd-treatment" },
-                        { name: "Asthma Care", link: "/conditions/asthma-treatment" },
-                        { name: "Pneumonia", link: "/conditions/pneumonia-treatment" },
-                        { name: "Sleep Disorders", link: "/conditions/sleep-apnea" },
-                        { name: "Critical Care", link: "/services/critical-care" },
-                        { name: "Bronchoscopy", link: "/services/bronchoscopy" },
-                        { name: "Pulmonary Function Tests", link: "/services/pulmonary-function-test" },
-                        { name: "Respiratory Medicine", link: "/" }
-                      ].map((specialty, index) => (
-                        <Link key={index} to={specialty.link}>
-                          <Card className="p-4 bg-lung-purple/5 border-lung-purple/20 text-center hover:shadow-medium transition-all hover:-translate-y-1 cursor-pointer">
-                            <p className="text-lung-purple font-medium font-livvic">{specialty.name}</p>
-                          </Card>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Professional Memberships */}
-                  <div>
-                    <div className="flex items-center gap-3 mb-6">
-                      <Users className="h-6 w-6 text-lung-blue" />
-                      <h2 className="text-2xl font-bold text-foreground font-lexend">Professional Memberships</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[
-                        "American College of Chest Physicians (ACCP)",
-                        "WHO Tuberculosis Control Program",
-                        "European Respiratory Society (ERS)",
-                        "Medical Council of India"
-                      ].map((membership, index) => (
-                        <Card key={index} className="p-4 bg-lung-blue/10 border-lung-blue/20">
-                          <div className="flex items-center gap-3">
-                            <Users className="h-5 w-5 text-lung-blue" />
-                            <p className="text-lung-blue font-medium font-livvic">{membership}</p>
-                          </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card className="p-6 bg-lung-green/5 border-lung-green/20">
+                          <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MD (Tuberculosis & Chest Diseases)</h3>
+                          <p className="text-lung-green font-medium mb-2">Vallabhbhai Patel Chest Institute, Delhi University</p>
+                          <p className="text-sm text-muted-foreground font-livvic">1988 | WHO Listed & MCI Recognized | Top Rank</p>
                         </Card>
-                      ))}
+                        <Card className="p-6 bg-lung-green/5 border-lung-green/20">
+                          <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">Diploma (TB & Chest Diseases)</h3>
+                          <p className="text-lung-green font-medium mb-2">Vallabhbhai Patel Chest Institute, Delhi University</p>
+                          <p className="text-sm text-muted-foreground font-livvic">1985 | WHO Listed & MCI Recognized</p>
+                        </Card>
+                        <Card className="p-6 bg-lung-green/5 border-lung-green/20">
+                          <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">MBBS</h3>
+                          <p className="text-lung-green font-medium mb-2">Maulana Azad Medical College, Delhi University</p>
+                          <p className="text-sm text-muted-foreground font-livvic">1981 | WHO Listed & MCI Recognized</p>
+                        </Card>
+                        <Card className="p-6 bg-lung-green/5 border-lung-green/20">
+                          <h3 className="text-lg font-bold text-foreground mb-2 font-lexend">FCCP</h3>
+                          <p className="text-lung-green font-medium mb-2">American College of Chest Physicians</p>
+                          <p className="text-sm text-muted-foreground font-livvic">2009 | Fellowship</p>
+                        </Card>
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Specialty Interests - only for Dr Mann */}
+                  {isDrMannTenant && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <Grid3X3 className="h-6 w-6 text-lung-purple" />
+                        <h2 className="text-2xl font-bold text-foreground font-lexend">Specialty Interests</h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {[
+                          { name: "Tuberculosis Management", link: "/conditions/tb-treatment" },
+                          { name: "COPD Treatment", link: "/conditions/copd-treatment" },
+                          { name: "Asthma Care", link: "/conditions/asthma-treatment" },
+                          { name: "Pneumonia", link: "/conditions/pneumonia-treatment" },
+                          { name: "Sleep Disorders", link: "/conditions/sleep-apnea" },
+                          { name: "Critical Care", link: "/services/critical-care" },
+                          { name: "Bronchoscopy", link: "/services/bronchoscopy" },
+                          { name: "Pulmonary Function Tests", link: "/services/pulmonary-function-test" },
+                          { name: "Respiratory Medicine", link: "/" }
+                        ].map((specialty, index) => (
+                          <Link key={index} to={specialty.link}>
+                            <Card className="p-4 bg-lung-purple/5 border-lung-purple/20 text-center hover:shadow-medium transition-all hover:-translate-y-1 cursor-pointer">
+                              <p className="text-lung-purple font-medium font-livvic">{specialty.name}</p>
+                            </Card>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Professional Memberships - only for Dr Mann */}
+                  {isDrMannTenant && (
+                    <div>
+                      <div className="flex items-center gap-3 mb-6">
+                        <Users className="h-6 w-6 text-lung-blue" />
+                        <h2 className="text-2xl font-bold text-foreground font-lexend">Professional Memberships</h2>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          "American College of Chest Physicians (ACCP)",
+                          "WHO Tuberculosis Control Program",
+                          "European Respiratory Society (ERS)",
+                          "Medical Council of India"
+                        ].map((membership, index) => (
+                          <Card key={index} className="p-4 bg-lung-blue/10 border-lung-blue/20">
+                            <div className="flex items-center gap-3">
+                              <Users className="h-5 w-5 text-lung-blue" />
+                              <p className="text-lung-blue font-medium font-livvic">{membership}</p>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Placeholder for non-Dr Mann tenants */}
+                  {!isDrMannTenant && !hasContent && (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <User className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                      <p className="text-muted-foreground max-w-md">
+                        Detailed profile information will appear here once configured in the admin dashboard under Website Settings.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {activeTab === "reviews" && (
+              {activeTab === "reviews" && testimonials.length > 0 && (
                 <div>
                   <h2 className="text-2xl font-bold text-foreground mb-6 font-lexend">Patient Testimonials</h2>
                   <div className="space-y-6">
-                    {[
-                      {
-                        text: "I was struggling with chronic asthma for years. Dr. Mann provided the right treatment and I finally feel relief. Best chest specialist in Delhi!",
-                        author: "Rajesh Kumar",
-                        location: "South Delhi",
-                        rating: 5
-                      },
-                      {
-                        text: "Highly professional and empathetic doctor. Got the best care for my father's COPD.",
-                        author: "Priya Sharma",
-                        location: "Delhi NCR",
-                        rating: 5
-                      },
-                      {
-                        text: "The lung rehabilitation program has been life-changing. I can now do activities I couldn't do before.",
-                        author: "Amit Patel",
-                        location: "East Delhi",
-                        rating: 5
-                      }
-                    ].map((testimonial, index) => (
+                    {testimonials.map((testimonial, index) => (
                       <Card key={index} className="p-6 hover:shadow-strong transition-shadow">
                         <div className="flex gap-1 mb-4">
                           {[...Array(testimonial.rating)].map((_, i) => (
@@ -397,85 +414,76 @@ const DoctorProfile = () => {
                   <div className="flex items-start gap-3">
                     <MapPin className="h-5 w-5 text-lung-blue mt-1" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">North Delhi Chest Centre</p>
-                      <p className="text-sm text-muted-foreground font-livvic">321, Main Road, Bhai Parmanand Colony, Near Dr. Mukherjee Nagar, Delhi-110009</p>
+                      <p className="font-medium text-foreground font-livvic">{contactInfo.clinicName}</p>
+                      <p className="text-sm text-muted-foreground font-livvic">{contactInfo.address}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-lung-green/5 rounded-lg">
                     <Phone className="h-5 w-5 text-lung-green" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">+91-9810589799</p>
-                      <p className="text-sm text-muted-foreground font-livvic">+91-9810588799, +91-011-65101829</p>
+                      <p className="font-medium text-foreground font-livvic">{contactInfo.phone}</p>
+                      {contactInfo.altPhone && <p className="text-sm text-muted-foreground font-livvic">{contactInfo.altPhone}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Mail className="h-5 w-5 text-lung-blue" />
                     <div>
-                      <p className="font-medium text-foreground font-livvic">psmann58@yahoo.com</p>
+                      <p className="font-medium text-foreground font-livvic">{contactInfo.email}</p>
                       <p className="text-sm text-muted-foreground font-livvic">For appointments</p>
                     </div>
                   </div>
                 </div>
               </Card>
 
-              {/* Facilities */}
-              <Card className="p-6">
-                <h3 className="text-xl font-bold text-foreground mb-6 font-lexend">Facilities</h3>
-                <div className="space-y-3">
-                  {[
-                    "Vaccination for Lung Infections",
-                    "Allergy Testing (S.P.T)",
-                    "Pulmonary Function Test (PFT)",
-                    "Pleural Fluid Tapping",
-                    "Chest Tube Insertion",
-                    "Sleep Study Testing",
-                    "Chest X-Ray"
-                  ].map((facility, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <CheckCircle className="h-4 w-4 text-lung-green" />
-                      <p className="text-sm text-foreground font-livvic">{facility}</p>
-                    </div>
-                  ))}
-                </div>
-                <Button variant="link" className="text-lung-blue font-livvic mt-4 p-0">Read More</Button>
-              </Card>
+              {/* Facilities - only for Dr Mann */}
+              {isDrMannTenant && (
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold text-foreground mb-6 font-lexend">Facilities</h3>
+                  <div className="space-y-3">
+                    {[
+                      "Vaccination for Lung Infections",
+                      "Allergy Testing (S.P.T)",
+                      "Pulmonary Function Test (PFT)",
+                      "Pleural Fluid Tapping",
+                      "Chest Tube Insertion",
+                      "Sleep Study Testing",
+                      "Chest X-Ray"
+                    ].map((facility, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <CheckCircle className="h-4 w-4 text-lung-green" />
+                        <p className="text-sm text-foreground font-livvic">{facility}</p>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
 
-              {/* Awards & Recognition */}
-              <Card className="p-6 bg-yellow-50 border-yellow-200">
-                <div className="flex items-center gap-3 mb-6">
-                  <Award className="h-6 w-6 text-yellow-600" />
-                  <h3 className="text-xl font-bold text-foreground font-lexend">Awards & Recognition</h3>
-                </div>
-                <div className="space-y-4">
-                  <div className="p-4 bg-yellow-100 rounded-lg">
-                    <div className="flex items-start gap-3 mb-2">
-                      <Award className="h-6 w-6 text-yellow-600 mt-1" />
-                      <div>
-                        <p className="font-bold text-foreground font-livvic">FCCP Fellowship (2009)</p>
-                        <p className="text-sm text-muted-foreground font-livvic">American College of Chest Physicians, USA</p>
-                      </div>
-                    </div>
+              {/* Awards & Recognition - only for Dr Mann */}
+              {isDrMannTenant && (
+                <Card className="p-6 bg-yellow-50 border-yellow-200">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Award className="h-6 w-6 text-yellow-600" />
+                    <h3 className="text-xl font-bold text-foreground font-lexend">Awards & Recognition</h3>
                   </div>
-                  <div className="p-4 bg-yellow-100 rounded-lg">
-                    <div className="flex items-start gap-3 mb-2">
-                      <Award className="h-6 w-6 text-yellow-600 mt-1" />
-                      <div>
-                        <p className="font-bold text-foreground font-livvic">Best Doctor Award (1998)</p>
-                        <p className="text-sm text-muted-foreground font-livvic">South Sharquia Region, Sultanate of Oman</p>
+                  <div className="space-y-4">
+                    {[
+                      { title: "FCCP Fellowship (2009)", desc: "American College of Chest Physicians, USA" },
+                      { title: "Best Doctor Award (1998)", desc: "South Sharquia Region, Sultanate of Oman" },
+                      { title: "Rajshiri Dr. Ram Kishore Memorial Medal (1988)", desc: "Top Candidate in MD Examination, Delhi University" },
+                    ].map((award, index) => (
+                      <div key={index} className="p-4 bg-yellow-100 rounded-lg">
+                        <div className="flex items-start gap-3 mb-2">
+                          <Award className="h-6 w-6 text-yellow-600 mt-1" />
+                          <div>
+                            <p className="font-bold text-foreground font-livvic">{award.title}</p>
+                            <p className="text-sm text-muted-foreground font-livvic">{award.desc}</p>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                  <div className="p-4 bg-yellow-100 rounded-lg">
-                    <div className="flex items-start gap-3 mb-2">
-                      <Award className="h-6 w-6 text-yellow-600 mt-1" />
-                      <div>
-                        <p className="font-bold text-foreground font-livvic">Rajshiri Dr. Ram Kishore Memorial Medal (1988)</p>
-                        <p className="text-sm text-muted-foreground font-livvic">Top Candidate in MD Examination, Delhi University</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              )}
 
               {/* Safety Assured */}
               <Card className="p-6">

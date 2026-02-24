@@ -14,6 +14,34 @@ import {
 
 const router = Router();
 
+const SUBDOMAIN_SUFFIX = process.env.SUBDOMAIN_SUFFIX || '.lungcare.in';
+
+// Generate subdomain slug from name
+function generateSubdomainSlug(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .substring(0, 30);
+}
+
+// Ensure subdomain is unique in tenant_domains
+async function ensureUniqueSubdomain(connection, slug) {
+  let candidate = slug + SUBDOMAIN_SUFFIX;
+  let counter = 1;
+  while (true) {
+    const [rows] = await connection.execute(
+      'SELECT id FROM tenant_domains WHERE domain = ?',
+      [candidate]
+    );
+    if (rows.length === 0) return candidate;
+    candidate = `${slug}-${counter}${SUBDOMAIN_SUFFIX}`;
+    counter++;
+  }
+}
+
 // Validation schema for tenant registration
 const tenantSchema = z.object({
   name: z.string().min(2).max(255),
@@ -21,7 +49,6 @@ const tenantSchema = z.object({
   email: z.string().email().max(255),
   phone: z.string().max(20).optional(),
   address: z.string().optional(),
-  customDomain: z.string().max(255).optional(),
   // Admin user details
   adminName: z.string().min(2).max(255),
   adminEmail: z.string().email().max(255),
@@ -80,21 +107,15 @@ router.post('/register', async (req, res) => {
         [tenantId, data.adminEmail, passwordHash, data.adminPhone || null, data.adminName, adminRole]
       );
 
-      // Add custom domain if provided
-      let domainInfo = null;
-      if (data.customDomain) {
-        const verificationToken = generateVerificationToken();
-        await connection.execute(
-          `INSERT INTO tenant_domains (tenant_id, domain, is_primary, verification_token) 
-           VALUES (?, ?, TRUE, ?)`,
-          [tenantId, data.customDomain, verificationToken]
-        );
-        domainInfo = {
-          domain: data.customDomain,
-          verificationToken,
-          verificationStatus: 'pending'
-        };
-      }
+      // Auto-generate subdomain
+      const slug = generateSubdomainSlug(data.name);
+      const subdomain = await ensureUniqueSubdomain(connection, slug);
+      
+      await connection.execute(
+        `INSERT INTO tenant_domains (tenant_id, domain, is_primary, verification_status, verified_at) 
+         VALUES (?, ?, TRUE, 'verified', NOW())`,
+        [tenantId, subdomain]
+      );
 
       // Create tenant database schema with appropriate template
       await createTenantSchema(tenantCode, data.type);
@@ -203,12 +224,11 @@ router.post('/register', async (req, res) => {
           email: data.email,
           status: 'active'
         },
-        domain: domainInfo,
-        nextSteps: domainInfo ? [
-          `Add a TXT record to your DNS: _saas-verify.${data.customDomain} = ${domainInfo.verificationToken}`,
-          'Once verified, your website will be live at your custom domain'
-        ] : [
-          'Your website is ready! You can add a custom domain later from settings.'
+        subdomain,
+        nextSteps: [
+          `Your website is live at: ${subdomain}`,
+          'Log in to your dashboard to configure your website content.',
+          'You can add a custom domain later from Dashboard → Settings.'
         ]
       });
 
