@@ -94,6 +94,24 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
      ============================================================ */
   const fetchTenantInfo = async () => {
     const devTenantCode = getDevTenantCode();
+
+    // Optional frontend fallback (used when tenant-info API is temporarily unavailable)
+    try {
+      const metaRaw = localStorage.getItem('dev_tenant_meta');
+      if (metaRaw) {
+        const meta = JSON.parse(metaRaw);
+        if (meta?.code && meta.code === devTenantCode && meta?.type) {
+          setTenantInfo({
+            id: meta.id || 0,
+            code: meta.code,
+            name: meta.name || meta.code,
+            type: meta.type
+          });
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
     
     // Only use legacy hardcoded info if on Dr Mann site AND no tenant override is active
     if (isLegacyDrMannSite() && !devTenantCode) {
@@ -118,7 +136,7 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
         if (data.tenant) setTenantInfo(data.tenant);
       }
     } catch {
-      // silent
+      // silent: keep fallback tenantInfo from localStorage if available
     }
   };
 
@@ -148,7 +166,8 @@ export const CustomAuthProvider = ({ children }: { children: ReactNode }) => {
      ============================================================ */
 
   const loginAsAdmin = async (email: string, password: string): Promise<AuthResult> => {
-    if (isLegacyDrMannSite()) {
+    // Use legacy hardcoded login only when no tenant override is active
+    if (isLegacyDrMannSite() && !getDevTenantCode()) {
       // Legacy Dr. Mann site uses the Express backend directly
       try {
         const res = await fetch(`${getApiBaseUrl()}/api/platform/auth/tenant-login`, {

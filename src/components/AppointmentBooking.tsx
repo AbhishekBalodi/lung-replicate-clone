@@ -211,7 +211,7 @@ const AppointmentBooking = () => {
   ];
 
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || "";
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || "";
   const doctor = {
     name: tenantInfo?.name || (tenantCode ? "Doctor" : "Doctor"),
     specialty: "Pulmonologist",
@@ -292,7 +292,7 @@ const AppointmentBooking = () => {
       }
     } else {
       try {
-        const tenantCode = tenantInfo?.code || getDevTenantCode();
+        const tenantCode = getDevTenantCode() || tenantInfo?.code;
         if (!tenantCode) {
           toast({
             title: "Tenant not selected",

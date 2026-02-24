@@ -73,7 +73,7 @@ const defaultContent: TenantContent = {
 
 export function useTenantContent() {
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || "";
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || "";
   const [content, setContent] = useState<TenantContent>(defaultContent);
   const [loading, setLoading] = useState(true);
 

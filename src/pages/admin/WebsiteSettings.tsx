@@ -83,7 +83,7 @@ const defaultContent: WebsiteContent = {
 export default function WebsiteSettings() {
   const { toast } = useToast();
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || "";
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || "";
   const [content, setContent] = useState<WebsiteContent>(defaultContent);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("basic");

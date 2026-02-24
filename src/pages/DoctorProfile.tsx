@@ -14,7 +14,7 @@ const DoctorProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
   const { tenantInfo } = useCustomAuth();
   const { content, isDrMannTenant, hasContent } = useTenantContent();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || 'doctor_mann';
   const [doctorData, setDoctorData] = useState<any | null>(null);
   
   // Determine display values based on tenant

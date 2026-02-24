@@ -7,7 +7,7 @@ import { useCustomAuth } from '@/contexts/CustomAuthContext';
 
 const Hero = () => {
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || 'doctor_mann';
   const isDrMann = tenantCode === 'doctor_mann' || tenantCode === 'drmann';
   
   // Dynamic content based on tenant

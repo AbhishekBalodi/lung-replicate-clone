@@ -10,7 +10,7 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, tenantInfo } = useCustomAuth();
   
-  const tenantCode = tenantInfo?.code || getDevTenantCode() || 'doctor_mann';
+  const tenantCode = getDevTenantCode() || tenantInfo?.code || 'doctor_mann';
   const isDrMann = tenantCode === 'doctor_mann' || tenantCode === 'drmann';
   const clinicName = tenantInfo?.name || (isDrMann ? 'Delhi Chest Physician' : 'Healthcare');
   const phoneNumber = isDrMann ? '+91-9810589799' : null;
