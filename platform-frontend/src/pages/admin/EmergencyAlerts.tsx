@@ -80,6 +80,22 @@ export default function EmergencyAlerts() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
+        <InstructionBanner
+          title="How Emergency & Alerts Work"
+          summary="Real-time critical notifications for patient emergencies, abnormal lab results, and vital sign alerts."
+          steps={[
+            { title: "Alerts are Auto-Generated", description: "Alerts appear automatically when critical lab values are detected, vital signs exceed thresholds, or emergency patients arrive." },
+            { title: "Acknowledge Alerts", description: "Click 'Acknowledge' on any alert to mark it as seen. This tells other staff you're handling it." },
+            { title: "Dismiss Alerts", description: "Click 'Dismiss' to remove resolved alerts from the active list." },
+            { title: "Configure Settings", description: "Toggle Push Notifications and Sound Alerts on/off using the switches above the alert list." },
+          ]}
+          tips={[
+            "Critical alerts pulse red — these need immediate attention.",
+            "Use the 'Unacknowledged' filter to see only pending alerts.",
+            "Alerts are triggered by lab results, vitals monitoring, and ER admissions.",
+          ]}
+        />
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Emergency & Alerts</h1>

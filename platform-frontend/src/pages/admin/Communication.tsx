@@ -162,6 +162,22 @@ export default function Communication() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
+        <InstructionBanner
+          title="How to Use Communication"
+          summary="Internal chat and staff notes for secure team communication within your clinic or hospital."
+          steps={[
+            { title: "Internal Chat", description: "Conversations appear here when staff members are added to the system. Go to Staff Management to add team members first." },
+            { title: "Start a Conversation", description: "Once staff members exist, their names appear in the chat list. Click a name to open the conversation and type your message." },
+            { title: "Staff Notes", description: "Click the 'Staff Notes' tab to send internal memos. Click '+ New Note', fill in the recipient (e.g., 'Nursing Staff'), subject, and message, then click 'Send Note'." },
+            { title: "Pin Important Notes", description: "Click the pin icon on any note to mark it as important. Pinned notes appear highlighted at the top." },
+          ]}
+          tips={[
+            "Chat requires at least 2 staff members registered in your system.",
+            "Notes are visible to all staff in the selected role/department.",
+            "Use Internal Chat for quick messages, Staff Notes for formal announcements.",
+          ]}
+        />
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Communication</h1>
