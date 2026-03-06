@@ -528,7 +528,7 @@ const [kpiData, setKpiData] = useState<any>(null);
     if (!editingDoctor) return;
     setEditLoading(true);
     try {
-      const payload = {
+      const payload: any = {
         name: editingFormData.name,
         email: editingFormData.email,
         phone: editingFormData.phone || null,
@@ -537,6 +537,9 @@ const [kpiData, setKpiData] = useState<any>(null);
         bio: editingFormData.bio || null,
         consultation_fee: editingFormData.consultation_fee ? parseFloat(editingFormData.consultation_fee) : null
       };
+      if (editingFormData.password) {
+        payload.password = editingFormData.password;
+      }
 
       const res = await apiFetch(`/api/doctors/${editingDoctor.id}`, {
         method: 'PUT',
@@ -1529,12 +1532,14 @@ const [kpiData, setKpiData] = useState<any>(null);
                                   name: doctor.name || '',
                                   email: doctor.email || '',
                                   phone: doctor.phone || '',
+                                  password: '',
                                   specialization: doctor.specialization || '',
                                   qualifications: doctor.qualifications || '',
                                   bio: doctor.bio || '',
                                   consultation_fee: doctor.consultation_fee ? String(doctor.consultation_fee) : ''
                                 });
                                 setEditPhotoFile(null);
+                                setShowEditPassword(false);
                                 setIsEditDialogOpen(true);
                               }}>
                                 <Edit className="h-4 w-4" />
