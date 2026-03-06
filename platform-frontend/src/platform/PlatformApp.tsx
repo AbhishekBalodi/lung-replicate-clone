@@ -102,6 +102,42 @@ import TaxSettings from "@/pages/admin/TaxSettings";
 import PaymentGateways from "@/pages/admin/PaymentGateways";
 import MessagingIntegrations from "@/pages/admin/MessagingIntegrations";
 import WebsiteSettings from "@/pages/admin/WebsiteSettings";
+import ThemeTemplates from "@/pages/admin/ThemeTemplates";
+
+/* EMR & Clinical Pages */
+import EMRDiagnosisNotes from "@/pages/admin/EMRDiagnosisNotes";
+import EMRTreatmentPlans from "@/pages/admin/EMRTreatmentPlans";
+import EMRProgressNotes from "@/pages/admin/EMRProgressNotes";
+import EMRDocuments from "@/pages/admin/EMRDocuments";
+import FollowUps from "@/pages/admin/FollowUps";
+import CarePlans from "@/pages/admin/CarePlans";
+import Telemedicine from "@/pages/admin/Telemedicine";
+import DoctorSchedule from "@/pages/admin/DoctorSchedule";
+import TasksNotifications from "@/pages/admin/TasksNotifications";
+import DoctorAnalytics from "@/pages/admin/DoctorAnalytics";
+import Communication from "@/pages/admin/Communication";
+import EmergencyAlerts from "@/pages/admin/EmergencyAlerts";
+import DoctorProfileSettings from "@/pages/admin/DoctorProfile";
+
+/* Patient Dashboard Pages */
+import PatientConsoleShell from "@/layouts/PatientConsoleShell";
+import PatientHome from "@/pages/patient/PatientHome";
+import PatientAppointments from "@/pages/patient/PatientAppointments";
+import PatientBookAppointment from "@/pages/patient/PatientBookAppointment";
+import PatientAppointmentHistory from "@/pages/patient/PatientAppointmentHistory";
+import PatientMedicalRecords from "@/pages/patient/PatientMedicalRecords";
+import PatientPrescriptions from "@/pages/patient/PatientPrescriptions";
+import PatientLabReports from "@/pages/patient/PatientLabReports";
+import PatientBilling from "@/pages/patient/PatientBilling";
+import PatientHealthTimeline from "@/pages/patient/PatientHealthTimeline";
+import PatientMessages from "@/pages/patient/PatientMessages";
+import PatientNotifications from "@/pages/patient/PatientNotifications";
+import PatientProfile from "@/pages/patient/PatientProfile";
+import PatientTelemedicine from "@/pages/patient/PatientTelemedicine";
+import PatientFeedbackPage from "@/pages/patient/PatientFeedback";
+import PatientSettings from "@/pages/patient/PatientSettings";
+import PatientUploadReports from "@/pages/patient/PatientUploadReports";
+import PatientSupport from "@/pages/patient/PatientSupport";
 
 const queryClient = new QueryClient();
 
@@ -114,7 +150,6 @@ const PlatformApp = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              {/* DevTenantSwitcher removed - not needed in SaaS platform */}
               <BrowserRouter>
                 <Routes>
                   {/* Platform routes */}
@@ -129,7 +164,7 @@ const PlatformApp = () => (
                   <Route path="/tenants/:id" element={<TenantDetails />} />
                   <Route path="/tenants/:id/settings" element={<TenantSettings />} />
 
-                  {/* Tenant Admin Dashboard Routes (same as 8080) */}
+                  {/* Tenant Admin Dashboard Routes */}
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/super-admin" element={<SuperAdminDashboard />} />
                   
@@ -215,6 +250,72 @@ const PlatformApp = () => (
                   <Route path="/admin/config/payment-gateways" element={<PaymentGateways />} />
                   <Route path="/admin/config/messaging" element={<MessagingIntegrations />} />
                   <Route path="/admin/config/website" element={<WebsiteSettings />} />
+                  <Route path="/admin/config/theme-templates" element={<ThemeTemplates />} />
+
+                  {/* EMR Routes */}
+                  <Route path="/admin/emr/diagnosis" element={<EMRDiagnosisNotes />} />
+                  <Route path="/admin/emr/treatment-plans" element={<EMRTreatmentPlans />} />
+                  <Route path="/admin/emr/progress-notes" element={<EMRProgressNotes />} />
+                  <Route path="/admin/emr/documents" element={<EMRDocuments />} />
+                  
+                  {/* Follow-Ups & Care Plans */}
+                  <Route path="/admin/follow-ups" element={<FollowUps />} />
+                  <Route path="/admin/care-plans" element={<CarePlans />} />
+                  
+                  {/* Telemedicine */}
+                  <Route path="/admin/telemedicine" element={<Telemedicine />} />
+                  
+                  {/* Schedule */}
+                  <Route path="/admin/schedule" element={<DoctorSchedule />} />
+                  
+                  {/* Tasks & Notifications */}
+                  <Route path="/admin/tasks" element={<TasksNotifications />} />
+                  
+                  {/* Analytics */}
+                  <Route path="/admin/analytics" element={<DoctorAnalytics />} />
+                  
+                  {/* Communication */}
+                  <Route path="/admin/communication" element={<Communication />} />
+                  
+                  {/* Emergency */}
+                  <Route path="/admin/emergency" element={<EmergencyAlerts />} />
+                  
+                  {/* Doctor Profile */}
+                  <Route path="/admin/profile" element={<DoctorProfileSettings />} />
+
+                  {/* Patient Dashboard Routes */}
+                  <Route path="/patient/dashboard" element={<PatientConsoleShell><PatientHome /></PatientConsoleShell>} />
+                  <Route path="/patient/appointments" element={<PatientConsoleShell><PatientAppointments /></PatientConsoleShell>} />
+                  <Route path="/patient/appointments/book" element={<PatientConsoleShell><PatientBookAppointment /></PatientConsoleShell>} />
+                  <Route path="/patient/appointments/history" element={<PatientConsoleShell><PatientAppointmentHistory /></PatientConsoleShell>} />
+                  <Route path="/patient/records" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+                  <Route path="/patient/records/visits" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+                  <Route path="/patient/records/diagnoses" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+                  <Route path="/patient/records/doctor-notes" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+                  <Route path="/patient/records/discharge" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+                  <Route path="/patient/records/documents" element={<PatientConsoleShell><PatientMedicalRecords /></PatientConsoleShell>} />
+                  <Route path="/patient/prescriptions" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+                  <Route path="/patient/prescriptions/current" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+                  <Route path="/patient/prescriptions/history" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+                  <Route path="/patient/prescriptions/refill" element={<PatientConsoleShell><PatientPrescriptions /></PatientConsoleShell>} />
+                  <Route path="/patient/lab-reports" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+                  <Route path="/patient/lab-reports/pending" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+                  <Route path="/patient/lab-reports/completed" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+                  <Route path="/patient/lab-reports/radiology" element={<PatientConsoleShell><PatientLabReports /></PatientConsoleShell>} />
+                  <Route path="/patient/billing" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+                  <Route path="/patient/billing/invoices" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+                  <Route path="/patient/billing/payments" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+                  <Route path="/patient/billing/insurance" element={<PatientConsoleShell><PatientBilling /></PatientConsoleShell>} />
+                  <Route path="/patient/timeline" element={<PatientConsoleShell><PatientHealthTimeline /></PatientConsoleShell>} />
+                  <Route path="/patient/messages" element={<PatientConsoleShell><PatientMessages /></PatientConsoleShell>} />
+                  <Route path="/patient/upload-reports" element={<PatientConsoleShell><PatientUploadReports /></PatientConsoleShell>} />
+                  <Route path="/patient/support" element={<PatientConsoleShell><PatientSupport /></PatientConsoleShell>} />
+                  <Route path="/patient/notifications" element={<PatientConsoleShell><PatientNotifications /></PatientConsoleShell>} />
+                  <Route path="/patient/profile" element={<PatientConsoleShell><PatientProfile /></PatientConsoleShell>} />
+                  <Route path="/patient/family" element={<PatientConsoleShell><PatientProfile /></PatientConsoleShell>} />
+                  <Route path="/patient/telemedicine" element={<PatientConsoleShell><PatientTelemedicine /></PatientConsoleShell>} />
+                  <Route path="/patient/feedback" element={<PatientConsoleShell><PatientFeedbackPage /></PatientConsoleShell>} />
+                  <Route path="/patient/settings" element={<PatientConsoleShell><PatientSettings /></PatientConsoleShell>} />
 
                   {/* Catch all - redirect to login */}
                   <Route path="*" element={<Navigate to="/login" replace />} />
