@@ -440,7 +440,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       if (res.ok) {
         toast({ title: 'Success', description: 'Staff member added' });
         setIsAddStaffOpen(false);
-        setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+        setStaffFormData({ name: '', email: '', phone: '', password: 'password123', role: '', department: '', designation: '' });
         await fetchAllStaff();
       } else {
         toast({ title: 'Error', description: data.error || 'Failed to add staff', variant: 'destructive' });
@@ -449,6 +449,84 @@ const [kpiData, setKpiData] = useState<any>(null);
       toast({ title: 'Error', description: 'Failed to add staff', variant: 'destructive' });
     } finally {
       setStaffFormLoading(false);
+    }
+  };
+
+  // Add patient handler
+  const handleAddPatient = async () => {
+    if (!patientFormData.full_name || !patientFormData.email || !patientFormData.phone) {
+      toast({ title: 'Validation Error', description: 'Name, email, and phone are required', variant: 'destructive' });
+      return;
+    }
+    try {
+      setPatientFormLoading(true);
+      const response = await apiFetch('/api/patients', {
+        method: 'POST',
+        body: JSON.stringify({
+          full_name: patientFormData.full_name,
+          email: patientFormData.email,
+          phone: patientFormData.phone,
+          password: patientFormData.password || 'password123',
+          doctor_id: patientFormData.doctor_id ? Number(patientFormData.doctor_id) : null,
+          date_of_birth: patientFormData.date_of_birth || null,
+          address: patientFormData.address || null,
+          age: patientFormData.age ? parseInt(patientFormData.age) : null,
+          gender: patientFormData.gender || null,
+          state: patientFormData.state || null,
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) {
+        toast({ title: 'Success', description: 'Patient added successfully' });
+        setIsAddPatientOpen(false);
+        setPatientFormData({ full_name: '', email: '', phone: '', password: 'password123', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' });
+        await fetchAllPatients();
+      } else {
+        toast({ title: 'Error', description: data.error || 'Failed to add patient', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to add patient', variant: 'destructive' });
+    } finally {
+      setPatientFormLoading(false);
+    }
+  };
+
+  // Save edit patient handler
+  const handleSaveEditPatient = async () => {
+    if (!editingPatient) return;
+    try {
+      setPatientFormLoading(true);
+      const payload: any = {
+        full_name: editPatientFormData.full_name,
+        email: editPatientFormData.email,
+        phone: editPatientFormData.phone,
+        doctor_id: editPatientFormData.doctor_id ? Number(editPatientFormData.doctor_id) : null,
+        date_of_birth: editPatientFormData.date_of_birth || null,
+        address: editPatientFormData.address || null,
+        age: editPatientFormData.age ? parseInt(editPatientFormData.age) : null,
+        gender: editPatientFormData.gender || null,
+        state: editPatientFormData.state || null,
+      };
+      if (editPatientFormData.password) {
+        payload.password = editPatientFormData.password;
+      }
+      const res = await apiFetch(`/api/patients/${editingPatient.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Patient updated' });
+        setIsEditPatientOpen(false);
+        setEditingPatient(null);
+        await fetchAllPatients();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ title: 'Error', description: data.error || 'Failed to update', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update patient', variant: 'destructive' });
+    } finally {
+      setPatientFormLoading(false);
     }
   };
 
