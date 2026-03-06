@@ -425,7 +425,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       if (res.ok) {
         toast.success('Staff member added');
         setIsAddStaffOpen(false);
-        setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+        setStaffFormData({ name: '', email: '', phone: '', password: 'password123', role: '', department: '', designation: '' });
         await fetchAllStaff();
       } else {
         toast.error(data.error || 'Failed to add staff');
