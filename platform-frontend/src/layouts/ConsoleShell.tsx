@@ -36,10 +36,13 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
 
   useEffect(() => {
-    if (!loading && (!user || (user.role !== "admin" && user.role !== "super_admin"))) {
-      navigate("/login");
+    if (loading) return;
+    // Only redirect if auth has finished loading AND user is not an admin
+    if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
+      navigate("/login", { replace: true });
     }
-  }, [loading, user, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user]);
 
   const isActive = (path: string) =>
     pathname === path
