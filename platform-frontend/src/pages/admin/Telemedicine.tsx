@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, Video, MessageSquare, Phone, Calendar, Clock, Play, FileText, Plus } from "lucide-react";
+import { Search, Video, MessageSquare, Phone, Calendar, Clock, Play, FileText, Plus, ExternalLink } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,11 +18,15 @@ interface TelemedicineSession {
   id: number;
   patient_id: number | null;
   patient_name: string;
-  type: "video" | "chat" | "phone";
+  patient_display_name?: string;
+  session_type: "video" | "chat" | "phone";
+  type?: "video" | "chat" | "phone";
+  scheduled_date?: string;
   scheduled_time: string;
   duration: string;
   status: "scheduled" | "in-progress" | "completed" | "cancelled";
   notes?: string;
+  meeting_link?: string;
   phone?: string;
   email?: string;
 }
@@ -43,7 +47,7 @@ export default function Telemedicine() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     patient_name: "",
-    type: "video" as "video" | "chat" | "phone",
+    session_type: "video" as "video" | "chat" | "phone",
     scheduled_time: "",
     duration: "30 min",
     notes: ""
@@ -52,9 +56,10 @@ export default function Telemedicine() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      // Always fetch ALL sessions and filter client-side to avoid backend status mapping issues
       const [summaryRes, sessionsRes] = await Promise.all([
         apiGet("/api/dashboard/telemedicine/summary"),
-        apiGet(`/api/dashboard/telemedicine/sessions?status=${activeTab}`)
+        apiGet("/api/dashboard/telemedicine/sessions?status=all")
       ]);
 
       if (summaryRes.ok) {
@@ -71,7 +76,7 @@ export default function Telemedicine() {
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -83,18 +88,28 @@ export default function Telemedicine() {
       return;
     }
 
+    // Parse datetime-local into scheduled_date + scheduled_time_only
+    const dt = new Date(formData.scheduled_time);
+    const scheduled_date = dt.toISOString().split('T')[0];
+    const scheduled_time_only = dt.toTimeString().slice(0, 5);
+
     try {
-      const res = await apiPost("/api/dashboard/telemedicine/sessions", formData);
+      const res = await apiPost("/api/dashboard/telemedicine/sessions", {
+        patient_name: formData.patient_name,
+        session_type: formData.session_type,
+        scheduled_date,
+        scheduled_time_only,
+        scheduled_time: formData.scheduled_time,
+        duration: formData.duration,
+        notes: formData.notes
+      });
       if (res.ok) {
         const data = await res.json();
         toast.success("Session scheduled successfully");
         setIsDialogOpen(false);
-        setFormData({ patient_name: "", type: "video", scheduled_time: "", duration: "30 min", notes: "" });
-        if (data.session) {
-          setSessions(prev => [data.session, ...prev]);
-        } else {
-          fetchData();
-        }
+        setFormData({ patient_name: "", session_type: "video", scheduled_time: "", duration: "30 min", notes: "" });
+        // Refetch all to get consistent data
+        fetchData();
       } else {
         const err = await res.json();
         toast.error(err.error || "Failed to schedule session");
@@ -102,6 +117,25 @@ export default function Telemedicine() {
     } catch (error) {
       toast.error("Failed to schedule session");
     }
+  };
+
+  const joinSession = async (session: TelemedicineSession) => {
+    // First update status to in-progress
+    try {
+      const res = await apiPut(`/api/dashboard/telemedicine/sessions/${session.id}`, { 
+        status: 'in-progress',
+        meeting_link: `https://meet.jit.si/telemedicine-session-${session.id}`
+      });
+      if (res.ok) {
+        setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: 'in-progress' as const } : s));
+      }
+    } catch (e) { /* continue to open anyway */ }
+
+    // Open Jitsi Meet in a new tab
+    const roomName = `telemedicine-session-${session.id}`;
+    const jitsiUrl = `https://meet.jit.si/${roomName}`;
+    window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+    toast.success("Video call opened in a new tab");
   };
 
   const handleUpdateStatus = async (id: number, status: string) => {
@@ -116,12 +150,43 @@ export default function Telemedicine() {
     }
   };
 
+  const getSessionType = (session: TelemedicineSession): string => {
+    return session.session_type || session.type || 'video';
+  };
+
+  const getDisplayDate = (session: TelemedicineSession): string => {
+    if (session.scheduled_date) {
+      return new Date(session.scheduled_date + 'T00:00:00').toLocaleDateString();
+    }
+    if (session.scheduled_time) {
+      const d = new Date(session.scheduled_time);
+      if (!isNaN(d.getTime())) return d.toLocaleDateString();
+    }
+    return 'N/A';
+  };
+
+  const getDisplayTime = (session: TelemedicineSession): string => {
+    // If scheduled_time is just HH:MM:SS, format it
+    if (session.scheduled_time && session.scheduled_time.match(/^\d{2}:\d{2}/)) {
+      const [h, m] = session.scheduled_time.split(':');
+      const hour = parseInt(h);
+      const ampm = hour >= 12 ? 'pm' : 'am';
+      const hour12 = hour % 12 || 12;
+      return `${hour12}:${m} ${ampm}`;
+    }
+    if (session.scheduled_time) {
+      const d = new Date(session.scheduled_time);
+      if (!isNaN(d.getTime())) return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    return 'N/A';
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "video": return <Video className="h-5 w-5" />;
       case "chat": return <MessageSquare className="h-5 w-5" />;
       case "phone": return <Phone className="h-5 w-5" />;
-      default: return null;
+      default: return <Video className="h-5 w-5" />;
     }
   };
 
@@ -136,7 +201,7 @@ export default function Telemedicine() {
   };
 
   const filteredSessions = sessions.filter(s =>
-    s.patient_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    (s.patient_name || s.patient_display_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const upcomingSessions = filteredSessions.filter(s => s.status === "scheduled" || s.status === "in-progress");
@@ -150,13 +215,13 @@ export default function Telemedicine() {
           summary="Schedule and manage video, chat, or phone consultations with patients remotely."
           steps={[
             { title: "Schedule a Session", description: "Click '+ New Session', enter the patient name, select session type (Video/Chat/Phone), pick date & time, and click 'Schedule Session'." },
-            { title: "Join a Video Call", description: "When a session is marked 'In Progress', click the 'Join' button to open the Jitsi video meeting room." },
+            { title: "Join a Video Call", description: "Click the 'Join' button on any session — it will open a Jitsi Meet video room in a new browser tab. Share the link with the patient." },
             { title: "Patient Booking", description: "Patients can also book telemedicine sessions from their Patient Portal → Telemedicine tab." },
-            { title: "Complete or Cancel", description: "After the consultation, update the session status to 'Completed'. You can also cancel upcoming sessions." },
+            { title: "Complete or Cancel", description: "After the consultation, click 'Complete' to mark it done. You can also cancel upcoming sessions." },
           ]}
           tips={[
-            "Patients must have a registered profile (with email) to book sessions.",
             "Video calls use Jitsi Meet — no installation needed, works in browser.",
+            "The Join button opens the video call in a new tab automatically.",
             "Chat sessions allow text messaging within the session window.",
           ]}
         />
@@ -189,7 +254,7 @@ export default function Telemedicine() {
                   </div>
                   <div>
                     <Label>Session Type</Label>
-                    <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v as any })}>
+                    <Select value={formData.session_type} onValueChange={(v) => setFormData({ ...formData, session_type: v as any })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="video">Video Call</SelectItem>
@@ -313,52 +378,62 @@ export default function Telemedicine() {
               <Card><CardContent className="py-12 text-center text-muted-foreground">Loading...</CardContent></Card>
             ) : (
               <div className="grid gap-4">
-                {upcomingSessions.map((session) => (
-                  <Card key={session.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-4">
-                      <div className="flex flex-col md:flex-row md:items-center gap-4">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
-                            session.type === "video" ? "bg-purple-100 text-purple-600" :
-                            session.type === "chat" ? "bg-emerald-100 text-emerald-600" :
-                            "bg-blue-100 text-blue-600"
-                          }`}>
-                            {getTypeIcon(session.type)}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium">{session.patient_name}</h3>
-                              <Badge className={getStatusColor(session.status)}>{session.status}</Badge>
+                {upcomingSessions.map((session) => {
+                  const sType = getSessionType(session);
+                  return (
+                    <Card key={session.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col md:flex-row md:items-center gap-4">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className={`h-12 w-12 rounded-full flex items-center justify-center ${
+                              sType === "video" ? "bg-purple-100 text-purple-600" :
+                              sType === "chat" ? "bg-emerald-100 text-emerald-600" :
+                              "bg-blue-100 text-blue-600"
+                            }`}>
+                              {getTypeIcon(sType)}
                             </div>
-                            <p className="text-sm text-muted-foreground">{session.notes}</p>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium">{session.patient_display_name || session.patient_name}</h3>
+                                <Badge className={getStatusColor(session.status)}>{session.status}</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{session.notes}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <div className="flex items-center gap-1 text-sm font-medium">
+                                <Calendar className="h-4 w-4" />
+                                {getDisplayDate(session)}
+                              </div>
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Clock className="h-4 w-4" />
+                                {getDisplayTime(session)} • {session.duration}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button variant="outline" size="sm">
+                                <FileText className="h-4 w-4 mr-1" />
+                                Notes
+                              </Button>
+                              {sType === 'video' ? (
+                                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => joinSession(session)}>
+                                  <ExternalLink className="h-4 w-4 mr-1" />
+                                  Join
+                                </Button>
+                              ) : (
+                                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleUpdateStatus(session.id, session.status === 'in-progress' ? 'completed' : 'in-progress')}>
+                                  <Play className="h-4 w-4 mr-1" />
+                                  {session.status === 'in-progress' ? 'Complete' : 'Start'}
+                                </Button>
+                              )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right">
-                            <div className="flex items-center gap-1 text-sm font-medium">
-                              <Calendar className="h-4 w-4" />
-                              {new Date(session.scheduled_time).toLocaleDateString()}
-                            </div>
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                              <Clock className="h-4 w-4" />
-                              {new Date(session.scheduled_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {session.duration}
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <FileText className="h-4 w-4 mr-1" />
-                              Notes
-                            </Button>
-                            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleUpdateStatus(session.id, 'in-progress')}>
-                              <Play className="h-4 w-4 mr-1" />
-                              Join
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
                 {upcomingSessions.length === 0 && (
                   <Card>
                     <CardContent className="py-12 text-center">
@@ -374,34 +449,37 @@ export default function Telemedicine() {
 
           <TabsContent value="past" className="mt-4">
             <div className="grid gap-4">
-              {pastSessions.map((session) => (
-                <Card key={session.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row md:items-center gap-4">
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-100 text-gray-600">
-                          {getTypeIcon(session.type)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-medium">{session.patient_name}</h3>
-                            <Badge className={getStatusColor(session.status)}>{session.status}</Badge>
+              {pastSessions.map((session) => {
+                const sType = getSessionType(session);
+                return (
+                  <Card key={session.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="h-12 w-12 rounded-full flex items-center justify-center bg-gray-100 text-gray-600">
+                            {getTypeIcon(sType)}
                           </div>
-                          <p className="text-sm text-muted-foreground">{session.notes}</p>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-medium">{session.patient_display_name || session.patient_name}</h3>
+                              <Badge className={getStatusColor(session.status)}>{session.status}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{session.notes}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right text-sm text-muted-foreground">
+                            {getDisplayDate(session)} • {session.duration}
+                          </div>
+                          <Button variant="outline" size="sm">
+                            View Summary
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right text-sm text-muted-foreground">
-                          {new Date(session.scheduled_time).toLocaleDateString()} • {session.duration}
-                        </div>
-                        <Button variant="outline" size="sm">
-                          View Summary
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
               {pastSessions.length === 0 && (
                 <Card>
                   <CardContent className="py-12 text-center text-muted-foreground">
