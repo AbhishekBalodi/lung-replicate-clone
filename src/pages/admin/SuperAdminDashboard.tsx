@@ -201,7 +201,7 @@ const SuperAdminDashboard = () => {
   const { toast } = useToast();
 
   // Main dashboard state
-  const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors' | 'patients'>('overview');
+  const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors' | 'patients' | 'staff'>('overview');
   
   // Tab Access Dialog state
   const [tabAccessDialog, setTabAccessDialog] = useState<{
@@ -225,7 +225,8 @@ const SuperAdminDashboard = () => {
   // Edit doctor modal state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-  const [editingFormData, setEditingFormData] = useState({ name: '', email: '', phone: '', specialization: '', qualifications: '', bio: '', consultation_fee: '' });
+  const [editingFormData, setEditingFormData] = useState({ name: '', email: '', phone: '', password: '', specialization: '', qualifications: '', bio: '', consultation_fee: '' });
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
   const [editHeroFile, setEditHeroFile] = useState<File | null>(null);
   const [editLoading, setEditLoading] = useState(false);
