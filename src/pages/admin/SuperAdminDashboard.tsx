@@ -1427,12 +1427,14 @@ const [kpiData, setKpiData] = useState<any>(null);
                                   name: doctor.name || '',
                                   email: doctor.email || '',
                                   phone: doctor.phone || '',
+                                  password: '',
                                   specialization: doctor.specialization || '',
                                   qualifications: doctor.qualifications || '',
                                   bio: doctor.bio || '',
                                   consultation_fee: doctor.consultation_fee ? String(doctor.consultation_fee) : ''
                                 });
                                 setEditPhotoFile(null);
+                                setShowEditPassword(false);
                                 setIsEditDialogOpen(true);
                               }}>
                                 <Edit className="h-4 w-4" />
