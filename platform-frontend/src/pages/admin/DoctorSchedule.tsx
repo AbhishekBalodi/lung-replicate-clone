@@ -191,6 +191,22 @@ export default function DoctorSchedule() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
+        <InstructionBanner
+          title="How to Use Schedule & Availability"
+          summary="Define your clinic hours, manage time slots, and handle leave requests."
+          steps={[
+            { title: "Add Time Slots", description: "Click '+ Add Time Slot', select the day, set start/end times and slot duration (e.g., 15 min). This defines when patients can book appointments." },
+            { title: "Toggle Slots", description: "Use the toggle switch on each slot to temporarily enable/disable availability without deleting the slot." },
+            { title: "Request Leave", description: "Go to the 'Leave Management' tab, click '+ Request Leave', enter dates and reason. Super Admins can approve/reject leave requests." },
+            { title: "Adjust Settings", description: "Configure default slot duration, buffer time between appointments, booking window, and cancellation policy in the Settings tab." },
+          ]}
+          tips={[
+            "Emergency Override mode opens all slots — use only for urgent situations.",
+            "Patients can only book during active time slots within the booking window.",
+            "Click 'Save Changes' after modifying any settings to persist them.",
+          ]}
+        />
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Schedule & Availability</h1>
