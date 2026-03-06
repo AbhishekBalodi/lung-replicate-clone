@@ -370,4 +370,24 @@ router.post('/patient/telemedicine/start-video/:sessionId', startVideoCall);
 router.post('/patient/telemedicine/end-video/:sessionId', endVideoCall);
 router.get('/patient/telemedicine/doctors', getTelemedicineDoctors);
 
+/* ============================================================
+   COMMUNICATION - Internal Chat & Staff Notes
+   ============================================================ */
+router.get('/communication/chats', getChatList);
+router.get('/communication/messages', getChatMessages);
+router.post('/communication/messages', sendChatMessage);
+router.get('/communication/notes', getStaffNotes);
+router.post('/communication/notes', addStaffNote);
+router.put('/communication/notes/:id/pin', toggleNotePin);
+
+/* ============================================================
+   STAFF - Hospital Staff & Call Center
+   ============================================================ */
+router.get('/staff/hospital-staff', getHospitalStaffList);
+router.post('/staff/hospital-staff', addHospitalStaff);
+router.put('/staff/hospital-staff/:id', updateHospitalStaff);
+router.delete('/staff/hospital-staff/:id', deleteHospitalStaff);
+router.get('/staff/call-center', getCallCenterStaff);
+router.post('/staff/call-center', addCallCenterStaff);
+
 export default router;
