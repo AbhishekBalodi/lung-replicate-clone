@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Bell, User, Clock, Phone, CheckCircle2, XCircle, Siren, Activity, ThermometerSun } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import InstructionBanner from "@/components/InstructionBanner";
 
 interface Alert {
   id: number;

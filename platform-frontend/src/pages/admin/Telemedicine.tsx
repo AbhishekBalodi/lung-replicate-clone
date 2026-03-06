@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { toast } from "sonner";
+import InstructionBanner from "@/components/InstructionBanner";
 
 interface TelemedicineSession {
   id: number;

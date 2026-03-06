@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import { toast } from "sonner";
+import InstructionBanner from "@/components/InstructionBanner";
 
 interface TimeSlot {
   id: number;

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import InstructionBanner from "@/components/InstructionBanner";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 
 interface FollowUp {
