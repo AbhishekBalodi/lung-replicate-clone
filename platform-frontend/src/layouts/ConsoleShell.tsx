@@ -1,5 +1,5 @@
-import { ReactNode, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { ReactNode, useState, useMemo } from "react";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft, 
@@ -35,14 +35,19 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
 
-  useEffect(() => {
-    if (loading) return;
-    // Only redirect if auth has finished loading AND user is not an admin
-    if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
-      navigate("/login", { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, user]);
+  // Check auth from both context AND localStorage fallback
+  const isAuthenticated = useMemo(() => {
+    if (user && (user.role === "admin" || user.role === "super_admin")) return true;
+    // Fallback: check localStorage directly (covers race conditions during route transitions)
+    try {
+      const stored = localStorage.getItem('customUser');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.role === "admin" || parsed.role === "super_admin";
+      }
+    } catch {}
+    return false;
+  }, [user]);
 
   const isActive = (path: string) =>
     pathname === path
@@ -71,7 +76,8 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
     setExpandedMenus(prev => ({ ...prev, [menuName]: !prev[menuName] }));
   };
 
-  if (loading || !user) return null;
+  if (loading) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   // Dynamic sidebar width: smaller for menu, larger for sub-pages
   const sidebarWidth = activeSidebarPage ? "w-[700px]" : "w-[280px]";
