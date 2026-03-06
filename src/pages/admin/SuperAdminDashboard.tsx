@@ -458,7 +458,7 @@ const [kpiData, setKpiData] = useState<any>(null);
     if (!editingDoctor) return;
     setEditLoading(true);
     try {
-      const payload = {
+      const payload: any = {
         name: editingFormData.name,
         email: editingFormData.email,
         phone: editingFormData.phone || null,
@@ -467,6 +467,9 @@ const [kpiData, setKpiData] = useState<any>(null);
         bio: editingFormData.bio || null,
         consultation_fee: editingFormData.consultation_fee ? parseFloat(editingFormData.consultation_fee) : null
       };
+      if (editingFormData.password) {
+        payload.password = editingFormData.password;
+      }
 
       const res = await fetch(`${getApiBaseUrl()}/api/doctors/${editingDoctor.id}`, {
         method: 'PUT',
@@ -1466,6 +1469,20 @@ const [kpiData, setKpiData] = useState<any>(null);
                         <div>
                           <Label>Phone</Label>
                           <Input value={editingFormData.phone} onChange={(e) => setEditingFormData({ ...editingFormData, phone: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Password (leave blank to keep current)</Label>
+                          <div className="relative">
+                            <Input
+                              type={showEditPassword ? 'text' : 'password'}
+                              value={editingFormData.password}
+                              onChange={(e) => setEditingFormData({ ...editingFormData, password: e.target.value })}
+                              placeholder="••••••••"
+                            />
+                            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditPassword(!showEditPassword)}>
+                              {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
                         </div>
                         <div>
                           <Label>Specialization</Label>
