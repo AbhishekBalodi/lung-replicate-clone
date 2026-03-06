@@ -19,6 +19,10 @@ import SuperAdminKPICards from '@/components/dashboard/SuperAdminKPICards';
 import SuperAdminGraphs from '@/components/dashboard/SuperAdminGraphs';
 import RescheduleModal from '@/components/RescheduleModal';
 import {
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer
+} from 'recharts';
+import {
   Plus,
   LogOut,
   Edit,
