@@ -84,6 +84,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
   return (
     <div className="min-h-screen bg-emerald-50/30 flex">
+      <ThemeApplicator />
 
       {/* SIDEBAR - now part of flex layout, pushes content */}
       <aside
