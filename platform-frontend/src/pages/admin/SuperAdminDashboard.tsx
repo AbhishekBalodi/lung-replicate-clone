@@ -907,29 +907,24 @@ const [kpiData, setKpiData] = useState<any>(null);
         entityName={tabAccessDialog.entityName}
       />
 
-      {/* Main Tabs: Overview, Doctors, Patients Management */}
-      <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors' | 'patients')} className="w-full">
+      {/* Main Tabs: Overview, Doctors, Patients, Staff Management */}
+      <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors' | 'patients' | 'staff')} className="w-full">
         <TabsList className="bg-slate-100 border border-slate-200 p-1 rounded-lg mb-6">
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
             <Calendar className="h-4 w-4 mr-2" />
             Dashboard Overview
           </TabsTrigger>
-          <TabsTrigger
-            value="doctors"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="doctors" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
             <Stethoscope className="h-4 w-4 mr-2" />
             Manage Doctors
           </TabsTrigger>
-          <TabsTrigger
-            value="patients"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="patients" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
             <Users className="h-4 w-4 mr-2" />
             Manage Patients
+          </TabsTrigger>
+          <TabsTrigger value="staff" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
+            <User className="h-4 w-4 mr-2" />
+            Manage Staff
           </TabsTrigger>
         </TabsList>
 
