@@ -1118,7 +1118,75 @@ const [kpiData, setKpiData] = useState<any>(null);
                 </TabsList>
 
                 <TabsContent value="analytics">
-                  <AnalyticsSection />
+                  <div className="grid gap-6">
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <Card>
+                        <CardHeader><CardTitle className="text-base">Patient Demographics</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={(() => {
+                                    const genderMap: Record<string, number> = {};
+                                    allPatients.forEach(p => {
+                                      const g = (p as any).gender || 'Unknown';
+                                      genderMap[g] = (genderMap[g] || 0) + 1;
+                                    });
+                                    return Object.entries(genderMap).map(([name, value]) => ({ name, value }));
+                                  })()}
+                                  cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                  {['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'].map((c, i) => <Cell key={i} fill={c} />)}
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader><CardTitle className="text-base">Appointment Types</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={(() => {
+                                    const statusMap: Record<string, number> = {};
+                                    appointments.forEach(a => {
+                                      const s = a.status || 'pending';
+                                      statusMap[s] = (statusMap[s] || 0) + 1;
+                                    });
+                                    return Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+                                  })()}
+                                  cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                  {['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'].map((c, i) => <Cell key={i} fill={c} />)}
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader><CardTitle className="text-base">Revenue Sources</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={superAdminCharts?.revenueByMonth?.map((r: any) => ({ month: r.month?.slice(5), revenue: r.revenue })) || []}>
+                                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                                <YAxis tick={{ fontSize: 11 }} />
+                                <Tooltip />
+                                <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="reports">
@@ -1585,7 +1653,9 @@ const [kpiData, setKpiData] = useState<any>(null);
                                 setIsEditDialogOpen(true);
                               }}>
                                 <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeleteDoctor(doctor.id)}>
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -1878,25 +1948,30 @@ const [kpiData, setKpiData] = useState<any>(null);
                           </Button>
                         </TableCell>
                         <TableCell>
-                          <Button size="sm" variant="ghost" onClick={() => {
-                            setEditingPatient(patient);
-                            setEditPatientFormData({
-                              full_name: patient.full_name || '',
-                              email: patient.email || '',
-                              phone: patient.phone || '',
-                              password: '',
-                              doctor_id: patient.doctor_id ? String(patient.doctor_id) : '',
-                              date_of_birth: (patient as any).date_of_birth || '',
-                              address: (patient as any).address || '',
-                              age: (patient as any).age ? String((patient as any).age) : '',
-                              gender: (patient as any).gender || '',
-                              state: (patient as any).state || '',
-                            });
-                            setShowEditPatientPassword(false);
-                            setIsEditPatientOpen(true);
-                          }}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              setEditingPatient(patient);
+                              setEditPatientFormData({
+                                full_name: patient.full_name || '',
+                                email: patient.email || '',
+                                phone: patient.phone || '',
+                                password: '',
+                                doctor_id: patient.doctor_id ? String(patient.doctor_id) : '',
+                                date_of_birth: (patient as any).date_of_birth || '',
+                                address: (patient as any).address || '',
+                                age: (patient as any).age ? String((patient as any).age) : '',
+                                gender: (patient as any).gender || '',
+                                state: (patient as any).state || '',
+                              });
+                              setShowEditPatientPassword(false);
+                              setIsEditPatientOpen(true);
+                            }}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeletePatient(patient.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
