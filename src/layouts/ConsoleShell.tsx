@@ -1,5 +1,5 @@
-import { ReactNode, useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { ReactNode, useState, useMemo } from "react";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   LogOut, MapPin, Phone, Clock, Menu, X, Search, Plus, ArrowLeft, 
