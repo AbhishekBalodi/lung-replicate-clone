@@ -618,7 +618,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       name: '',
       email: '',
       phone: '',
-      password: '',
+      password: 'password123',
       specialization: '',
       qualifications: '',
       bio: '',

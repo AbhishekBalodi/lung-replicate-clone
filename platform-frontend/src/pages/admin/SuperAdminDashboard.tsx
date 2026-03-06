@@ -248,8 +248,17 @@ const SuperAdminDashboard = () => {
   // Add Patient modal state
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [patientFormLoading, setPatientFormLoading] = useState(false);
+  const [showPatientPassword, setShowPatientPassword] = useState(false);
   const [patientFormData, setPatientFormData] = useState({
-    full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: ''
+    full_name: '', email: '', phone: '', password: 'password123', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: ''
+  });
+
+  // Edit Patient modal state
+  const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [showEditPatientPassword, setShowEditPatientPassword] = useState(false);
+  const [editPatientFormData, setEditPatientFormData] = useState({
+    full_name: '', email: '', phone: '', password: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: ''
   });
 
   // Staff state
@@ -261,7 +270,7 @@ const SuperAdminDashboard = () => {
   const [staffFormLoading, setStaffFormLoading] = useState(false);
   const [showStaffPassword, setShowStaffPassword] = useState(false);
   const [showEditStaffPassword, setShowEditStaffPassword] = useState(false);
-  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', phone: '', password: 'password123', role: '', department: '', designation: '' });
   const [editStaffFormData, setEditStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
   
   // Rooms state
@@ -515,7 +524,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       name: '',
       email: '',
       phone: '',
-      password: '',
+      password: 'password123',
       specialization: '',
       qualifications: '',
       bio: '',
