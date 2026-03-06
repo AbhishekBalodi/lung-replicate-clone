@@ -428,6 +428,7 @@ const [kpiData, setKpiData] = useState<any>(null);
   };
 
   const handleDeleteStaff = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this staff member?')) return;
     try {
       const res = await apiFetch(`/api/staff/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -436,6 +437,36 @@ const [kpiData, setKpiData] = useState<any>(null);
       }
     } catch {
       toast.error('Failed to delete staff');
+    }
+  };
+
+  const handleDeleteDoctor = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this doctor?')) return;
+    try {
+      const res = await apiFetch(`/api/doctors/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Doctor deactivated');
+        await fetchDoctors();
+      } else {
+        toast.error('Failed to delete doctor');
+      }
+    } catch {
+      toast.error('Failed to delete doctor');
+    }
+  };
+
+  const handleDeletePatient = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this patient?')) return;
+    try {
+      const res = await apiFetch(`/api/patients/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Patient deactivated');
+        await fetchAllPatients();
+      } else {
+        toast.error('Failed to delete patient');
+      }
+    } catch {
+      toast.error('Failed to delete patient');
     }
   };
 
