@@ -142,8 +142,8 @@ async function main() {
 
       try {
         await platformConn.execute(
-          `INSERT INTO tenant_users (tenant_id, email, password_hash, name, phone, role, doctor_id, status)
-           VALUES (?, ?, ?, ?, ?, 'admin', ?, 'active')`,
+          `INSERT INTO tenant_users (tenant_id, email, password_hash, name, phone, role, doctor_id)
+           VALUES (?, ?, ?, ?, ?, 'admin', ?)`,
           [tenant.id, email, passwordHash, name, phone, doctorId]
         );
         console.log(`  ✅ Synced: ${email} (doctor_id: ${doctorId})`);
@@ -178,8 +178,8 @@ async function main() {
 
         try {
           await platformConn.execute(
-            `INSERT INTO tenant_users (tenant_id, email, password_hash, name, phone, role, status)
-             VALUES (?, ?, ?, ?, ?, 'patient', 'active')`,
+            `INSERT INTO tenant_users (tenant_id, email, password_hash, name, phone, role)
+             VALUES (?, ?, ?, ?, ?, 'patient')`,
             [tenant.id, email, passwordHash, name, phone]
           );
           console.log(`  ✅ Synced patient: ${email}`);
