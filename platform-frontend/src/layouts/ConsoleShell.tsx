@@ -15,7 +15,7 @@ import ProceduresContent from "@/pages/admin/ProceduresContent";
 import PatientsListSidebar from "@/pages/admin/PatientsListSidebar";
 import SettingsContent from "@/pages/SettingsContent";
 import ConsultationSidebar from "@/pages/admin/ConsultationSidebar";
-
+import ThemeApplicator from "@/components/ThemeApplicator";
 
 type SidebarPage = "patients" | "medicines" | "lab-tests" | "procedures" | "consultation" | "settings" | "blood-bank" | "billing" | "pharmacy" | "room-allotment" | null;
 
