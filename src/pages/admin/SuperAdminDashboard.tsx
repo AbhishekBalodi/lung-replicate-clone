@@ -19,6 +19,10 @@ import SuperAdminKPICards from '@/components/dashboard/SuperAdminKPICards';
 import SuperAdminGraphs from '@/components/dashboard/SuperAdminGraphs';
 import RescheduleModal from '@/components/RescheduleModal';
 import {
+  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
+import {
   Plus,
   LogOut,
   Edit,
@@ -105,44 +109,7 @@ interface Invoice {
   created_at?: string;
 }
 
-const AnalyticsSection = () => (
-  <div className="grid gap-6">
-    <div className="grid md:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Patient Demographics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appointment Types</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Pie chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Sources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Bar chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  </div>
-);
+// AnalyticsSection is now rendered inline with real data - see renderAnalyticsSection below
 
 const ReportsSection = () => (
   <div className="space-y-4">
@@ -559,6 +526,7 @@ const [kpiData, setKpiData] = useState<any>(null);
 
   // Delete staff handler
   const handleDeleteStaff = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this staff member?')) return;
     try {
       const res = await apiFetch(`/api/staff/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -567,6 +535,38 @@ const [kpiData, setKpiData] = useState<any>(null);
       }
     } catch {
       toast({ title: 'Error', description: 'Failed to delete staff', variant: 'destructive' });
+    }
+  };
+
+  // Delete doctor handler
+  const handleDeleteDoctor = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this doctor?')) return;
+    try {
+      const res = await apiFetch(`/api/doctors/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Doctor deactivated' });
+        await fetchDoctors();
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete doctor', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete doctor', variant: 'destructive' });
+    }
+  };
+
+  // Delete patient handler
+  const handleDeletePatient = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this patient?')) return;
+    try {
+      const res = await apiFetch(`/api/patients/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Patient deactivated' });
+        await fetchAllPatients();
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete patient', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete patient', variant: 'destructive' });
     }
   };
 
@@ -1154,7 +1154,80 @@ const [kpiData, setKpiData] = useState<any>(null);
                 </TabsList>
 
                 <TabsContent value="analytics">
-                  <AnalyticsSection />
+                  <div className="grid gap-6">
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {/* Patient Demographics - Gender breakdown */}
+                      <Card>
+                        <CardHeader><CardTitle className="text-base">Patient Demographics</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={(() => {
+                                    const genderMap: Record<string, number> = {};
+                                    allPatients.forEach(p => {
+                                      const g = (p as any).gender || 'Unknown';
+                                      genderMap[g] = (genderMap[g] || 0) + 1;
+                                    });
+                                    return Object.entries(genderMap).map(([name, value]) => ({ name, value }));
+                                  })()}
+                                  cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                  {['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6'].map((c, i) => <Cell key={i} fill={c} />)}
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Appointment Types - Status breakdown */}
+                      <Card>
+                        <CardHeader><CardTitle className="text-base">Appointment Types</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={(() => {
+                                    const statusMap: Record<string, number> = {};
+                                    appointments.forEach(a => {
+                                      const s = a.status || 'pending';
+                                      statusMap[s] = (statusMap[s] || 0) + 1;
+                                    });
+                                    return Object.entries(statusMap).map(([name, value]) => ({ name, value }));
+                                  })()}
+                                  cx="50%" cy="50%" outerRadius={60} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                >
+                                  {['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'].map((c, i) => <Cell key={i} fill={c} />)}
+                                </Pie>
+                                <Tooltip />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Revenue Sources - Monthly revenue bar chart */}
+                      <Card>
+                        <CardHeader><CardTitle className="text-base">Revenue Sources</CardTitle></CardHeader>
+                        <CardContent>
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={superAdminCharts?.revenueByMonth?.map((r: any) => ({ month: r.month?.slice(5), revenue: r.revenue })) || []}>
+                                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                                <YAxis tick={{ fontSize: 11 }} />
+                                <Tooltip />
+                                <Bar dataKey="revenue" fill="#10B981" radius={[4, 4, 0, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="reports">
@@ -1621,7 +1694,9 @@ const [kpiData, setKpiData] = useState<any>(null);
                                 setIsEditDialogOpen(true);
                               }}>
                                 <Edit className="h-4 w-4" />
-                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeleteDoctor(doctor.id)}>
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -1919,25 +1994,30 @@ const [kpiData, setKpiData] = useState<any>(null);
                           </Button>
                         </TableCell>
                         <TableCell>
-                          <Button size="sm" variant="ghost" onClick={() => {
-                            setEditingPatient(patient);
-                            setEditPatientFormData({
-                              full_name: patient.full_name || '',
-                              email: patient.email || '',
-                              phone: patient.phone || '',
-                              password: '',
-                              doctor_id: patient.doctor_id ? String(patient.doctor_id) : '',
-                              date_of_birth: (patient as any).date_of_birth || '',
-                              address: (patient as any).address || '',
-                              age: (patient as any).age ? String((patient as any).age) : '',
-                              gender: (patient as any).gender || '',
-                              state: (patient as any).state || '',
-                            });
-                            setShowEditPatientPassword(false);
-                            setIsEditPatientOpen(true);
-                          }}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              setEditingPatient(patient);
+                              setEditPatientFormData({
+                                full_name: patient.full_name || '',
+                                email: patient.email || '',
+                                phone: patient.phone || '',
+                                password: '',
+                                doctor_id: patient.doctor_id ? String(patient.doctor_id) : '',
+                                date_of_birth: (patient as any).date_of_birth || '',
+                                address: (patient as any).address || '',
+                                age: (patient as any).age ? String((patient as any).age) : '',
+                                gender: (patient as any).gender || '',
+                                state: (patient as any).state || '',
+                              });
+                              setShowEditPatientPassword(false);
+                              setIsEditPatientOpen(true);
+                            }}>
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeletePatient(patient.id)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
