@@ -6,6 +6,9 @@ import { getSuperAdminDashboardCharts } from '../lib/superadmin.dashboard.charts
 import { getRoomsSummary, getRoomsList, getRoomAllotments, addRoom, addRoomAllotment } from '../lib/admin.rooms.js';
 import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups, addBloodDonor, getBloodDonorsSummary, getBloodDonorsCharts } from '../lib/admin.blood-bank.js';
 import { getStaffSummary, getStaffList, addStaff, updateStaff, deleteStaff } from '../lib/admin.staff.js';
+
+// Communication APIs
+import { getChatList, getChatMessages, sendChatMessage, getStaffNotes, addStaffNote, toggleNotePin, getHospitalStaffList, addHospitalStaff, updateHospitalStaff, deleteHospitalStaff, getCallCenterStaff, addCallCenterStaff } from '../lib/admin.communication.js';
 import { getFeedbackSummary, getFeedbackList } from '../lib/admin.feedback.js';
 import { getBillingSummary, getRevenueByMonth, getRevenueByDoctor } from '../lib/admin.billing.js';
 import { getAppointmentsSummary, getAppointmentsByDoctor, getAppointmentsByMonth } from '../lib/admin.appointments.js';
@@ -366,5 +369,25 @@ router.post('/patient/telemedicine/chat/:sessionId', sendTelemedicineMessage);
 router.post('/patient/telemedicine/start-video/:sessionId', startVideoCall);
 router.post('/patient/telemedicine/end-video/:sessionId', endVideoCall);
 router.get('/patient/telemedicine/doctors', getTelemedicineDoctors);
+
+/* ============================================================
+   COMMUNICATION - Internal Chat & Staff Notes
+   ============================================================ */
+router.get('/communication/chats', getChatList);
+router.get('/communication/messages', getChatMessages);
+router.post('/communication/messages', sendChatMessage);
+router.get('/communication/notes', getStaffNotes);
+router.post('/communication/notes', addStaffNote);
+router.put('/communication/notes/:id/pin', toggleNotePin);
+
+/* ============================================================
+   STAFF - Hospital Staff & Call Center
+   ============================================================ */
+router.get('/staff/hospital-staff', getHospitalStaffList);
+router.post('/staff/hospital-staff', addHospitalStaff);
+router.put('/staff/hospital-staff/:id', updateHospitalStaff);
+router.delete('/staff/hospital-staff/:id', deleteHospitalStaff);
+router.get('/staff/call-center', getCallCenterStaff);
+router.post('/staff/call-center', addCallCenterStaff);
 
 export default router;
