@@ -76,7 +76,8 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
     setExpandedMenus(prev => ({ ...prev, [menuName]: !prev[menuName] }));
   };
 
-  if (loading || !user) return null;
+  if (loading) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   // Dynamic sidebar width: smaller for menu, larger for sub-pages
   const sidebarWidth = activeSidebarPage ? "w-[700px]" : "w-[280px]";
