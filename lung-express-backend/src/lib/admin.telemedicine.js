@@ -6,7 +6,7 @@
 import { getTenantPool } from './tenant-db.js';
 
 // ============================================
-// ENSURE TABLE EXISTS
+// ENSURE TABLE EXISTS + MISSING COLUMNS
 // ============================================
 async function ensureTelemedicineTables(pool) {
   try {
@@ -16,12 +16,14 @@ async function ensureTelemedicineTables(pool) {
         patient_id INT,
         patient_name VARCHAR(255),
         doctor_id INT,
+        appointment_id INT,
         session_type VARCHAR(20) DEFAULT 'video',
         scheduled_date DATE,
         scheduled_time TIME,
         duration VARCHAR(20) DEFAULT '30 min',
         status VARCHAR(20) DEFAULT 'scheduled',
         meeting_link VARCHAR(500),
+        recording_url VARCHAR(500),
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -39,24 +41,52 @@ async function ensureTelemedicineTables(pool) {
         INDEX idx_tele_messages_session (session_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
     `);
+
+    // Ensure missing columns on existing tables
+    const colInfo = await _getRawColumnSet(pool);
+    const alters = [];
+    if (!colInfo.has('meeting_link')) alters.push('ADD COLUMN meeting_link VARCHAR(500) DEFAULT NULL');
+    if (!colInfo.has('patient_name')) alters.push("ADD COLUMN patient_name VARCHAR(255) DEFAULT NULL");
+    if (!colInfo.has('session_type')) alters.push("ADD COLUMN session_type VARCHAR(20) DEFAULT 'video'");
+    if (!colInfo.has('scheduled_date')) alters.push('ADD COLUMN scheduled_date DATE DEFAULT NULL');
+    if (!colInfo.has('appointment_id')) alters.push('ADD COLUMN appointment_id INT DEFAULT NULL');
+    if (!colInfo.has('recording_url')) alters.push('ADD COLUMN recording_url VARCHAR(500) DEFAULT NULL');
+    if (!colInfo.has('doctor_id')) alters.push('ADD COLUMN doctor_id INT DEFAULT NULL');
+
+    if (alters.length) {
+      await pool.query(`ALTER TABLE telemedicine_sessions ${alters.join(', ')}`);
+    }
   } catch (e) {
     console.warn('ensureTelemedicineTables warning:', e.message);
   }
 }
 
+// Raw column set helper
+async function _getRawColumnSet(pool) {
+  try {
+    const [columns] = await pool.query(`
+      SELECT COLUMN_NAME FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_sessions'
+    `);
+    return new Set((columns || []).map(c => c.COLUMN_NAME));
+  } catch {
+    return new Set();
+  }
+}
+
 // Helper to check schema columns
 async function getTelemedicineColumnInfo(pool) {
-  const [columns] = await pool.query(`
-    SELECT COLUMN_NAME
-    FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_sessions'
-  `).catch(() => [[]]);
-  const colSet = new Set((columns || []).map((c) => c.COLUMN_NAME));
+  const colSet = await _getRawColumnSet(pool);
   return {
     hasSessionType: colSet.has('session_type'),
     hasScheduledDate: colSet.has('scheduled_date'),
     hasScheduledTime: colSet.has('scheduled_time'),
     hasType: colSet.has('type'),
+    hasMeetingLink: colSet.has('meeting_link'),
+    hasPatientName: colSet.has('patient_name'),
+    hasAppointmentId: colSet.has('appointment_id'),
+    hasRecordingUrl: colSet.has('recording_url'),
+    hasDoctorId: colSet.has('doctor_id'),
   };
 }
 
@@ -129,24 +159,26 @@ export async function getTelemedicineSessions(req, res) {
     const { status, search, doctor_id } = req.query;
 
     const colInfo = await getTelemedicineColumnInfo(pool);
-    const typeCol = colInfo.hasSessionType ? 'ts.session_type' : (colInfo.hasType ? 'ts.type' : 'NULL');
+    const typeCol = colInfo.hasSessionType ? 'ts.session_type' : (colInfo.hasType ? 'ts.type' : "'video'");
 
     let query = `
       SELECT 
         ts.id,
         ts.patient_id,
-        ts.patient_name,
-        ts.doctor_id,
+        ${colInfo.hasPatientName ? 'ts.patient_name' : "NULL AS patient_name"},
+        ${colInfo.hasDoctorId ? 'ts.doctor_id' : 'NULL AS doctor_id'},
+        ${colInfo.hasAppointmentId ? 'ts.appointment_id' : 'NULL AS appointment_id'},
         ${typeCol} AS session_type,
         ${colInfo.hasScheduledDate ? 'ts.scheduled_date' : 'DATE(ts.scheduled_time)'} AS scheduled_date,
         ${colInfo.hasScheduledTime ? 'ts.scheduled_time' : 'TIME(ts.scheduled_time)'} AS scheduled_time,
         ts.duration,
         ts.status,
-        ts.meeting_link,
+        ${colInfo.hasMeetingLink ? 'ts.meeting_link' : 'NULL AS meeting_link'},
+        ${colInfo.hasRecordingUrl ? 'ts.recording_url' : 'NULL AS recording_url'},
         ts.notes,
         ts.created_at,
         ts.updated_at,
-        COALESCE(p.full_name, ts.patient_name) as patient_display_name, 
+        COALESCE(p.full_name, ${colInfo.hasPatientName ? 'ts.patient_name' : "NULL"}) as patient_display_name, 
         p.phone, 
         p.email
       FROM telemedicine_sessions ts
@@ -168,11 +200,15 @@ export async function getTelemedicineSessions(req, res) {
     }
 
     if (search) {
-      conditions.push('(p.full_name LIKE ? OR ts.notes LIKE ? OR ts.patient_name LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      const searchCondition = colInfo.hasPatientName
+        ? '(p.full_name LIKE ? OR ts.notes LIKE ? OR ts.patient_name LIKE ?)'
+        : '(p.full_name LIKE ? OR ts.notes LIKE ?)';
+      conditions.push(searchCondition);
+      params.push(`%${search}%`, `%${search}%`);
+      if (colInfo.hasPatientName) params.push(`%${search}%`);
     }
 
-    if (doctor_id) {
+    if (doctor_id && colInfo.hasDoctorId) {
       conditions.push('ts.doctor_id = ?');
       params.push(doctor_id);
     }
@@ -197,77 +233,71 @@ export async function addTelemedicineSession(req, res) {
   try {
     const pool = getTenantPool(req);
     await ensureTelemedicineTables(pool);
-    const { patient_id, patient_name, type, session_type, scheduled_time, scheduled_date, scheduled_time_only, duration, notes, doctor_id } = req.body;
+    const { patient_id, patient_name, type, session_type, scheduled_time, scheduled_date, scheduled_time_only, duration, notes, doctor_id, appointment_id } = req.body;
 
     const sessionTypeValue = session_type || type || 'video';
-
-    // Determine if we have scheduled_date/scheduled_time columns or just scheduled_time
     const colInfo = await getTelemedicineColumnInfo(pool);
     
-    // Build insert based on schema
-    if (colInfo.hasScheduledDate && colInfo.hasScheduledTime) {
-      // New schema with separate date and time columns
+    // Build columns and values dynamically
+    const cols = [];
+    const placeholders = [];
+    const vals = [];
+
+    cols.push('patient_id'); placeholders.push('?'); vals.push(patient_id || null);
+    if (colInfo.hasPatientName) { cols.push('patient_name'); placeholders.push('?'); vals.push(patient_name || null); }
+    if (colInfo.hasSessionType) { cols.push('session_type'); placeholders.push('?'); vals.push(sessionTypeValue); }
+    else if (colInfo.hasType) { cols.push('type'); placeholders.push('?'); vals.push(sessionTypeValue); }
+    if (colInfo.hasDoctorId) { cols.push('doctor_id'); placeholders.push('?'); vals.push(doctor_id || null); }
+    if (colInfo.hasAppointmentId && appointment_id) { cols.push('appointment_id'); placeholders.push('?'); vals.push(appointment_id); }
+
+    // Handle date/time
+    if (colInfo.hasScheduledDate) {
       let dateVal = scheduled_date;
       let timeVal = scheduled_time_only || scheduled_time;
-      
-      // If scheduled_time is a datetime string, parse it
       if (!dateVal && scheduled_time && scheduled_time.includes('T')) {
         const dt = new Date(scheduled_time);
         dateVal = dt.toISOString().split('T')[0];
         timeVal = dt.toTimeString().slice(0, 5);
       }
-
-      if (!patient_name || !dateVal) {
-        return res.status(400).json({ error: 'patient_name and scheduled_date are required' });
-      }
-
-      const [result] = await pool.execute(
-        colInfo.hasSessionType
-          ? `INSERT INTO telemedicine_sessions (patient_id, patient_name, session_type, scheduled_date, scheduled_time, duration, notes, doctor_id, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'scheduled')`
-          : `INSERT INTO telemedicine_sessions (patient_id, patient_name, scheduled_date, scheduled_time, duration, notes, doctor_id, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled')`,
-        colInfo.hasSessionType
-          ? [patient_id || null, patient_name, sessionTypeValue, dateVal, timeVal || '09:00', duration || '30 min', notes || null, doctor_id || null]
-          : [patient_id || null, patient_name, dateVal, timeVal || '09:00', duration || '30 min', notes || null, doctor_id || null]
-      );
-
-      const [rows] = await pool.execute(
-        `SELECT ts.*, COALESCE(p.full_name, ts.patient_name) as patient_name
-         FROM telemedicine_sessions ts
-         LEFT JOIN patients p ON p.id = ts.patient_id
-         WHERE ts.id = ?`,
-        [result.insertId]
-      );
-
-      return res.status(201).json({ success: true, id: result.insertId, session: rows[0] || null });
-    } else {
-      // Legacy schema with single scheduled_time datetime column
-      if (!patient_name || !scheduled_time) {
-        return res.status(400).json({ error: 'patient_name and scheduled_time are required' });
-      }
-      
-      const [result] = await pool.execute(
-        colInfo.hasType
-          ? `INSERT INTO telemedicine_sessions (patient_id, patient_name, type, scheduled_time, duration, notes, doctor_id, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled')`
-          : `INSERT INTO telemedicine_sessions (patient_id, patient_name, scheduled_time, duration, notes, doctor_id, status)
-             VALUES (?, ?, ?, ?, ?, ?, 'scheduled')`,
-        colInfo.hasType
-          ? [patient_id || null, patient_name, sessionTypeValue, scheduled_time, duration || '30 min', notes || null, doctor_id || null]
-          : [patient_id || null, patient_name, scheduled_time, duration || '30 min', notes || null, doctor_id || null]
-      );
-
-      const [rows] = await pool.execute(
-        `SELECT ts.*, COALESCE(p.full_name, ts.patient_name) as patient_name
-         FROM telemedicine_sessions ts
-         LEFT JOIN patients p ON p.id = ts.patient_id
-         WHERE ts.id = ?`,
-        [result.insertId]
-      );
-
-      return res.status(201).json({ success: true, id: result.insertId, session: rows[0] || null });
+      cols.push('scheduled_date'); placeholders.push('?'); vals.push(dateVal || null);
+      if (colInfo.hasScheduledTime) { cols.push('scheduled_time'); placeholders.push('?'); vals.push(timeVal || '09:00'); }
+    } else if (colInfo.hasScheduledTime) {
+      cols.push('scheduled_time'); placeholders.push('?'); vals.push(scheduled_time || null);
     }
+
+    cols.push('duration'); placeholders.push('?'); vals.push(duration || '30 min');
+    cols.push('notes'); placeholders.push('?'); vals.push(notes || null);
+    cols.push('status'); placeholders.push('?'); vals.push('scheduled');
+
+    if (!patient_name && !patient_id) {
+      return res.status(400).json({ error: 'Patient selection is required' });
+    }
+
+    const [result] = await pool.execute(
+      `INSERT INTO telemedicine_sessions (${cols.join(', ')}) VALUES (${placeholders.join(', ')})`,
+      vals
+    );
+
+    // Build select with same schema awareness
+    const selectCols = [
+      'ts.id', 'ts.patient_id',
+      colInfo.hasPatientName ? 'ts.patient_name' : 'NULL AS patient_name',
+      colInfo.hasSessionType ? 'ts.session_type' : (colInfo.hasType ? 'ts.type AS session_type' : "'video' AS session_type"),
+      colInfo.hasScheduledDate ? 'ts.scheduled_date' : 'DATE(ts.scheduled_time) AS scheduled_date',
+      colInfo.hasScheduledTime ? 'ts.scheduled_time' : 'NULL AS scheduled_time',
+      'ts.duration', 'ts.status',
+      colInfo.hasMeetingLink ? 'ts.meeting_link' : 'NULL AS meeting_link',
+      'ts.notes', 'ts.created_at', 'ts.updated_at',
+      `COALESCE(p.full_name, ${colInfo.hasPatientName ? 'ts.patient_name' : 'NULL'}) as patient_display_name`,
+      'p.phone', 'p.email'
+    ];
+
+    const [rows] = await pool.execute(
+      `SELECT ${selectCols.join(', ')} FROM telemedicine_sessions ts LEFT JOIN patients p ON p.id = ts.patient_id WHERE ts.id = ?`,
+      [result.insertId]
+    );
+
+    return res.status(201).json({ success: true, id: result.insertId, session: rows[0] || null });
   } catch (err) {
     console.error('addTelemedicineSession error:', err);
     res.status(500).json({ error: 'Failed to add telemedicine session' });
@@ -278,8 +308,10 @@ export async function addTelemedicineSession(req, res) {
 export async function updateTelemedicineSession(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTelemedicineTables(pool);
     const { id } = req.params;
-    const { status, notes, meeting_link } = req.body;
+    const { status, notes, meeting_link, recording_url } = req.body;
+    const colInfo = await getTelemedicineColumnInfo(pool);
 
     const updates = [];
     const params = [];
@@ -292,9 +324,13 @@ export async function updateTelemedicineSession(req, res) {
       updates.push('notes = ?');
       params.push(notes);
     }
-    if (meeting_link !== undefined) {
+    if (meeting_link !== undefined && colInfo.hasMeetingLink) {
       updates.push('meeting_link = ?');
       params.push(meeting_link);
+    }
+    if (recording_url !== undefined && colInfo.hasRecordingUrl) {
+      updates.push('recording_url = ?');
+      params.push(recording_url);
     }
     
     updates.push('updated_at = NOW()');
@@ -369,5 +405,25 @@ export async function sendTelemedicineMessage(req, res) {
   } catch (err) {
     console.error('sendTelemedicineMessage error:', err);
     res.status(500).json({ error: 'Failed to send message' });
+  }
+}
+
+// Get appointments for telemedicine session creation (dropdown)
+export async function getTelemedicineAppointments(req, res) {
+  try {
+    const pool = getTenantPool(req);
+    // Get upcoming appointments that can be linked to telemedicine
+    const [rows] = await pool.execute(`
+      SELECT a.id, a.full_name, a.email, a.phone, a.appointment_date, a.appointment_time, a.selected_doctor, a.message, a.status,
+             p.id as patient_id
+      FROM appointments a
+      LEFT JOIN patients p ON p.email = a.email OR p.phone = a.phone
+      WHERE a.status IS NULL OR a.status NOT IN ('done', 'cancelled')
+      ORDER BY a.appointment_date DESC, a.appointment_time DESC
+    `).catch(() => [[]]);
+    res.json({ appointments: rows || [] });
+  } catch (err) {
+    console.error('getTelemedicineAppointments error:', err);
+    res.status(500).json({ error: 'Failed to fetch appointments' });
   }
 }
