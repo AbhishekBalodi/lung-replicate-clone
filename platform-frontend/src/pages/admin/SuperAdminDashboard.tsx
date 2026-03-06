@@ -248,8 +248,17 @@ const SuperAdminDashboard = () => {
   // Add Patient modal state
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false);
   const [patientFormLoading, setPatientFormLoading] = useState(false);
+  const [showPatientPassword, setShowPatientPassword] = useState(false);
   const [patientFormData, setPatientFormData] = useState({
-    full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: ''
+    full_name: '', email: '', phone: '', password: 'password123', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: ''
+  });
+
+  // Edit Patient modal state
+  const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [showEditPatientPassword, setShowEditPatientPassword] = useState(false);
+  const [editPatientFormData, setEditPatientFormData] = useState({
+    full_name: '', email: '', phone: '', password: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: ''
   });
 
   // Staff state
@@ -261,7 +270,7 @@ const SuperAdminDashboard = () => {
   const [staffFormLoading, setStaffFormLoading] = useState(false);
   const [showStaffPassword, setShowStaffPassword] = useState(false);
   const [showEditStaffPassword, setShowEditStaffPassword] = useState(false);
-  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', phone: '', password: 'password123', role: '', department: '', designation: '' });
   const [editStaffFormData, setEditStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
   
   // Rooms state
@@ -416,7 +425,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       if (res.ok) {
         toast.success('Staff member added');
         setIsAddStaffOpen(false);
-        setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+        setStaffFormData({ name: '', email: '', phone: '', password: 'password123', role: '', department: '', designation: '' });
         await fetchAllStaff();
       } else {
         toast.error(data.error || 'Failed to add staff');
@@ -515,7 +524,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       name: '',
       email: '',
       phone: '',
-      password: '',
+      password: 'password123',
       specialization: '',
       qualifications: '',
       bio: '',
@@ -653,6 +662,7 @@ const [kpiData, setKpiData] = useState<any>(null);
           full_name: patientFormData.full_name,
           email: patientFormData.email,
           phone: patientFormData.phone,
+          password: patientFormData.password || 'password123',
           doctor_id: patientFormData.doctor_id ? Number(patientFormData.doctor_id) : null,
           date_of_birth: patientFormData.date_of_birth || null,
           address: patientFormData.address || null,
@@ -665,13 +675,52 @@ const [kpiData, setKpiData] = useState<any>(null);
       if (response.ok) {
         toast({ title: 'Success', description: 'Patient added successfully' });
         setIsAddPatientOpen(false);
-        setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' });
+        setPatientFormData({ full_name: '', email: '', phone: '', password: 'password123', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' });
         await fetchAllPatients();
       } else {
         toast({ title: 'Error', description: data.error || 'Failed to add patient', variant: 'destructive' });
       }
     } catch {
       toast({ title: 'Error', description: 'Failed to add patient', variant: 'destructive' });
+    } finally {
+      setPatientFormLoading(false);
+    }
+  };
+
+  // Save edit patient handler
+  const handleSaveEditPatient = async () => {
+    if (!editingPatient) return;
+    try {
+      setPatientFormLoading(true);
+      const payload: any = {
+        full_name: editPatientFormData.full_name,
+        email: editPatientFormData.email,
+        phone: editPatientFormData.phone,
+        doctor_id: editPatientFormData.doctor_id ? Number(editPatientFormData.doctor_id) : null,
+        date_of_birth: editPatientFormData.date_of_birth || null,
+        address: editPatientFormData.address || null,
+        age: editPatientFormData.age ? parseInt(editPatientFormData.age) : null,
+        gender: editPatientFormData.gender || null,
+        state: editPatientFormData.state || null,
+      };
+      if (editPatientFormData.password) {
+        payload.password = editPatientFormData.password;
+      }
+      const res = await apiFetch(`/api/patients/${editingPatient.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Patient updated' });
+        setIsEditPatientOpen(false);
+        setEditingPatient(null);
+        await fetchAllPatients();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ title: 'Error', description: data.error || 'Failed to update', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update patient', variant: 'destructive' });
     } finally {
       setPatientFormLoading(false);
     }
@@ -1675,11 +1724,11 @@ const [kpiData, setKpiData] = useState<any>(null);
 
               <Dialog open={isAddPatientOpen} onOpenChange={(open) => { if (!patientFormLoading) setIsAddPatientOpen(open); }}>
                 <DialogTrigger asChild>
-                  <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => { setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' }); setIsAddPatientOpen(true); }}>
+                  <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => { setPatientFormData({ full_name: '', email: '', phone: '', password: 'password123', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' }); setShowPatientPassword(false); setIsAddPatientOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" /> Add Patient
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Add New Patient</DialogTitle>
                   </DialogHeader>
@@ -1697,12 +1746,17 @@ const [kpiData, setKpiData] = useState<any>(null);
                       <Input value={patientFormData.phone} onChange={(e) => setPatientFormData({ ...patientFormData, phone: e.target.value })} placeholder="10-digit phone number" />
                     </div>
                     <div>
+                      <Label>Password *</Label>
+                      <div className="relative">
+                        <Input type={showPatientPassword ? 'text' : 'password'} value={patientFormData.password} onChange={(e) => setPatientFormData({ ...patientFormData, password: e.target.value })} placeholder="••••••••" />
+                        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowPatientPassword(!showPatientPassword)}>
+                          {showPatientPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
                       <Label>Assign Doctor</Label>
-                      <select
-                        className="w-full border rounded-md px-3 py-2 text-sm"
-                        value={patientFormData.doctor_id}
-                        onChange={(e) => setPatientFormData({ ...patientFormData, doctor_id: e.target.value })}
-                      >
+                      <select className="w-full border rounded-md px-3 py-2 text-sm" value={patientFormData.doctor_id} onChange={(e) => setPatientFormData({ ...patientFormData, doctor_id: e.target.value })}>
                         <option value="">-- Unassigned --</option>
                         {doctors.map((d) => (
                           <option key={d.id} value={d.id}>{d.name} {d.specialization ? `(${d.specialization})` : ''}</option>
@@ -1720,26 +1774,11 @@ const [kpiData, setKpiData] = useState<any>(null);
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label>Age</Label>
-                        <Input
-                          type="number"
-                          value={patientFormData.age}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '').slice(0, 2);
-                            setPatientFormData({ ...patientFormData, age: val });
-                          }}
-                          placeholder="e.g. 25"
-                          min="1"
-                          max="99"
-                          maxLength={2}
-                        />
+                        <Input type="number" value={patientFormData.age} onChange={(e) => { const val = e.target.value.replace(/\D/g, '').slice(0, 2); setPatientFormData({ ...patientFormData, age: val }); }} placeholder="e.g. 25" min="1" max="99" />
                       </div>
                       <div>
                         <Label>Gender</Label>
-                        <select
-                          className="w-full border rounded-md px-3 py-2 text-sm"
-                          value={patientFormData.gender}
-                          onChange={(e) => setPatientFormData({ ...patientFormData, gender: e.target.value })}
-                        >
+                        <select className="w-full border rounded-md px-3 py-2 text-sm" value={patientFormData.gender} onChange={(e) => setPatientFormData({ ...patientFormData, gender: e.target.value })}>
                           <option value="">Select Gender</option>
                           <option value="male">Male</option>
                           <option value="female">Female</option>
@@ -1770,6 +1809,7 @@ const [kpiData, setKpiData] = useState<any>(null);
                   <p className="text-muted-foreground">No patients registered yet</p>
                 </div>
               ) : (
+                <>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -1780,6 +1820,7 @@ const [kpiData, setKpiData] = useState<any>(null);
                       <TableHead className="text-center">Dashboard Access</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Tab Settings</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1838,10 +1879,77 @@ const [kpiData, setKpiData] = useState<any>(null);
                             Configure Tabs
                           </Button>
                         </TableCell>
+                        <TableCell>
+                          <Button size="sm" variant="ghost" onClick={() => {
+                            setEditingPatient(patient);
+                            setEditPatientFormData({
+                              full_name: patient.full_name || '',
+                              email: patient.email || '',
+                              phone: patient.phone || '',
+                              password: '',
+                              doctor_id: patient.doctor_id ? String(patient.doctor_id) : '',
+                              date_of_birth: (patient as any).date_of_birth || '',
+                              address: (patient as any).address || '',
+                              age: (patient as any).age ? String((patient as any).age) : '',
+                              gender: (patient as any).gender || '',
+                              state: (patient as any).state || '',
+                            });
+                            setShowEditPatientPassword(false);
+                            setIsEditPatientOpen(true);
+                          }}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+
+                {/* Edit Patient Dialog */}
+                <Dialog open={isEditPatientOpen} onOpenChange={(open) => { if (!patientFormLoading) setIsEditPatientOpen(open); }}>
+                  <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit Patient</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 mt-4">
+                      <div>
+                        <Label>Full Name *</Label>
+                        <Input value={editPatientFormData.full_name} onChange={(e) => setEditPatientFormData({ ...editPatientFormData, full_name: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Email *</Label>
+                        <Input type="email" value={editPatientFormData.email} onChange={(e) => setEditPatientFormData({ ...editPatientFormData, email: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Phone *</Label>
+                        <Input value={editPatientFormData.phone} onChange={(e) => setEditPatientFormData({ ...editPatientFormData, phone: e.target.value })} />
+                      </div>
+                      <div>
+                        <Label>Password (leave blank to keep current)</Label>
+                        <div className="relative">
+                          <Input type={showEditPatientPassword ? 'text' : 'password'} value={editPatientFormData.password} onChange={(e) => setEditPatientFormData({ ...editPatientFormData, password: e.target.value })} placeholder="••••••••" />
+                          <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditPatientPassword(!showEditPatientPassword)}>
+                            {showEditPatientPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <Label>Assign Doctor</Label>
+                        <select className="w-full border rounded-md px-3 py-2 text-sm" value={editPatientFormData.doctor_id} onChange={(e) => setEditPatientFormData({ ...editPatientFormData, doctor_id: e.target.value })}>
+                          <option value="">-- Unassigned --</option>
+                          {doctors.map((d) => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button className="bg-purple-600 hover:bg-purple-700" onClick={handleSaveEditPatient} disabled={patientFormLoading}>{patientFormLoading ? 'Saving...' : 'Save'}</Button>
+                        <Button variant="ghost" onClick={() => { if (!patientFormLoading) { setIsEditPatientOpen(false); setEditingPatient(null); } }}>Cancel</Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+                </>
               )}
             </CardContent>
           </Card>
