@@ -1755,6 +1755,196 @@ const [kpiData, setKpiData] = useState<any>(null);
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* STAFF MANAGEMENT TAB */}
+        <TabsContent value="staff">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-blue-600" />
+                  Manage Staff
+                </CardTitle>
+                <CardDescription>
+                  Add staff members who can log in to the admin dashboard
+                </CardDescription>
+              </div>
+
+              <Dialog open={isAddStaffOpen} onOpenChange={(open) => { if (!staffFormLoading) setIsAddStaffOpen(open); }}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' }); setShowStaffPassword(false); setIsAddStaffOpen(true); }}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Staff
+                  </Button>
+                </DialogTrigger>
+
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add New Staff Member</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div>
+                      <Label>Name *</Label>
+                      <Input value={staffFormData.name} onChange={(e) => setStaffFormData({ ...staffFormData, name: e.target.value })} placeholder="Staff name" />
+                    </div>
+                    <div>
+                      <Label>Email *</Label>
+                      <Input type="email" value={staffFormData.email} onChange={(e) => setStaffFormData({ ...staffFormData, email: e.target.value })} placeholder="staff@hospital.com" />
+                    </div>
+                    <div>
+                      <Label>Phone</Label>
+                      <Input value={staffFormData.phone} onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value })} placeholder="+91 98765 43210" />
+                    </div>
+                    <div>
+                      <Label>Password *</Label>
+                      <div className="relative">
+                        <Input type={showStaffPassword ? 'text' : 'password'} value={staffFormData.password} onChange={(e) => setStaffFormData({ ...staffFormData, password: e.target.value })} placeholder="••••••••" />
+                        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowStaffPassword(!showStaffPassword)}>
+                          {showStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Role</Label>
+                      <Input value={staffFormData.role} onChange={(e) => setStaffFormData({ ...staffFormData, role: e.target.value })} placeholder="e.g. Nurse, Receptionist" />
+                    </div>
+                    <div>
+                      <Label>Department</Label>
+                      <Input value={staffFormData.department} onChange={(e) => setStaffFormData({ ...staffFormData, department: e.target.value })} placeholder="e.g. Cardiology, Admin" />
+                    </div>
+                    <div>
+                      <Label>Designation</Label>
+                      <Input value={staffFormData.designation} onChange={(e) => setStaffFormData({ ...staffFormData, designation: e.target.value })} placeholder="e.g. Senior Nurse" />
+                    </div>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleAddStaff} disabled={staffFormLoading}>
+                      {staffFormLoading ? 'Adding...' : 'Add Staff'}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+
+            <CardContent>
+              {staffLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+                </div>
+              ) : allStaff.length === 0 ? (
+                <div className="text-center py-12">
+                  <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">No staff members added yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Click "Add Staff" to get started</p>
+                </div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead>Designation</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {allStaff.map((staff: any) => (
+                        <TableRow key={staff.id}>
+                          <TableCell className="font-medium">{staff.name}</TableCell>
+                          <TableCell>{staff.email || '-'}</TableCell>
+                          <TableCell>{staff.phone || '-'}</TableCell>
+                          <TableCell>{staff.role || '-'}</TableCell>
+                          <TableCell>{staff.department || '-'}</TableCell>
+                          <TableCell>{staff.designation || '-'}</TableCell>
+                          <TableCell>
+                            {staff.is_active ? (
+                              <Badge className="bg-green-100 text-green-800">Active</Badge>
+                            ) : (
+                              <Badge variant="secondary">Inactive</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                setEditingStaff(staff);
+                                setEditStaffFormData({
+                                  name: staff.name || '',
+                                  email: staff.email || '',
+                                  phone: staff.phone || '',
+                                  password: '',
+                                  role: staff.role || '',
+                                  department: staff.department || '',
+                                  designation: staff.designation || ''
+                                });
+                                setShowEditStaffPassword(false);
+                                setIsEditStaffOpen(true);
+                              }}>
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeleteStaff(staff.id)}>
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+
+                  {/* Edit Staff Dialog */}
+                  <Dialog open={isEditStaffOpen} onOpenChange={(open) => { if (!staffFormLoading) setIsEditStaffOpen(open); }}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Edit Staff Member</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        <div>
+                          <Label>Name *</Label>
+                          <Input value={editStaffFormData.name} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, name: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Email *</Label>
+                          <Input type="email" value={editStaffFormData.email} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, email: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Phone</Label>
+                          <Input value={editStaffFormData.phone} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, phone: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Password (leave blank to keep current)</Label>
+                          <div className="relative">
+                            <Input type={showEditStaffPassword ? 'text' : 'password'} value={editStaffFormData.password} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, password: e.target.value })} placeholder="••••••••" />
+                            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditStaffPassword(!showEditStaffPassword)}>
+                              {showEditStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <Label>Role</Label>
+                          <Input value={editStaffFormData.role} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, role: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Department</Label>
+                          <Input value={editStaffFormData.department} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, department: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Designation</Label>
+                          <Input value={editStaffFormData.designation} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, designation: e.target.value })} />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveEditStaff} disabled={staffFormLoading}>{staffFormLoading ? 'Saving...' : 'Save'}</Button>
+                          <Button variant="ghost" onClick={() => { if (!staffFormLoading) { setIsEditStaffOpen(false); setEditingStaff(null); } }}>Cancel</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Reschedule Modal */}
