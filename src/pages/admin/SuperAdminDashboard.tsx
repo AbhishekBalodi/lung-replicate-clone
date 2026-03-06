@@ -394,17 +394,87 @@ const [kpiData, setKpiData] = useState<any>(null);
   // Fetch all staff members
   const fetchAllStaff = useCallback(async () => {
     try {
+      setStaffLoading(true);
       const res = await apiFetch('/api/staff', { method: 'GET' });
       const data = await res.json();
       if (res.ok) {
-        setAllStaff(Array.isArray(data) ? data : []);
+        setAllStaff(data.staff || (Array.isArray(data) ? data : []));
       }
     } catch (err) {
       console.error('Error fetching staff:', err);
-      // Fallback: count doctors as staff if staff API not available
       setAllStaff([]);
+    } finally {
+      setStaffLoading(false);
     }
   }, []);
+
+  // Add staff handler
+  const handleAddStaff = async () => {
+    if (!staffFormData.name || !staffFormData.email || !staffFormData.password) {
+      toast({ title: 'Validation Error', description: 'Name, email, and password are required', variant: 'destructive' });
+      return;
+    }
+    try {
+      setStaffFormLoading(true);
+      const res = await apiFetch('/api/staff', {
+        method: 'POST',
+        body: JSON.stringify(staffFormData)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Staff member added' });
+        setIsAddStaffOpen(false);
+        setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+        await fetchAllStaff();
+      } else {
+        toast({ title: 'Error', description: data.error || 'Failed to add staff', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to add staff', variant: 'destructive' });
+    } finally {
+      setStaffFormLoading(false);
+    }
+  };
+
+  // Save edit staff handler
+  const handleSaveEditStaff = async () => {
+    if (!editingStaff) return;
+    try {
+      setStaffFormLoading(true);
+      const payload: any = { ...editStaffFormData };
+      if (!payload.password) delete payload.password;
+      const res = await apiFetch(`/api/staff/${editingStaff.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Staff updated' });
+        setIsEditStaffOpen(false);
+        setEditingStaff(null);
+        await fetchAllStaff();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ title: 'Error', description: data.error || 'Failed to update', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update staff', variant: 'destructive' });
+    } finally {
+      setStaffFormLoading(false);
+    }
+  };
+
+  // Delete staff handler
+  const handleDeleteStaff = async (id: number) => {
+    try {
+      const res = await apiFetch(`/api/staff/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Staff member deactivated' });
+        await fetchAllStaff();
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete staff', variant: 'destructive' });
+    }
+  };
 
   // Fetch all rooms
   const fetchAllRooms = useCallback(async () => {
