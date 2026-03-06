@@ -63,7 +63,7 @@ import { getPatientProfile, updatePatientProfile, updateEmergencyContact, addFam
 import { getPatientSupportTickets, createSupportTicket, getSupportTicketDetails, getDoctorsForFeedback, submitDoctorRating, submitHospitalFeedback, submitComplaint } from '../lib/patient.support.js';
 
 // Telemedicine APIs
-import { getTelemedicineSummary, getTelemedicineSessions, addTelemedicineSession, updateTelemedicineSession } from '../lib/admin.telemedicine.js';
+import { getTelemedicineSummary, getTelemedicineSessions, addTelemedicineSession, updateTelemedicineSession, getTelemedicineAppointments } from '../lib/admin.telemedicine.js';
 
 // Schedule APIs
 import { getScheduleSlots, addScheduleSlot, updateScheduleSlot, deleteScheduleSlot, toggleSlotActive, getLeaveRequests, addLeaveRequest, updateLeaveRequest, getScheduleSettings, saveScheduleSettings } from '../lib/admin.schedule.js';
