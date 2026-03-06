@@ -35,14 +35,19 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
 
-  useEffect(() => {
-    if (loading) return;
-    // Only redirect if auth has finished loading AND user is not an admin
-    if (!user || (user.role !== "admin" && user.role !== "super_admin")) {
-      navigate("/login", { replace: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, user]);
+  // Check auth from both context AND localStorage fallback
+  const isAuthenticated = useMemo(() => {
+    if (user && (user.role === "admin" || user.role === "super_admin")) return true;
+    // Fallback: check localStorage directly (covers race conditions during route transitions)
+    try {
+      const stored = localStorage.getItem('customUser');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        return parsed.role === "admin" || parsed.role === "super_admin";
+      }
+    } catch {}
+    return false;
+  }, [user]);
 
   const isActive = (path: string) =>
     pathname === path
