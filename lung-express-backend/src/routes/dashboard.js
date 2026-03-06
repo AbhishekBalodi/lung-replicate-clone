@@ -6,6 +6,9 @@ import { getSuperAdminDashboardCharts } from '../lib/superadmin.dashboard.charts
 import { getRoomsSummary, getRoomsList, getRoomAllotments, addRoom, addRoomAllotment } from '../lib/admin.rooms.js';
 import { getBloodBankSummary, getBloodStock, getBloodDonors, addBloodStock, getBloodGroups, addBloodDonor, getBloodDonorsSummary, getBloodDonorsCharts } from '../lib/admin.blood-bank.js';
 import { getStaffSummary, getStaffList, addStaff, updateStaff, deleteStaff } from '../lib/admin.staff.js';
+
+// Communication APIs
+import { getChatList, getChatMessages, sendChatMessage, getStaffNotes, addStaffNote, toggleNotePin, getHospitalStaffList, addHospitalStaff, updateHospitalStaff, deleteHospitalStaff, getCallCenterStaff, addCallCenterStaff } from '../lib/admin.communication.js';
 import { getFeedbackSummary, getFeedbackList } from '../lib/admin.feedback.js';
 import { getBillingSummary, getRevenueByMonth, getRevenueByDoctor } from '../lib/admin.billing.js';
 import { getAppointmentsSummary, getAppointmentsByDoctor, getAppointmentsByMonth } from '../lib/admin.appointments.js';
