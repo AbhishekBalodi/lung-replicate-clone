@@ -247,6 +247,15 @@ const SuperAdminDashboard = () => {
 
   // Staff state
   const [allStaff, setAllStaff] = useState<Staff[]>([]);
+  const [staffLoading, setStaffLoading] = useState(true);
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<any>(null);
+  const [staffFormLoading, setStaffFormLoading] = useState(false);
+  const [showStaffPassword, setShowStaffPassword] = useState(false);
+  const [showEditStaffPassword, setShowEditStaffPassword] = useState(false);
+  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+  const [editStaffFormData, setEditStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
   
   // Rooms state
   const [allRooms, setAllRooms] = useState<Room[]>([]);
