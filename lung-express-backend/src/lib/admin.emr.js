@@ -8,7 +8,6 @@ import { getTenantPool } from './tenant-db.js';
 function normalizeJsonForMysql(value) {
   if (value === undefined || value === null || value === '') return null;
   if (typeof value === 'string') {
-    // If it's already JSON, keep it; otherwise wrap as an object.
     try {
       const parsed = JSON.parse(value);
       return JSON.stringify(parsed);
@@ -16,8 +15,72 @@ function normalizeJsonForMysql(value) {
       return JSON.stringify({ text: value });
     }
   }
-  // objects/arrays/numbers/booleans
   return JSON.stringify(value);
+}
+
+// ============================================
+// ENSURE TABLES EXIST
+// ============================================
+async function ensureEMRTables(pool) {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS diagnosis_notes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        diagnosis TEXT NOT NULL,
+        symptoms TEXT,
+        notes TEXT,
+        status VARCHAR(20) DEFAULT 'draft',
+        doctor_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS treatment_plans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        goals TEXT,
+        start_date DATE,
+        end_date DATE,
+        status VARCHAR(20) DEFAULT 'active',
+        doctor_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS progress_notes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        note_type VARCHAR(50) DEFAULT 'general',
+        content TEXT,
+        vitals JSON,
+        doctor_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS medical_documents (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        title VARCHAR(255),
+        document_type VARCHAR(50) DEFAULT 'other',
+        file_url VARCHAR(500),
+        file_name VARCHAR(255),
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+  } catch (e) {
+    console.warn('ensureEMRTables warning:', e.message);
+  }
 }
 
 // ============================================
@@ -27,6 +90,7 @@ function normalizeJsonForMysql(value) {
 export async function getDiagnosisNotes(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, search, status } = req.query;
     
     let query = `
@@ -70,6 +134,7 @@ export async function getDiagnosisNotes(req, res) {
 export async function addDiagnosisNote(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, patient_name, diagnosis, symptoms, notes, status, doctor_id } = req.body;
     
     const [result] = await pool.execute(
@@ -78,7 +143,16 @@ export async function addDiagnosisNote(req, res) {
       [patient_id || null, patient_name, diagnosis, symptoms || null, notes || null, status || 'draft', doctor_id || null]
     );
     
-    res.json({ success: true, id: result.insertId });
+    // Return created note for instant rendering
+    const [rows] = await pool.execute(
+      `SELECT dn.*, COALESCE(p.full_name, dn.patient_name) as patient_name
+       FROM diagnosis_notes dn
+       LEFT JOIN patients p ON p.id = dn.patient_id
+       WHERE dn.id = ?`,
+      [result.insertId]
+    );
+    
+    res.json({ success: true, id: result.insertId, note: rows[0] || null });
   } catch (err) {
     console.error('addDiagnosisNote error:', err);
     res.status(500).json({ error: 'Failed to add diagnosis note' });
@@ -124,6 +198,7 @@ export async function deleteDiagnosisNote(req, res) {
 export async function getTreatmentPlans(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, search, status } = req.query;
     
     let query = `
@@ -167,6 +242,7 @@ export async function getTreatmentPlans(req, res) {
 export async function addTreatmentPlan(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, patient_name, title, description, goals, start_date, end_date, status, doctor_id } = req.body;
     
     const [result] = await pool.execute(
@@ -175,7 +251,16 @@ export async function addTreatmentPlan(req, res) {
       [patient_id || null, patient_name, title, description || null, goals || null, start_date || null, end_date || null, status || 'active', doctor_id || null]
     );
     
-    res.json({ success: true, id: result.insertId });
+    // Return created plan for instant rendering
+    const [rows] = await pool.execute(
+      `SELECT tp.*, COALESCE(p.full_name, tp.patient_name) as patient_name
+       FROM treatment_plans tp
+       LEFT JOIN patients p ON p.id = tp.patient_id
+       WHERE tp.id = ?`,
+      [result.insertId]
+    );
+    
+    res.json({ success: true, id: result.insertId, plan: rows[0] || null });
   } catch (err) {
     console.error('addTreatmentPlan error:', err);
     res.status(500).json({ error: 'Failed to add treatment plan' });
@@ -208,6 +293,7 @@ export async function updateTreatmentPlan(req, res) {
 export async function getProgressNotes(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, search } = req.query;
     
     let query = `
@@ -246,6 +332,7 @@ export async function getProgressNotes(req, res) {
 export async function addProgressNote(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, patient_name, note_type, content, vitals, doctor_id } = req.body;
 
     const vitalsJson = normalizeJsonForMysql(vitals);
@@ -256,7 +343,16 @@ export async function addProgressNote(req, res) {
       [patient_id || null, patient_name, note_type || 'general', content, vitalsJson, doctor_id || null]
     );
 
-    res.json({ success: true, id: result.insertId });
+    // Return created note
+    const [rows] = await pool.execute(
+      `SELECT pn.*, COALESCE(p.full_name, pn.patient_name) as patient_name
+       FROM progress_notes pn
+       LEFT JOIN patients p ON p.id = pn.patient_id
+       WHERE pn.id = ?`,
+      [result.insertId]
+    );
+
+    res.json({ success: true, id: result.insertId, note: rows[0] || null });
   } catch (err) {
     console.error('addProgressNote error:', err);
     res.status(500).json({ error: 'Failed to add progress note' });
@@ -270,6 +366,7 @@ export async function addProgressNote(req, res) {
 export async function getMedicalDocuments(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, document_type, search } = req.query;
     
     let query = `
@@ -313,6 +410,7 @@ export async function getMedicalDocuments(req, res) {
 export async function addMedicalDocument(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureEMRTables(pool);
     const { patient_id, patient_name, title, document_type, file_url, file_name, notes } = req.body;
     
     const [result] = await pool.execute(
@@ -321,7 +419,16 @@ export async function addMedicalDocument(req, res) {
       [patient_id || null, patient_name, title, document_type || 'other', file_url || null, file_name || null, notes || null]
     );
     
-    res.json({ success: true, id: result.insertId });
+    // Return created document
+    const [rows] = await pool.execute(
+      `SELECT md.*, COALESCE(p.full_name, md.patient_name) as patient_name
+       FROM medical_documents md
+       LEFT JOIN patients p ON p.id = md.patient_id
+       WHERE md.id = ?`,
+      [result.insertId]
+    );
+    
+    res.json({ success: true, id: result.insertId, document: rows[0] || null });
   } catch (err) {
     console.error('addMedicalDocument error:', err);
     res.status(500).json({ error: 'Failed to add medical document' });

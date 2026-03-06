@@ -5,6 +5,45 @@
 
 import { getTenantPool } from './tenant-db.js';
 
+// ============================================
+// ENSURE TABLE EXISTS
+// ============================================
+async function ensureTelemedicineTables(pool) {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS telemedicine_sessions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        doctor_id INT,
+        session_type VARCHAR(20) DEFAULT 'video',
+        scheduled_date DATE,
+        scheduled_time TIME,
+        duration VARCHAR(20) DEFAULT '30 min',
+        status VARCHAR(20) DEFAULT 'scheduled',
+        meeting_link VARCHAR(500),
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS telemedicine_messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        session_id INT NOT NULL,
+        sender_type VARCHAR(20) DEFAULT 'patient',
+        sender_id INT,
+        message TEXT NOT NULL,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_tele_messages_session (session_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+  } catch (e) {
+    console.warn('ensureTelemedicineTables warning:', e.message);
+  }
+}
+
 // Helper to check schema columns
 async function getTelemedicineColumnInfo(pool) {
   const [columns] = await pool.query(`
@@ -25,6 +64,7 @@ async function getTelemedicineColumnInfo(pool) {
 export async function getTelemedicineSummary(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTelemedicineTables(pool);
     const { doctor_id } = req.query;
     
     const colInfo = await getTelemedicineColumnInfo(pool);
@@ -85,6 +125,7 @@ export async function getTelemedicineSummary(req, res) {
 export async function getTelemedicineSessions(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTelemedicineTables(pool);
     const { status, search, doctor_id } = req.query;
 
     const colInfo = await getTelemedicineColumnInfo(pool);
@@ -155,6 +196,7 @@ export async function getTelemedicineSessions(req, res) {
 export async function addTelemedicineSession(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTelemedicineTables(pool);
     const { patient_id, patient_name, type, session_type, scheduled_time, scheduled_date, scheduled_time_only, duration, notes, doctor_id } = req.body;
 
     const sessionTypeValue = session_type || type || 'video';
@@ -178,9 +220,6 @@ export async function addTelemedicineSession(req, res) {
       if (!patient_name || !dateVal) {
         return res.status(400).json({ error: 'patient_name and scheduled_date are required' });
       }
-
-      const typeCol = colInfo.hasSessionType ? 'session_type' : '';
-      const typeParams = colInfo.hasSessionType ? [sessionTypeValue] : [];
 
       const [result] = await pool.execute(
         colInfo.hasSessionType
@@ -207,8 +246,6 @@ export async function addTelemedicineSession(req, res) {
       if (!patient_name || !scheduled_time) {
         return res.status(400).json({ error: 'patient_name and scheduled_time are required' });
       }
-
-      const typeCol = colInfo.hasType ? 'type' : '';
       
       const [result] = await pool.execute(
         colInfo.hasType
@@ -279,18 +316,8 @@ export async function updateTelemedicineSession(req, res) {
 export async function getTelemedicineChat(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTelemedicineTables(pool);
     const { sessionId } = req.params;
-
-    // Check if telemedicine_messages table exists
-    const [tables] = await pool.query(`
-      SELECT TABLE_NAME 
-      FROM information_schema.TABLES 
-      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_messages'
-    `).catch(() => [[]]);
-
-    if (!tables || tables.length === 0) {
-      return res.json({ messages: [] });
-    }
 
     const [messages] = await pool.execute(`
       SELECT 
@@ -315,22 +342,12 @@ export async function getTelemedicineChat(req, res) {
 export async function sendTelemedicineMessage(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTelemedicineTables(pool);
     const { sessionId } = req.params;
     const { sender_type, sender_id, message } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
-    }
-
-    // Check if telemedicine_messages table exists
-    const [tables] = await pool.query(`
-      SELECT TABLE_NAME 
-      FROM information_schema.TABLES 
-      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_messages'
-    `).catch(() => [[]]);
-
-    if (!tables || tables.length === 0) {
-      return res.status(400).json({ error: 'Chat not available for this tenant' });
     }
 
     const [result] = await pool.execute(`

@@ -5,10 +5,57 @@
 
 import { getTenantPool } from './tenant-db.js';
 
+// ============================================
+// ENSURE TABLES EXIST
+// ============================================
+async function ensureScheduleTables(pool) {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS doctor_schedule (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        doctor_id INT,
+        day VARCHAR(20) NOT NULL,
+        start_time TIME NOT NULL,
+        end_time TIME NOT NULL,
+        slot_duration INT DEFAULT 15,
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS leave_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        doctor_id INT,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        reason TEXT,
+        status ENUM('pending','approved','rejected') DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS schedule_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        doctor_id INT UNIQUE,
+        default_slot_duration INT DEFAULT 15,
+        buffer_time INT DEFAULT 5,
+        booking_window_days INT DEFAULT 30,
+        cancellation_hours INT DEFAULT 24,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+  } catch (e) {
+    console.warn('ensureScheduleTables warning:', e.message);
+  }
+}
+
 // Get schedule slots
 export async function getScheduleSlots(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureScheduleTables(pool);
     const { doctor_id } = req.query;
 
     let query = 'SELECT * FROM doctor_schedule';
@@ -33,6 +80,7 @@ export async function getScheduleSlots(req, res) {
 export async function addScheduleSlot(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureScheduleTables(pool);
     const { day, start_time, end_time, slot_duration, is_active, doctor_id } = req.body;
 
     if (!day || !start_time || !end_time) {
@@ -105,6 +153,7 @@ export async function toggleSlotActive(req, res) {
 export async function getLeaveRequests(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureScheduleTables(pool);
     const { doctor_id, status } = req.query;
 
     let query = 'SELECT * FROM leave_requests';
@@ -139,6 +188,7 @@ export async function getLeaveRequests(req, res) {
 export async function addLeaveRequest(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureScheduleTables(pool);
     const { start_date, end_date, reason, doctor_id } = req.body;
 
     if (!start_date || !end_date) {
@@ -178,6 +228,7 @@ export async function updateLeaveRequest(req, res) {
 export async function getScheduleSettings(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureScheduleTables(pool);
     const { doctor_id } = req.query;
 
     let query = 'SELECT * FROM schedule_settings';
@@ -211,6 +262,7 @@ export async function getScheduleSettings(req, res) {
 export async function saveScheduleSettings(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureScheduleTables(pool);
     const { default_slot_duration, buffer_time, booking_window_days, cancellation_hours, doctor_id } = req.body;
 
     // Upsert settings

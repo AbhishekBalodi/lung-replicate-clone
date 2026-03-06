@@ -6,12 +6,56 @@
 import { getTenantPool } from './tenant-db.js';
 
 // ============================================
+// ENSURE TABLES EXIST
+// ============================================
+async function ensureFollowUpsTables(pool) {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS follow_ups (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        follow_up_date DATE NOT NULL,
+        reason TEXT,
+        notes TEXT,
+        status VARCHAR(20) DEFAULT 'pending',
+        reminder_sent BOOLEAN DEFAULT FALSE,
+        doctor_id INT,
+        completed_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS care_plans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        goals TEXT,
+        interventions TEXT,
+        start_date DATE,
+        end_date DATE,
+        status VARCHAR(20) DEFAULT 'active',
+        doctor_id INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+  } catch (e) {
+    console.warn('ensureFollowUpsTables warning:', e.message);
+  }
+}
+
+// ============================================
 // FOLLOW-UPS
 // ============================================
 
 export async function getFollowUpsSummary(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureFollowUpsTables(pool);
     
     const [total] = await pool.execute('SELECT COUNT(*) as count FROM follow_ups');
     const [pending] = await pool.execute("SELECT COUNT(*) as count FROM follow_ups WHERE status = 'pending'");
@@ -33,10 +77,11 @@ export async function getFollowUpsSummary(req, res) {
 export async function getFollowUpsList(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureFollowUpsTables(pool);
     const { status, search, doctor_id } = req.query;
     
     let query = `
-      SELECT f.*, p.full_name as patient_name, p.phone, p.email
+      SELECT f.*, COALESCE(p.full_name, f.patient_name) as patient_name, p.phone, p.email
       FROM follow_ups f
       LEFT JOIN patients p ON p.id = f.patient_id
     `;
@@ -54,8 +99,8 @@ export async function getFollowUpsList(req, res) {
     }
     
     if (search) {
-      conditions.push('(p.full_name LIKE ? OR f.reason LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`);
+      conditions.push('(p.full_name LIKE ? OR f.reason LIKE ? OR f.patient_name LIKE ?)');
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
     
     if (doctor_id) {
@@ -88,15 +133,25 @@ export async function getFollowUpsList(req, res) {
 export async function addFollowUp(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureFollowUpsTables(pool);
     const { patient_id, patient_name, follow_up_date, reason, notes, doctor_id, reminder_sent } = req.body;
     
     const [result] = await pool.execute(
       `INSERT INTO follow_ups (patient_id, patient_name, follow_up_date, reason, notes, doctor_id, reminder_sent, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [patient_id || null, patient_name, follow_up_date, reason, notes || null, doctor_id || null, reminder_sent || false]
+      [patient_id || null, patient_name, follow_up_date, reason || null, notes || null, doctor_id || null, reminder_sent || false]
     );
     
-    res.json({ success: true, id: result.insertId });
+    // Return created follow-up for instant rendering
+    const [rows] = await pool.execute(
+      `SELECT f.*, COALESCE(p.full_name, f.patient_name) as patient_name, p.phone, p.email
+       FROM follow_ups f
+       LEFT JOIN patients p ON p.id = f.patient_id
+       WHERE f.id = ?`,
+      [result.insertId]
+    );
+    
+    res.json({ success: true, id: result.insertId, followUp: rows[0] || null });
   } catch (err) {
     console.error('addFollowUp error:', err);
     res.status(500).json({ error: 'Failed to add follow-up' });
@@ -146,6 +201,7 @@ export async function markFollowUpComplete(req, res) {
 export async function getCarePlans(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureFollowUpsTables(pool);
     const { patient_id, status, search } = req.query;
     
     let query = `
@@ -189,6 +245,7 @@ export async function getCarePlans(req, res) {
 export async function addCarePlan(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureFollowUpsTables(pool);
     const {
       patient_id,
       patient_name,
