@@ -271,56 +271,110 @@ router.post('/tenant-login', async (req, res) => {
       });
     }
 
-    // Check for patient login (email + phone)
-    if (email && phone) {
-      const [users] = await platformPool.execute(
-        `SELECT * FROM tenant_users 
-         WHERE tenant_id = ? AND email = ? AND phone = ? AND role = 'patient' AND is_active = TRUE`,
-        [tenant.id, email.trim(), phone.trim()]
-      );
+    // Check for patient login (email + password or email + phone)
+    if (email && (phone || password)) {
+      // First try password-based patient login
+      if (password) {
+        const [users] = await platformPool.execute(
+          `SELECT * FROM tenant_users 
+           WHERE tenant_id = ? AND email = ? AND role = 'patient' AND is_active = TRUE AND password_hash IS NOT NULL`,
+          [tenant.id, email.trim()]
+        );
 
-      if (users.length === 0) {
-        return res.status(401).json({ error: 'Invalid credentials. Use your email and phone number.' });
-      }
+        if (users.length > 0) {
+          const user = users[0];
+          const validPassword = await bcrypt.compare(password, user.password_hash);
 
-      const user = users[0];
+          if (validPassword) {
+            await platformPool.execute(
+              'UPDATE tenant_users SET last_login = NOW() WHERE id = ?',
+              [user.id]
+            );
 
-      // Update last login
-      await platformPool.execute(
-        'UPDATE tenant_users SET last_login = NOW() WHERE id = ?',
-        [user.id]
-      );
+            if (req.session) {
+              req.session.user = {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                phone: user.phone,
+                userType: 'patient',
+                tenantId: tenant.id
+              };
+            }
 
-      // Store session for patient
-      if (req.session) {
-        req.session.user = {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          phone: user.phone,
-          userType: 'patient',
-          tenantId: tenant.id
-        };
-      }
-
-      return res.json({
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          phone: user.phone,
-          userType: 'patient'
-        },
-        tenant: {
-          id: tenant.id,
-          code: tenant.tenant_code,
-          name: tenant.name,
-          type: tenant.type
+            return res.json({
+              success: true,
+              user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                phone: user.phone,
+                userType: 'patient'
+              },
+              tenant: {
+                id: tenant.id,
+                code: tenant.tenant_code,
+                name: tenant.name,
+                type: tenant.type
+              }
+            });
+          }
         }
-      });
+      }
+
+      // Fallback: phone-based patient login
+      if (phone) {
+        const [users] = await platformPool.execute(
+          `SELECT * FROM tenant_users 
+           WHERE tenant_id = ? AND email = ? AND phone = ? AND role = 'patient' AND is_active = TRUE`,
+          [tenant.id, email.trim(), phone.trim()]
+        );
+
+        if (users.length === 0) {
+          return res.status(401).json({ error: 'Invalid credentials. Use your email and phone number.' });
+        }
+
+        const user = users[0];
+
+        await platformPool.execute(
+          'UPDATE tenant_users SET last_login = NOW() WHERE id = ?',
+          [user.id]
+        );
+
+        if (req.session) {
+          req.session.user = {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            phone: user.phone,
+            userType: 'patient',
+            tenantId: tenant.id
+          };
+        }
+
+        return res.json({
+          success: true,
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            phone: user.phone,
+            userType: 'patient'
+          },
+          tenant: {
+            id: tenant.id,
+            code: tenant.tenant_code,
+            name: tenant.name,
+            type: tenant.type
+          }
+        });
+      }
+
+      return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     return res.status(400).json({ error: 'Email and password (or phone for patients) are required' });
