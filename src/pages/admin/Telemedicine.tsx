@@ -27,8 +27,10 @@ interface TelemedicineSession {
   status: "scheduled" | "in-progress" | "completed" | "cancelled";
   notes?: string;
   meeting_link?: string;
+  recording_url?: string;
   phone?: string;
   email?: string;
+  appointment_id?: number;
 }
 
 interface Summary {
@@ -38,6 +40,17 @@ interface Summary {
   completed: number;
 }
 
+interface AppointmentOption {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string;
+  appointment_date: string;
+  appointment_time: string;
+  selected_doctor: string;
+  patient_id?: number;
+}
+
 export default function Telemedicine() {
   const [sessions, setSessions] = useState<TelemedicineSession[]>([]);
   const [summary, setSummary] = useState<Summary>({ today: 0, video: 0, chat: 0, completed: 0 });
@@ -45,8 +58,11 @@ export default function Telemedicine() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [appointments, setAppointments] = useState<AppointmentOption[]>([]);
   const [formData, setFormData] = useState({
+    appointment_id: "",
     patient_name: "",
+    patient_id: null as number | null,
     session_type: "video" as "video" | "chat" | "phone",
     scheduled_time: "",
     duration: "30 min",
@@ -56,17 +72,12 @@ export default function Telemedicine() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      // Always fetch ALL sessions and filter client-side to avoid backend status mapping issues
       const [summaryRes, sessionsRes] = await Promise.all([
         apiGet("/api/dashboard/telemedicine/summary"),
         apiGet("/api/dashboard/telemedicine/sessions?status=all")
       ]);
 
-      if (summaryRes.ok) {
-        const data = await summaryRes.json();
-        setSummary(data);
-      }
-
+      if (summaryRes.ok) setSummary(await summaryRes.json());
       if (sessionsRes.ok) {
         const data = await sessionsRes.json();
         setSessions(data.sessions || []);
@@ -78,17 +89,42 @@ export default function Telemedicine() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const fetchAppointments = useCallback(async () => {
+    try {
+      const res = await apiGet("/api/dashboard/telemedicine/appointments");
+      if (res.ok) {
+        const data = await res.json();
+        setAppointments(data.appointments || []);
+      }
+    } catch (e) {
+      console.error("Error fetching appointments for telemedicine:", e);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (isDialogOpen) fetchAppointments(); }, [isDialogOpen, fetchAppointments]);
+
+  const handleAppointmentSelect = (apptId: string) => {
+    const appt = appointments.find(a => String(a.id) === apptId);
+    if (appt) {
+      const dateTimeStr = `${appt.appointment_date}T${appt.appointment_time || '09:00'}`;
+      setFormData(prev => ({
+        ...prev,
+        appointment_id: apptId,
+        patient_name: appt.full_name,
+        patient_id: appt.patient_id || null,
+        scheduled_time: dateTimeStr,
+        notes: `Appointment with Dr. ${appt.selected_doctor}`
+      }));
+    }
+  };
 
   const handleAddSession = async () => {
     if (!formData.patient_name || !formData.scheduled_time) {
-      toast.error("Patient name and scheduled time are required");
+      toast.error("Please select an appointment or enter patient details");
       return;
     }
 
-    // Parse datetime-local into scheduled_date + scheduled_time_only
     const dt = new Date(formData.scheduled_time);
     const scheduled_date = dt.toISOString().split('T')[0];
     const scheduled_time_only = dt.toTimeString().slice(0, 5);
@@ -96,6 +132,8 @@ export default function Telemedicine() {
     try {
       const res = await apiPost("/api/dashboard/telemedicine/sessions", {
         patient_name: formData.patient_name,
+        patient_id: formData.patient_id,
+        appointment_id: formData.appointment_id ? Number(formData.appointment_id) : null,
         session_type: formData.session_type,
         scheduled_date,
         scheduled_time_only,
@@ -104,11 +142,9 @@ export default function Telemedicine() {
         notes: formData.notes
       });
       if (res.ok) {
-        const data = await res.json();
         toast.success("Session scheduled successfully");
         setIsDialogOpen(false);
-        setFormData({ patient_name: "", session_type: "video", scheduled_time: "", duration: "30 min", notes: "" });
-        // Refetch all to get consistent data
+        setFormData({ appointment_id: "", patient_name: "", patient_id: null, session_type: "video", scheduled_time: "", duration: "30 min", notes: "" });
         fetchData();
       } else {
         const err = await res.json();
@@ -120,7 +156,6 @@ export default function Telemedicine() {
   };
 
   const joinSession = async (session: TelemedicineSession) => {
-    // First update status to in-progress
     try {
       const res = await apiPut(`/api/dashboard/telemedicine/sessions/${session.id}`, { 
         status: 'in-progress',
@@ -129,12 +164,10 @@ export default function Telemedicine() {
       if (res.ok) {
         setSessions(prev => prev.map(s => s.id === session.id ? { ...s, status: 'in-progress' as const } : s));
       }
-    } catch (e) { /* continue to open anyway */ }
+    } catch (e) { /* continue */ }
 
-    // Open Jitsi Meet in a new tab
     const roomName = `telemedicine-session-${session.id}`;
-    const jitsiUrl = `https://meet.jit.si/${roomName}`;
-    window.open(jitsiUrl, '_blank', 'noopener,noreferrer');
+    window.open(`https://meet.jit.si/${roomName}`, '_blank', 'noopener,noreferrer');
     toast.success("Video call opened in a new tab");
   };
 
@@ -150,14 +183,10 @@ export default function Telemedicine() {
     }
   };
 
-  const getSessionType = (session: TelemedicineSession): string => {
-    return session.session_type || session.type || 'video';
-  };
+  const getSessionType = (session: TelemedicineSession): string => session.session_type || session.type || 'video';
 
   const getDisplayDate = (session: TelemedicineSession): string => {
-    if (session.scheduled_date) {
-      return new Date(session.scheduled_date + 'T00:00:00').toLocaleDateString();
-    }
+    if (session.scheduled_date) return new Date(session.scheduled_date + 'T00:00:00').toLocaleDateString();
     if (session.scheduled_time) {
       const d = new Date(session.scheduled_time);
       if (!isNaN(d.getTime())) return d.toLocaleDateString();
@@ -166,13 +195,11 @@ export default function Telemedicine() {
   };
 
   const getDisplayTime = (session: TelemedicineSession): string => {
-    // If scheduled_time is just HH:MM:SS, format it
     if (session.scheduled_time && session.scheduled_time.match(/^\d{2}:\d{2}/)) {
       const [h, m] = session.scheduled_time.split(':');
       const hour = parseInt(h);
       const ampm = hour >= 12 ? 'pm' : 'am';
-      const hour12 = hour % 12 || 12;
-      return `${hour12}:${m} ${ampm}`;
+      return `${hour % 12 || 12}:${m} ${ampm}`;
     }
     if (session.scheduled_time) {
       const d = new Date(session.scheduled_time);
@@ -214,15 +241,14 @@ export default function Telemedicine() {
           title="How to Use Telemedicine"
           summary="Schedule and manage video, chat, or phone consultations with patients remotely."
           steps={[
-            { title: "Schedule a Session", description: "Click '+ New Session', enter the patient name, select session type (Video/Chat/Phone), pick date & time, and click 'Schedule Session'." },
-            { title: "Join a Video Call", description: "Click the 'Join' button on any session — it will open a Jitsi Meet video room in a new browser tab. Share the link with the patient." },
-            { title: "Patient Booking", description: "Patients can also book telemedicine sessions from their Patient Portal → Telemedicine tab." },
+            { title: "Schedule a Session", description: "Click '+ New Session', select an existing appointment from the dropdown, choose session type, and click 'Schedule Session'." },
+            { title: "Join a Video Call", description: "Click the 'Join' button on any session — it will open a Jitsi Meet video room in a new browser tab." },
+            { title: "Auto-created from Appointments", description: "When patients book telemedicine appointments, sessions are auto-created here." },
             { title: "Complete or Cancel", description: "After the consultation, click 'Complete' to mark it done. You can also cancel upcoming sessions." },
           ]}
           tips={[
             "Video calls use Jitsi Meet — no installation needed, works in browser.",
-            "The Join button opens the video call in a new tab automatically.",
-            "Chat sessions allow text messaging within the session window.",
+            "Select from existing appointments instead of typing patient names manually.",
           ]}
         />
 
@@ -231,129 +257,107 @@ export default function Telemedicine() {
             <h1 className="text-2xl font-bold text-foreground">Telemedicine</h1>
             <p className="text-muted-foreground">Manage video consultations and patient chat</p>
           </div>
-          <div className="flex gap-2">
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-emerald-600 hover:bg-emerald-700">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Session
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Schedule Telemedicine Session</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div>
-                    <Label>Patient Name</Label>
-                    <Input
-                      value={formData.patient_name}
-                      onChange={(e) => setFormData({ ...formData, patient_name: e.target.value })}
-                      placeholder="Enter patient name"
-                    />
-                  </div>
-                  <div>
-                    <Label>Session Type</Label>
-                    <Select value={formData.session_type} onValueChange={(v) => setFormData({ ...formData, session_type: v as any })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="video">Video Call</SelectItem>
-                        <SelectItem value="chat">Chat</SelectItem>
-                        <SelectItem value="phone">Phone</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Scheduled Time</Label>
-                    <Input
-                      type="datetime-local"
-                      value={formData.scheduled_time}
-                      onChange={(e) => setFormData({ ...formData, scheduled_time: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>Duration</Label>
-                    <Select value={formData.duration} onValueChange={(v) => setFormData({ ...formData, duration: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15 min">15 minutes</SelectItem>
-                        <SelectItem value="30 min">30 minutes</SelectItem>
-                        <SelectItem value="45 min">45 minutes</SelectItem>
-                        <SelectItem value="60 min">60 minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Notes</Label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                      placeholder="Session notes..."
-                    />
-                  </div>
-                  <Button onClick={handleAddSession} className="w-full bg-emerald-600 hover:bg-emerald-700">
-                    Schedule Session
-                  </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="h-4 w-4 mr-2" /> New Session
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Schedule Telemedicine Session</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>Select Appointment</Label>
+                  <Select value={formData.appointment_id} onValueChange={handleAppointmentSelect}>
+                    <SelectTrigger><SelectValue placeholder="Choose an appointment..." /></SelectTrigger>
+                    <SelectContent>
+                      {appointments.length === 0 && (
+                        <SelectItem value="__none" disabled>No appointments available</SelectItem>
+                      )}
+                      {appointments.map(appt => (
+                        <SelectItem key={appt.id} value={String(appt.id)}>
+                          {appt.full_name} — {appt.appointment_date} {appt.appointment_time} (Dr. {appt.selected_doctor})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">Select from existing patient appointments</p>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
+                <div>
+                  <Label>Patient Name</Label>
+                  <Input value={formData.patient_name} readOnly className="bg-muted" placeholder="Auto-filled from appointment" />
+                </div>
+                <div>
+                  <Label>Session Type</Label>
+                  <Select value={formData.session_type} onValueChange={(v) => setFormData({ ...formData, session_type: v as any })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="video">Video Call</SelectItem>
+                      <SelectItem value="chat">Chat</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Scheduled Time</Label>
+                  <Input
+                    type="datetime-local"
+                    value={formData.scheduled_time}
+                    onChange={(e) => setFormData({ ...formData, scheduled_time: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Duration</Label>
+                  <Select value={formData.duration} onValueChange={(v) => setFormData({ ...formData, duration: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15 min">15 minutes</SelectItem>
+                      <SelectItem value="30 min">30 minutes</SelectItem>
+                      <SelectItem value="45 min">45 minutes</SelectItem>
+                      <SelectItem value="60 min">60 minutes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Notes</Label>
+                  <Textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Session notes..."
+                  />
+                </div>
+                <Button onClick={handleAddSession} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                  Schedule Session
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-blue-600" />
+          {[
+            { icon: Calendar, color: "blue", value: summary.today, label: "Today" },
+            { icon: Video, color: "purple", value: summary.video, label: "Video Calls" },
+            { icon: MessageSquare, color: "emerald", value: summary.chat, label: "Chat Sessions" },
+            { icon: Clock, color: "gray", value: summary.completed, label: "Completed" },
+          ].map((stat, i) => (
+            <Card key={i}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`h-10 w-10 rounded-full bg-${stat.color}-100 flex items-center justify-center`}>
+                    <stat.icon className={`h-5 w-5 text-${stat.color}-600`} />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <div className="text-sm text-muted-foreground">{stat.label}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold">{summary.today}</div>
-                  <div className="text-sm text-muted-foreground">Today</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                  <Video className="h-5 w-5 text-purple-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{summary.video}</div>
-                  <div className="text-sm text-muted-foreground">Video Calls</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{summary.chat}</div>
-                  <div className="text-sm text-muted-foreground">Chat Sessions</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                  <Clock className="h-5 w-5 text-gray-600" />
-                </div>
-                <div>
-                  <div className="text-2xl font-bold">{summary.completed}</div>
-                  <div className="text-sm text-muted-foreground">Completed</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -364,12 +368,7 @@ export default function Telemedicine() {
             </TabsList>
             <div className="relative max-w-md w-full md:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search sessions..."
-                className="pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <Input placeholder="Search sessions..." className="pl-10" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
           </div>
 
@@ -413,13 +412,11 @@ export default function Telemedicine() {
                             </div>
                             <div className="flex gap-2">
                               <Button variant="outline" size="sm">
-                                <FileText className="h-4 w-4 mr-1" />
-                                Notes
+                                <FileText className="h-4 w-4 mr-1" /> Notes
                               </Button>
                               {sType === 'video' ? (
                                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => joinSession(session)}>
-                                  <ExternalLink className="h-4 w-4 mr-1" />
-                                  Join
+                                  <ExternalLink className="h-4 w-4 mr-1" /> Join
                                 </Button>
                               ) : (
                                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={() => handleUpdateStatus(session.id, session.status === 'in-progress' ? 'completed' : 'in-progress')}>
@@ -439,7 +436,7 @@ export default function Telemedicine() {
                     <CardContent className="py-12 text-center">
                       <Video className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                       <h3 className="text-lg font-medium mb-2">No upcoming sessions</h3>
-                      <p className="text-muted-foreground">Schedule a new telemedicine session</p>
+                      <p className="text-muted-foreground">Schedule a new telemedicine session or wait for patient bookings</p>
                     </CardContent>
                   </Card>
                 )}
@@ -471,9 +468,7 @@ export default function Telemedicine() {
                           <div className="text-right text-sm text-muted-foreground">
                             {getDisplayDate(session)} • {session.duration}
                           </div>
-                          <Button variant="outline" size="sm">
-                            View Summary
-                          </Button>
+                          <Button variant="outline" size="sm">View Summary</Button>
                         </div>
                       </div>
                     </CardContent>
@@ -482,9 +477,7 @@ export default function Telemedicine() {
               })}
               {pastSessions.length === 0 && (
                 <Card>
-                  <CardContent className="py-12 text-center text-muted-foreground">
-                    No past sessions
-                  </CardContent>
+                  <CardContent className="py-12 text-center text-muted-foreground">No past sessions</CardContent>
                 </Card>
               )}
             </div>
