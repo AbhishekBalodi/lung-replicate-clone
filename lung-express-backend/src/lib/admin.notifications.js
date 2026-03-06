@@ -6,12 +6,52 @@
 import { getTenantPool } from './tenant-db.js';
 
 // ============================================
+// ENSURE TABLES EXIST
+// ============================================
+async function ensureAlertsTables(pool) {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_alerts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        message TEXT,
+        alert_type VARCHAR(50) DEFAULT 'info',
+        priority VARCHAR(20) DEFAULT 'normal',
+        patient_name VARCHAR(255),
+        target_role VARCHAR(50),
+        status VARCHAR(20) DEFAULT 'active',
+        expires_at TIMESTAMP NULL,
+        dismissed_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notification_settings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        category VARCHAR(100),
+        setting_key VARCHAR(100),
+        setting_name VARCHAR(255),
+        enabled BOOLEAN DEFAULT TRUE,
+        email_enabled BOOLEAN DEFAULT TRUE,
+        sms_enabled BOOLEAN DEFAULT FALSE,
+        push_enabled BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+  } catch (e) {
+    console.warn('ensureAlertsTables warning:', e.message);
+  }
+}
+
+// ============================================
 // SYSTEM ALERTS
 // ============================================
 
 export async function getSystemAlerts(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureAlertsTables(pool);
     const { type, status, search } = req.query;
     
     let query = 'SELECT * FROM system_alerts';
@@ -50,6 +90,7 @@ export async function getSystemAlerts(req, res) {
 export async function getSystemAlertsSummary(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureAlertsTables(pool);
     
     const [total] = await pool.execute('SELECT COUNT(*) as count FROM system_alerts');
     const [critical] = await pool.execute("SELECT COUNT(*) as count FROM system_alerts WHERE priority = 'critical' AND status = 'active'");
@@ -71,15 +112,18 @@ export async function getSystemAlertsSummary(req, res) {
 export async function createSystemAlert(req, res) {
   try {
     const pool = getTenantPool(req);
-    const { title, message, alert_type, priority, target_role, expires_at } = req.body;
+    await ensureAlertsTables(pool);
+    const { title, message, alert_type, priority, patient_name, target_role, expires_at } = req.body;
     
     const [result] = await pool.execute(
-      `INSERT INTO system_alerts (title, message, alert_type, priority, target_role, expires_at, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'active')`,
-      [title, message, alert_type || 'info', priority || 'normal', target_role || null, expires_at || null]
+      `INSERT INTO system_alerts (title, message, alert_type, priority, patient_name, target_role, expires_at, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'active')`,
+      [title, message, alert_type || 'info', priority || 'normal', patient_name || null, target_role || null, expires_at || null]
     );
     
-    res.json({ success: true, id: result.insertId });
+    // Return created alert for instant rendering
+    const [rows] = await pool.execute('SELECT * FROM system_alerts WHERE id = ?', [result.insertId]);
+    res.json({ success: true, id: result.insertId, alert: rows[0] || null });
   } catch (err) {
     console.error('createSystemAlert error:', err);
     res.status(500).json({ error: 'Failed to create system alert' });
@@ -106,6 +150,7 @@ export async function dismissAlert(req, res) {
 export async function getNotificationSettings(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureAlertsTables(pool);
     
     const [settings] = await pool.execute('SELECT * FROM notification_settings ORDER BY category, setting_key');
     res.json({ settings });
@@ -138,6 +183,7 @@ export async function updateNotificationSetting(req, res) {
 export async function saveNotificationSettings(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureAlertsTables(pool);
     const { settings } = req.body;
     
     for (const setting of settings) {

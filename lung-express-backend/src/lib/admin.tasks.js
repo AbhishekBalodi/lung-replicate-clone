@@ -5,10 +5,49 @@
 
 import { getTenantPool } from './tenant-db.js';
 
+// ============================================
+// ENSURE TABLES EXIST
+// ============================================
+async function ensureTasksTables(pool) {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        type VARCHAR(50) DEFAULT 'general',
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        patient_id INT,
+        patient_name VARCHAR(255),
+        due_date DATE,
+        priority ENUM('low','medium','high') DEFAULT 'medium',
+        status ENUM('pending','completed') DEFAULT 'pending',
+        doctor_id INT,
+        completed_at TIMESTAMP NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        type VARCHAR(50) DEFAULT 'info',
+        title VARCHAR(255) NOT NULL,
+        message TEXT,
+        user_id INT,
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+  } catch (e) {
+    console.warn('ensureTasksTables warning:', e.message);
+  }
+}
+
 // Get tasks summary
 export async function getTasksSummary(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTasksTables(pool);
     const { doctor_id } = req.query;
 
     let baseCondition = '';
@@ -38,10 +77,11 @@ export async function getTasksSummary(req, res) {
 export async function getTasksList(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTasksTables(pool);
     const { status, search, doctor_id } = req.query;
 
     let query = `
-      SELECT t.*, p.full_name as patient_name
+      SELECT t.*, COALESCE(p.full_name, t.patient_name) as patient_name
       FROM tasks t
       LEFT JOIN patients p ON p.id = t.patient_id
     `;
@@ -82,20 +122,21 @@ export async function getTasksList(req, res) {
 export async function addTask(req, res) {
   try {
     const pool = getTenantPool(req);
-    const { type, title, description, patient_id, due_date, priority, doctor_id } = req.body;
+    await ensureTasksTables(pool);
+    const { type, title, description, patient_id, patient_name, due_date, priority, doctor_id } = req.body;
 
     if (!title) {
       return res.status(400).json({ error: 'title is required' });
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO tasks (type, title, description, patient_id, due_date, priority, doctor_id, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')`,
-      [type || 'general', title, description || null, patient_id || null, due_date || null, priority || 'medium', doctor_id || null]
+      `INSERT INTO tasks (type, title, description, patient_id, patient_name, due_date, priority, doctor_id, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+      [type || 'general', title, description || null, patient_id || null, patient_name || null, due_date || null, priority || 'medium', doctor_id || null]
     );
 
     const [rows] = await pool.execute(
-      `SELECT t.*, COALESCE(p.full_name, '') as patient_name
+      `SELECT t.*, COALESCE(p.full_name, t.patient_name, '') as patient_name
        FROM tasks t
        LEFT JOIN patients p ON p.id = t.patient_id
        WHERE t.id = ?`,
@@ -141,6 +182,7 @@ export async function deleteTask(req, res) {
 export async function getNotificationsSummary(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTasksTables(pool);
     const { user_id } = req.query;
 
     let baseCondition = '';
@@ -168,6 +210,7 @@ export async function getNotificationsSummary(req, res) {
 export async function getNotificationsList(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureTasksTables(pool);
     const { user_id } = req.query;
 
     let query = 'SELECT * FROM notifications';

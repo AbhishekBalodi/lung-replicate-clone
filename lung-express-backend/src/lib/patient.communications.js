@@ -111,34 +111,64 @@ export async function bookTelemedicineSession(req, res) {
     }
 
     // Schema-aware insert: handle tenants without certain columns
-    const [tsColumns] = await db.query(`
+    let [tsColumns] = await db.query(`
       SELECT COLUMN_NAME
       FROM information_schema.COLUMNS
       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_sessions'
     `).catch(() => [[]]);
-    const tsColSet = new Set((tsColumns || []).map((c) => c.COLUMN_NAME));
-    const hasSessionType = tsColSet.has('session_type');
-    const hasPatientName = tsColSet.has('patient_name');
-    const hasScheduledDate = tsColSet.has('scheduled_date');
-    const hasScheduledTimeCol = tsColSet.has('scheduled_time');
+    let tsColSet = new Set((tsColumns || []).map((c) => c.COLUMN_NAME));
 
     // Auto-add missing columns if needed (schema evolution)
-    if (!hasScheduledDate) {
+    let schemaChanged = false;
+    if (!tsColSet.has('scheduled_date')) {
       try {
         await db.query(`ALTER TABLE telemedicine_sessions ADD COLUMN scheduled_date DATE DEFAULT NULL`);
         console.log('✅ Added missing scheduled_date column to telemedicine_sessions');
+        schemaChanged = true;
       } catch (e) {
         console.warn('Could not add scheduled_date column:', e.message);
       }
     }
-    if (!hasScheduledTimeCol) {
+    if (!tsColSet.has('scheduled_time')) {
       try {
         await db.query(`ALTER TABLE telemedicine_sessions ADD COLUMN scheduled_time TIME DEFAULT NULL`);
         console.log('✅ Added missing scheduled_time column to telemedicine_sessions');
+        schemaChanged = true;
       } catch (e) {
         console.warn('Could not add scheduled_time column:', e.message);
       }
     }
+    if (!tsColSet.has('session_type')) {
+      try {
+        await db.query(`ALTER TABLE telemedicine_sessions ADD COLUMN session_type VARCHAR(20) DEFAULT 'video'`);
+        console.log('✅ Added missing session_type column to telemedicine_sessions');
+        schemaChanged = true;
+      } catch (e) {
+        console.warn('Could not add session_type column:', e.message);
+      }
+    }
+    if (!tsColSet.has('patient_name')) {
+      try {
+        await db.query(`ALTER TABLE telemedicine_sessions ADD COLUMN patient_name VARCHAR(255) DEFAULT NULL`);
+        console.log('✅ Added missing patient_name column to telemedicine_sessions');
+        schemaChanged = true;
+      } catch (e) {
+        console.warn('Could not add patient_name column:', e.message);
+      }
+    }
+
+    // Re-read columns if schema changed
+    if (schemaChanged) {
+      const [refreshedCols] = await db.query(`
+        SELECT COLUMN_NAME
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'telemedicine_sessions'
+      `).catch(() => [[]]);
+      tsColSet = new Set((refreshedCols || []).map((c) => c.COLUMN_NAME));
+    }
+
+    const hasSessionType = tsColSet.has('session_type');
+    const hasPatientName = tsColSet.has('patient_name');
 
     // Build insert query based on available columns
     let insertCols = ['patient_id', 'doctor_id', 'scheduled_date', 'scheduled_time', 'status'];
