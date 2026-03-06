@@ -316,6 +316,7 @@ router.post('/patient/feedback/complaint', submitComplaint);
    ============================================================ */
 router.get('/telemedicine/summary', getTelemedicineSummary);
 router.get('/telemedicine/sessions', getTelemedicineSessions);
+router.get('/telemedicine/appointments', getTelemedicineAppointments);
 router.post('/telemedicine/sessions', addTelemedicineSession);
 router.put('/telemedicine/sessions/:id', updateTelemedicineSession);
 
