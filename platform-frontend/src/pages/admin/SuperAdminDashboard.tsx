@@ -1573,6 +1573,15 @@ const [kpiData, setKpiData] = useState<any>(null);
                           <Input value={editingFormData.phone} onChange={(e) => setEditingFormData({ ...editingFormData, phone: e.target.value })} />
                         </div>
                         <div>
+                          <Label>Password (leave blank to keep current)</Label>
+                          <div className="relative">
+                            <Input type={showEditPassword ? 'text' : 'password'} value={editingFormData.password} onChange={(e) => setEditingFormData({ ...editingFormData, password: e.target.value })} placeholder="••••••••" />
+                            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditPassword(!showEditPassword)}>
+                              {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        <div>
                           <Label>Specialization</Label>
                           <Input value={editingFormData.specialization} onChange={(e) => setEditingFormData({ ...editingFormData, specialization: e.target.value })} />
                         </div>
