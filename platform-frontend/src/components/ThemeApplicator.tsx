@@ -93,16 +93,26 @@ export default function ThemeApplicator() {
     }
   }, [tenantCode]);
 
-  // Listen for storage events so theme updates immediately after save
+  // Listen for theme-updated custom event for immediate apply
   useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key?.startsWith("theme_settings_")) {
-        // Re-trigger by forcing re-render
-        window.location.reload();
-      }
+    const handleThemeUpdate = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail) return;
+      const palette = colorPalettes[detail.colorPalette];
+      if (!palette) return;
+      const root = document.documentElement;
+      root.style.setProperty("--tenant-primary", palette.primary);
+      root.style.setProperty("--tenant-secondary", palette.secondary);
+      root.style.setProperty("--tenant-accent", palette.accent);
+      root.style.setProperty("--tenant-bg", palette.background);
+      root.style.setProperty("--tenant-fg", palette.foreground);
+      root.style.setProperty("--primary", hexToHSL(palette.primary));
+      root.style.setProperty("--primary-foreground", "0 0% 100%");
+      root.style.setProperty("--accent", hexToHSL(palette.accent));
+      root.style.setProperty("--accent-foreground", hexToHSL(palette.foreground));
     };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("theme-updated", handleThemeUpdate);
+    return () => window.removeEventListener("theme-updated", handleThemeUpdate);
   }, []);
 
   return null;
