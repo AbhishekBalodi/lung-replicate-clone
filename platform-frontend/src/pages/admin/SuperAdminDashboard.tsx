@@ -662,6 +662,7 @@ const [kpiData, setKpiData] = useState<any>(null);
           full_name: patientFormData.full_name,
           email: patientFormData.email,
           phone: patientFormData.phone,
+          password: patientFormData.password || 'password123',
           doctor_id: patientFormData.doctor_id ? Number(patientFormData.doctor_id) : null,
           date_of_birth: patientFormData.date_of_birth || null,
           address: patientFormData.address || null,
@@ -674,13 +675,52 @@ const [kpiData, setKpiData] = useState<any>(null);
       if (response.ok) {
         toast({ title: 'Success', description: 'Patient added successfully' });
         setIsAddPatientOpen(false);
-        setPatientFormData({ full_name: '', email: '', phone: '', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' });
+        setPatientFormData({ full_name: '', email: '', phone: '', password: 'password123', doctor_id: '', date_of_birth: '', address: '', age: '', gender: '', state: '' });
         await fetchAllPatients();
       } else {
         toast({ title: 'Error', description: data.error || 'Failed to add patient', variant: 'destructive' });
       }
     } catch {
       toast({ title: 'Error', description: 'Failed to add patient', variant: 'destructive' });
+    } finally {
+      setPatientFormLoading(false);
+    }
+  };
+
+  // Save edit patient handler
+  const handleSaveEditPatient = async () => {
+    if (!editingPatient) return;
+    try {
+      setPatientFormLoading(true);
+      const payload: any = {
+        full_name: editPatientFormData.full_name,
+        email: editPatientFormData.email,
+        phone: editPatientFormData.phone,
+        doctor_id: editPatientFormData.doctor_id ? Number(editPatientFormData.doctor_id) : null,
+        date_of_birth: editPatientFormData.date_of_birth || null,
+        address: editPatientFormData.address || null,
+        age: editPatientFormData.age ? parseInt(editPatientFormData.age) : null,
+        gender: editPatientFormData.gender || null,
+        state: editPatientFormData.state || null,
+      };
+      if (editPatientFormData.password) {
+        payload.password = editPatientFormData.password;
+      }
+      const res = await apiFetch(`/api/patients/${editingPatient.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Patient updated' });
+        setIsEditPatientOpen(false);
+        setEditingPatient(null);
+        await fetchAllPatients();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ title: 'Error', description: data.error || 'Failed to update', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update patient', variant: 'destructive' });
     } finally {
       setPatientFormLoading(false);
     }
