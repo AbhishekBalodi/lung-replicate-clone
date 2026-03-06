@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import InstructionBanner from "@/components/InstructionBanner";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 
 interface FollowUp {
@@ -173,6 +174,21 @@ export default function FollowUps() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
+        <InstructionBanner
+          title="How to Use Follow-Up & Care"
+          summary="Track patient follow-up appointments, send reminders, and manage care plans."
+          steps={[
+            { title: "Schedule a Follow-Up", description: "Click '+ Schedule Follow-Up', enter the patient name, select a date, add the reason for follow-up, and click 'Schedule'." },
+            { title: "Send Reminders", description: "Toggle the reminder switch on any follow-up to send an automated reminder to the patient via SMS/Email." },
+            { title: "Mark Complete", description: "When a follow-up visit is done, click 'Complete' to move it to the completed list." },
+            { title: "Track Overdue", description: "Overdue follow-ups are highlighted in red. Filter by status to see only pending or overdue items." },
+          ]}
+          tips={[
+            "Follow-ups are auto-created when you mark a visit as 'needs follow-up' during consultation.",
+            "Use the search bar to find specific patients quickly.",
+            "Export follow-up data as CSV for reporting using the download button.",
+          ]}
+        />
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Follow-Ups & Care Plans</h1>

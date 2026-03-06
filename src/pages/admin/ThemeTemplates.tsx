@@ -200,7 +200,7 @@ const defaultSettings: ThemeSettings = {
 export default function ThemeTemplates() {
   const { toast } = useToast();
   const { tenantInfo } = useCustomAuth();
-  const tenantCode = getDevTenantCode() || tenantInfo?.code || "";
+  const tenantCode = tenantInfo?.code || getDevTenantCode() || "";
   const [settings, setSettings] = useState<ThemeSettings>(defaultSettings);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("colors");
@@ -221,9 +221,13 @@ export default function ThemeTemplates() {
     setIsSaving(true);
     try {
       localStorage.setItem(`theme_settings_${tenantCode}`, JSON.stringify(settings));
+      
+      // Dispatch custom event so ThemeApplicator picks up changes immediately
+      window.dispatchEvent(new CustomEvent("theme-updated", { detail: settings }));
+      
       toast({
         title: "Theme Settings Saved",
-        description: "Your website theme and template have been updated successfully.",
+        description: "Your website theme and template have been updated successfully. Refresh the page to see full effect.",
       });
     } catch (error) {
       toast({
