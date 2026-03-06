@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { toast } from "sonner";
+import InstructionBanner from "@/components/InstructionBanner";
 
 interface TelemedicineSession {
   id: number;
@@ -144,6 +145,22 @@ export default function Telemedicine() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
+        <InstructionBanner
+          title="How to Use Telemedicine"
+          summary="Schedule and manage video, chat, or phone consultations with patients remotely."
+          steps={[
+            { title: "Schedule a Session", description: "Click '+ New Session', enter the patient name, select session type (Video/Chat/Phone), pick date & time, and click 'Schedule Session'." },
+            { title: "Join a Video Call", description: "When a session is marked 'In Progress', click the 'Join' button to open the Jitsi video meeting room." },
+            { title: "Patient Booking", description: "Patients can also book telemedicine sessions from their Patient Portal → Telemedicine tab." },
+            { title: "Complete or Cancel", description: "After the consultation, update the session status to 'Completed'. You can also cancel upcoming sessions." },
+          ]}
+          tips={[
+            "Patients must have a registered profile (with email) to book sessions.",
+            "Video calls use Jitsi Meet — no installation needed, works in browser.",
+            "Chat sessions allow text messaging within the session window.",
+          ]}
+        />
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Telemedicine</h1>

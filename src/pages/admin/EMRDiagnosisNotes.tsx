@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
+import InstructionBanner from "@/components/InstructionBanner";
 
 interface DiagnosisNote {
   id: number;
@@ -111,6 +112,22 @@ export default function EMRDiagnosisNotes() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
+        <InstructionBanner
+          title="How to Use EMR Diagnosis Notes"
+          summary="Create, manage, and export electronic medical records for patient diagnoses."
+          steps={[
+            { title: "Add a Diagnosis", description: "Click '+ New Diagnosis Note', fill in the patient name, diagnosis, symptoms, and clinical notes. Set status as 'Draft' or 'Final'." },
+            { title: "Search Records", description: "Use the search bar to find records by patient name or diagnosis keyword." },
+            { title: "Edit Records", description: "Click the edit icon on any record to update the diagnosis, symptoms, or notes." },
+            { title: "Export Data", description: "Click the download icon to export all diagnosis notes as a CSV file for external use." },
+          ]}
+          tips={[
+            "Draft notes can be edited later; Final notes are considered complete clinical records.",
+            "All EMR records are tied to the specific tenant and doctor for data isolation.",
+            "Use the other EMR sub-tabs (Progress Notes, Treatment Plans, Documents) for additional record types.",
+          ]}
+        />
+
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Diagnosis Notes</h1>
