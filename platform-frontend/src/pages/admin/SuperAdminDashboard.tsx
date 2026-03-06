@@ -105,44 +105,7 @@ interface Invoice {
   created_at?: string;
 }
 
-const AnalyticsSection = () => (
-  <div className="grid gap-6">
-    <div className="grid md:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Patient Demographics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appointment Types</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Pie chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Sources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Bar chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  </div>
-);
+// AnalyticsSection is now rendered inline with real data
 
 const ReportsSection = () => (
   <div className="space-y-4">
