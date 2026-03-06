@@ -63,12 +63,59 @@ export async function getChatList(req, res) {
     const pool = getTenantPool(req);
     await ensureCommunicationTables(pool);
 
-    // Get all chats with latest message info
+    // Auto-populate chats from all staff sources if none exist
+    const [[{ chatCount }]] = await pool.query(`SELECT COUNT(*) as chatCount FROM internal_chats`);
+    
+    if (chatCount === 0) {
+      // Gather all staff from doctors, hospital_staff, call_center_staff
+      const staffMembers = [];
+
+      // Doctors
+      try {
+        const [doctors] = await pool.query(`SELECT id, name, COALESCE(specialization, 'Doctor') as role FROM doctors WHERE is_active = 1`);
+        for (const d of doctors) {
+          staffMembers.push({ id: d.id, name: d.name, role: d.role, source: 'doctor' });
+        }
+      } catch (e) { /* table may not exist */ }
+
+      // Hospital staff
+      try {
+        const [hStaff] = await pool.query(`SELECT id, name, COALESCE(role, 'Staff') as role FROM hospital_staff WHERE status = 'active'`);
+        for (const s of hStaff) {
+          staffMembers.push({ id: 1000 + s.id, name: s.name, role: s.role, source: 'hospital_staff' });
+        }
+      } catch (e) { /* table may not exist */ }
+
+      // Call center staff
+      try {
+        const [ccStaff] = await pool.query(`SELECT id, name, COALESCE(department, 'Call Center') as role FROM call_center_staff WHERE status = 'active'`);
+        for (const s of ccStaff) {
+          staffMembers.push({ id: 2000 + s.id, name: s.name, role: s.role, source: 'call_center' });
+        }
+      } catch (e) { /* table may not exist */ }
+
+      // Create a chat entry for each staff member
+      for (const staff of staffMembers) {
+        try {
+          await pool.query(
+            `INSERT INTO internal_chats (participant1_id, participant2_id, chat_type, name) VALUES (0, ?, 'direct', ?)`,
+            [staff.id, staff.name]
+          );
+        } catch (e) { /* ignore duplicates */ }
+      }
+    }
+
+    // Now fetch chats — join against multiple sources for role info
     const [chats] = await pool.query(`
       SELECT 
         ic.id,
-        COALESCE(ic.name, d.name, 'Unknown') as name,
-        COALESCE(d.specialization, 'Staff') as role,
+        ic.name,
+        COALESCE(
+          d.specialization,
+          hs.role,
+          ccs.department,
+          'Staff'
+        ) as role,
         COALESCE(
           (SELECT content FROM internal_messages WHERE chat_id = ic.id ORDER BY created_at DESC LIMIT 1),
           'No messages yet'
@@ -79,7 +126,9 @@ export async function getChatList(req, res) {
         ) as last_message_time,
         (SELECT COUNT(*) FROM internal_messages WHERE chat_id = ic.id AND is_read = FALSE) as unread_count
       FROM internal_chats ic
-      LEFT JOIN doctors d ON d.id = ic.participant2_id
+      LEFT JOIN doctors d ON d.id = ic.participant2_id AND ic.participant2_id < 1000
+      LEFT JOIN hospital_staff hs ON hs.id = (ic.participant2_id - 1000) AND ic.participant2_id >= 1000 AND ic.participant2_id < 2000
+      LEFT JOIN call_center_staff ccs ON ccs.id = (ic.participant2_id - 2000) AND ic.participant2_id >= 2000
       ORDER BY last_message_time DESC
     `);
 
