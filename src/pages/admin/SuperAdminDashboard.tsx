@@ -105,44 +105,7 @@ interface Invoice {
   created_at?: string;
 }
 
-const AnalyticsSection = () => (
-  <div className="grid gap-6">
-    <div className="grid md:grid-cols-3 gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Patient Demographics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appointment Types</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Pie chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue Sources</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-slate-100 rounded flex items-center justify-center">
-            Bar chart placeholder
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  </div>
-);
+// AnalyticsSection is now rendered inline with real data - see renderAnalyticsSection below
 
 const ReportsSection = () => (
   <div className="space-y-4">
@@ -559,6 +522,7 @@ const [kpiData, setKpiData] = useState<any>(null);
 
   // Delete staff handler
   const handleDeleteStaff = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this staff member?')) return;
     try {
       const res = await apiFetch(`/api/staff/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -567,6 +531,38 @@ const [kpiData, setKpiData] = useState<any>(null);
       }
     } catch {
       toast({ title: 'Error', description: 'Failed to delete staff', variant: 'destructive' });
+    }
+  };
+
+  // Delete doctor handler
+  const handleDeleteDoctor = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this doctor?')) return;
+    try {
+      const res = await apiFetch(`/api/doctors/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Doctor deactivated' });
+        await fetchDoctors();
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete doctor', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete doctor', variant: 'destructive' });
+    }
+  };
+
+  // Delete patient handler
+  const handleDeletePatient = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this patient?')) return;
+    try {
+      const res = await apiFetch(`/api/patients/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast({ title: 'Success', description: 'Patient deactivated' });
+        await fetchAllPatients();
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete patient', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to delete patient', variant: 'destructive' });
     }
   };
 
