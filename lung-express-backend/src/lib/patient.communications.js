@@ -110,7 +110,7 @@ export async function bookTelemedicineSession(req, res) {
       return res.status(404).json({ error: 'Patient not found. Please ensure you have a patient profile.' });
     }
 
-    // Schema-aware insert: handle tenants without session_type column
+    // Schema-aware insert: handle tenants without certain columns
     const [tsColumns] = await db.query(`
       SELECT COLUMN_NAME
       FROM information_schema.COLUMNS
@@ -119,6 +119,26 @@ export async function bookTelemedicineSession(req, res) {
     const tsColSet = new Set((tsColumns || []).map((c) => c.COLUMN_NAME));
     const hasSessionType = tsColSet.has('session_type');
     const hasPatientName = tsColSet.has('patient_name');
+    const hasScheduledDate = tsColSet.has('scheduled_date');
+    const hasScheduledTimeCol = tsColSet.has('scheduled_time');
+
+    // Auto-add missing columns if needed (schema evolution)
+    if (!hasScheduledDate) {
+      try {
+        await db.query(`ALTER TABLE telemedicine_sessions ADD COLUMN scheduled_date DATE DEFAULT NULL`);
+        console.log('✅ Added missing scheduled_date column to telemedicine_sessions');
+      } catch (e) {
+        console.warn('Could not add scheduled_date column:', e.message);
+      }
+    }
+    if (!hasScheduledTimeCol) {
+      try {
+        await db.query(`ALTER TABLE telemedicine_sessions ADD COLUMN scheduled_time TIME DEFAULT NULL`);
+        console.log('✅ Added missing scheduled_time column to telemedicine_sessions');
+      } catch (e) {
+        console.warn('Could not add scheduled_time column:', e.message);
+      }
+    }
 
     // Build insert query based on available columns
     let insertCols = ['patient_id', 'doctor_id', 'scheduled_date', 'scheduled_time', 'status'];
