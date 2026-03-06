@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, Shield, Building2, User, Crown } from 'lucide-react';
+import { Loader2, Shield, Building2, User, Crown, Eye, EyeOff } from 'lucide-react';
 import { useCustomAuth } from '@/contexts/CustomAuthContext';
 import { apiFetch } from '@/lib/api';
 
@@ -23,6 +23,7 @@ const PlatformLogin = () => {
   const [password, setPassword] = useState('');
   const [tenantCode, setTenantCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handlePlatformAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,14 +166,19 @@ const PlatformLogin = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="tenantPassword">Password</Label>
-                  <Input
-                    id="tenantPassword"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="tenantPassword"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
@@ -205,14 +211,19 @@ const PlatformLogin = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="adminPassword">Password</Label>
-                  <Input
-                    id="adminPassword"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                  <div className="relative">
+                    <Input
+                      id="adminPassword"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                    <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? (
