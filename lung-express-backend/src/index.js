@@ -53,6 +53,7 @@ import reviewsRouter from './routes/reviews.js';
 import feedbackRouter from './routes/feedback.js';
 import tasksRouter from './routes/tasks.js';
 import billingRouter from './routes/billing.js';
+import staffRouter from './routes/staff.js';
 
 // Platform (SaaS) routes
 import tenantsRouter from './routes/tenants.js';
@@ -206,6 +207,7 @@ app.use('/api/reviews', reviewsRouter);
 app.use('/api/feedback', feedbackRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/billing', billingRouter);
+app.use('/api/staff', staffRouter);
 
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/schedule', scheduleRouter);

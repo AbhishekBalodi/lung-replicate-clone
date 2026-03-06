@@ -201,7 +201,7 @@ const SuperAdminDashboard = () => {
   const { toast } = useToast();
 
   // Main dashboard state
-  const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors' | 'patients'>('overview');
+  const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors' | 'patients' | 'staff'>('overview');
   
   // Tab Access Dialog state
   const [tabAccessDialog, setTabAccessDialog] = useState<{
@@ -225,7 +225,8 @@ const SuperAdminDashboard = () => {
   // Edit doctor modal state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-  const [editingFormData, setEditingFormData] = useState({ name: '', email: '', phone: '', specialization: '', qualifications: '', bio: '', consultation_fee: '' });
+  const [editingFormData, setEditingFormData] = useState({ name: '', email: '', phone: '', password: '', specialization: '', qualifications: '', bio: '', consultation_fee: '' });
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
   const [editHeroFile, setEditHeroFile] = useState<File | null>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -253,6 +254,15 @@ const SuperAdminDashboard = () => {
 
   // Staff state
   const [allStaff, setAllStaff] = useState<Staff[]>([]);
+  const [staffLoading, setStaffLoading] = useState(true);
+  const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<any>(null);
+  const [staffFormLoading, setStaffFormLoading] = useState(false);
+  const [showStaffPassword, setShowStaffPassword] = useState(false);
+  const [showEditStaffPassword, setShowEditStaffPassword] = useState(false);
+  const [staffFormData, setStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+  const [editStaffFormData, setEditStaffFormData] = useState({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
   
   // Rooms state
   const [allRooms, setAllRooms] = useState<Room[]>([]);
@@ -379,17 +389,79 @@ const [kpiData, setKpiData] = useState<any>(null);
   // Fetch all staff members
   const fetchAllStaff = useCallback(async () => {
     try {
+      setStaffLoading(true);
       const res = await apiFetch('/api/staff', { method: 'GET' });
       const data = await res.json();
       if (res.ok) {
-        setAllStaff(Array.isArray(data) ? data : []);
+        setAllStaff(data.staff || (Array.isArray(data) ? data : []));
       }
     } catch (err) {
       console.error('Error fetching staff:', err);
-      // Fallback: count doctors as staff if staff API not available
       setAllStaff([]);
+    } finally {
+      setStaffLoading(false);
     }
   }, []);
+
+  // Add staff handler
+  const handleAddStaff = async () => {
+    if (!staffFormData.name || !staffFormData.email || !staffFormData.password) {
+      toast.error('Name, email, and password are required');
+      return;
+    }
+    try {
+      setStaffFormLoading(true);
+      const res = await apiFetch('/api/staff', { method: 'POST', body: JSON.stringify(staffFormData) });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        toast.success('Staff member added');
+        setIsAddStaffOpen(false);
+        setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' });
+        await fetchAllStaff();
+      } else {
+        toast.error(data.error || 'Failed to add staff');
+      }
+    } catch {
+      toast.error('Failed to add staff');
+    } finally {
+      setStaffFormLoading(false);
+    }
+  };
+
+  const handleSaveEditStaff = async () => {
+    if (!editingStaff) return;
+    try {
+      setStaffFormLoading(true);
+      const payload: any = { ...editStaffFormData };
+      if (!payload.password) delete payload.password;
+      const res = await apiFetch(`/api/staff/${editingStaff.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      if (res.ok) {
+        toast.success('Staff updated');
+        setIsEditStaffOpen(false);
+        setEditingStaff(null);
+        await fetchAllStaff();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to update');
+      }
+    } catch {
+      toast.error('Failed to update staff');
+    } finally {
+      setStaffFormLoading(false);
+    }
+  };
+
+  const handleDeleteStaff = async (id: number) => {
+    try {
+      const res = await apiFetch(`/api/staff/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Staff member deactivated');
+        await fetchAllStaff();
+      }
+    } catch {
+      toast.error('Failed to delete staff');
+    }
+  };
 
   // Fetch all rooms
   const fetchAllRooms = useCallback(async () => {
@@ -456,7 +528,7 @@ const [kpiData, setKpiData] = useState<any>(null);
     if (!editingDoctor) return;
     setEditLoading(true);
     try {
-      const payload = {
+      const payload: any = {
         name: editingFormData.name,
         email: editingFormData.email,
         phone: editingFormData.phone || null,
@@ -465,6 +537,9 @@ const [kpiData, setKpiData] = useState<any>(null);
         bio: editingFormData.bio || null,
         consultation_fee: editingFormData.consultation_fee ? parseFloat(editingFormData.consultation_fee) : null
       };
+      if (editingFormData.password) {
+        payload.password = editingFormData.password;
+      }
 
       const res = await apiFetch(`/api/doctors/${editingDoctor.id}`, {
         method: 'PUT',
@@ -832,29 +907,24 @@ const [kpiData, setKpiData] = useState<any>(null);
         entityName={tabAccessDialog.entityName}
       />
 
-      {/* Main Tabs: Overview, Doctors, Patients Management */}
-      <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors' | 'patients')} className="w-full">
+      {/* Main Tabs: Overview, Doctors, Patients, Staff Management */}
+      <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors' | 'patients' | 'staff')} className="w-full">
         <TabsList className="bg-slate-100 border border-slate-200 p-1 rounded-lg mb-6">
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
             <Calendar className="h-4 w-4 mr-2" />
             Dashboard Overview
           </TabsTrigger>
-          <TabsTrigger
-            value="doctors"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="doctors" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
             <Stethoscope className="h-4 w-4 mr-2" />
             Manage Doctors
           </TabsTrigger>
-          <TabsTrigger
-            value="patients"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="patients" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
             <Users className="h-4 w-4 mr-2" />
             Manage Patients
+          </TabsTrigger>
+          <TabsTrigger value="staff" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
+            <User className="h-4 w-4 mr-2" />
+            Manage Staff
           </TabsTrigger>
         </TabsList>
 
@@ -1457,12 +1527,14 @@ const [kpiData, setKpiData] = useState<any>(null);
                                   name: doctor.name || '',
                                   email: doctor.email || '',
                                   phone: doctor.phone || '',
+                                  password: '',
                                   specialization: doctor.specialization || '',
                                   qualifications: doctor.qualifications || '',
                                   bio: doctor.bio || '',
                                   consultation_fee: doctor.consultation_fee ? String(doctor.consultation_fee) : ''
                                 });
                                 setEditPhotoFile(null);
+                                setShowEditPassword(false);
                                 setIsEditDialogOpen(true);
                               }}>
                                 <Edit className="h-4 w-4" />
@@ -1494,6 +1566,15 @@ const [kpiData, setKpiData] = useState<any>(null);
                         <div>
                           <Label>Phone</Label>
                           <Input value={editingFormData.phone} onChange={(e) => setEditingFormData({ ...editingFormData, phone: e.target.value })} />
+                        </div>
+                        <div>
+                          <Label>Password (leave blank to keep current)</Label>
+                          <div className="relative">
+                            <Input type={showEditPassword ? 'text' : 'password'} value={editingFormData.password} onChange={(e) => setEditingFormData({ ...editingFormData, password: e.target.value })} placeholder="••••••••" />
+                            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditPassword(!showEditPassword)}>
+                              {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
                         </div>
                         <div>
                           <Label>Specialization</Label>
@@ -1761,6 +1842,89 @@ const [kpiData, setKpiData] = useState<any>(null);
                     ))}
                   </TableBody>
                 </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* STAFF MANAGEMENT TAB */}
+        <TabsContent value="staff">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-blue-600" />
+                  Manage Staff
+                </CardTitle>
+                <CardDescription>Add staff members who can log in to the admin dashboard</CardDescription>
+              </div>
+              <Dialog open={isAddStaffOpen} onOpenChange={(open) => { if (!staffFormLoading) setIsAddStaffOpen(open); }}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' }); setShowStaffPassword(false); setIsAddStaffOpen(true); }}>
+                    <Plus className="h-4 w-4 mr-2" /> Add Staff
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader><DialogTitle>Add New Staff Member</DialogTitle></DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div><Label>Name *</Label><Input value={staffFormData.name} onChange={(e) => setStaffFormData({ ...staffFormData, name: e.target.value })} placeholder="Staff name" /></div>
+                    <div><Label>Email *</Label><Input type="email" value={staffFormData.email} onChange={(e) => setStaffFormData({ ...staffFormData, email: e.target.value })} placeholder="staff@hospital.com" /></div>
+                    <div><Label>Phone</Label><Input value={staffFormData.phone} onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value })} /></div>
+                    <div><Label>Password *</Label><div className="relative"><Input type={showStaffPassword ? 'text' : 'password'} value={staffFormData.password} onChange={(e) => setStaffFormData({ ...staffFormData, password: e.target.value })} placeholder="••••••••" /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowStaffPassword(!showStaffPassword)}>{showStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+                    <div><Label>Role</Label><Input value={staffFormData.role} onChange={(e) => setStaffFormData({ ...staffFormData, role: e.target.value })} placeholder="e.g. Nurse, Receptionist" /></div>
+                    <div><Label>Department</Label><Input value={staffFormData.department} onChange={(e) => setStaffFormData({ ...staffFormData, department: e.target.value })} /></div>
+                    <div><Label>Designation</Label><Input value={staffFormData.designation} onChange={(e) => setStaffFormData({ ...staffFormData, designation: e.target.value })} /></div>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleAddStaff} disabled={staffFormLoading}>{staffFormLoading ? 'Adding...' : 'Add Staff'}</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {staffLoading ? (
+                <div className="flex items-center justify-center py-8"><div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" /></div>
+              ) : allStaff.length === 0 ? (
+                <div className="text-center py-12"><User className="h-12 w-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">No staff members added yet</p></div>
+              ) : (
+                <>
+                  <Table>
+                    <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead>Role</TableHead><TableHead>Department</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
+                    <TableBody>
+                      {allStaff.map((staff: any) => (
+                        <TableRow key={staff.id}>
+                          <TableCell className="font-medium">{staff.name}</TableCell>
+                          <TableCell>{staff.email || '-'}</TableCell>
+                          <TableCell>{staff.phone || '-'}</TableCell>
+                          <TableCell>{staff.role || '-'}</TableCell>
+                          <TableCell>{staff.department || '-'}</TableCell>
+                          <TableCell>{staff.is_active ? <Badge className="bg-green-100 text-green-800">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => { setEditingStaff(staff); setEditStaffFormData({ name: staff.name || '', email: staff.email || '', phone: staff.phone || '', password: '', role: staff.role || '', department: staff.department || '', designation: staff.designation || '' }); setShowEditStaffPassword(false); setIsEditStaffOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeleteStaff(staff.id)}><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <Dialog open={isEditStaffOpen} onOpenChange={(open) => { if (!staffFormLoading) setIsEditStaffOpen(open); }}>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader><DialogTitle>Edit Staff Member</DialogTitle></DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        <div><Label>Name *</Label><Input value={editStaffFormData.name} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, name: e.target.value })} /></div>
+                        <div><Label>Email *</Label><Input type="email" value={editStaffFormData.email} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, email: e.target.value })} /></div>
+                        <div><Label>Phone</Label><Input value={editStaffFormData.phone} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, phone: e.target.value })} /></div>
+                        <div><Label>Password (leave blank to keep current)</Label><div className="relative"><Input type={showEditStaffPassword ? 'text' : 'password'} value={editStaffFormData.password} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, password: e.target.value })} placeholder="••••••••" /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditStaffPassword(!showEditStaffPassword)}>{showEditStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+                        <div><Label>Role</Label><Input value={editStaffFormData.role} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, role: e.target.value })} /></div>
+                        <div><Label>Department</Label><Input value={editStaffFormData.department} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, department: e.target.value })} /></div>
+                        <div className="flex gap-2">
+                          <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveEditStaff} disabled={staffFormLoading}>{staffFormLoading ? 'Saving...' : 'Save'}</Button>
+                          <Button variant="ghost" onClick={() => { if (!staffFormLoading) { setIsEditStaffOpen(false); setEditingStaff(null); } }}>Cancel</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
             </CardContent>
           </Card>

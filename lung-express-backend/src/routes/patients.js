@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import bcrypt from 'bcrypt';
 import { getPool, getConnection } from '../lib/tenant-db.js';
 import { getDoctorFilter, getDoctorIdForInsert } from '../middleware/doctor-context.js';
 
@@ -368,7 +369,7 @@ router.get('/:id/prescriptions', async (req, res) => {
 router.post('/', async (req, res) => {
   let conn;
   try {
-    const { full_name, email, phone, doctor_id, date_of_birth, address, gender, blood_group } = req.body;
+    const { full_name, email, phone, password, doctor_id, date_of_birth, address, gender, blood_group } = req.body;
 
     if (!full_name || !email || !phone) {
       return res.status(400).json({ error: 'Name, email, and phone are required' });
@@ -410,7 +411,7 @@ router.post('/', async (req, res) => {
     const patientUid = await generatePatientUID(conn, patientId);
     await conn.execute('UPDATE patients SET patient_uid = ? WHERE id = ?', [patientUid, patientId]);
 
-    // Register in platform tenant_users table
+    // Register in platform tenant_users table with password
     if (req.tenant?.id) {
       try {
         const { platformPool } = await import('../lib/platform-db.js');
@@ -420,10 +421,11 @@ router.post('/', async (req, res) => {
         );
 
         if (existingUser.length === 0) {
+          const passwordHash = password ? await bcrypt.hash(password, 10) : null;
           await platformPool.execute(
-            `INSERT INTO tenant_users (tenant_id, email, phone, name, role, is_active)
-             VALUES (?, ?, ?, ?, 'patient', TRUE)`,
-            [req.tenant.id, email.trim(), phone.trim(), full_name.trim()]
+            `INSERT INTO tenant_users (tenant_id, email, phone, name, password_hash, role, is_active)
+             VALUES (?, ?, ?, ?, ?, 'patient', TRUE)`,
+            [req.tenant.id, email.trim(), phone.trim(), full_name.trim(), passwordHash]
           );
         }
       } catch (platformErr) {
