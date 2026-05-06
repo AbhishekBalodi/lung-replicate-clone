@@ -11,7 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/use-toast';
+import { toast as sonnerToast } from 'sonner';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
 import ConsoleShell from '@/layouts/ConsoleShell';
 import DashboardKPICards from '@/components/dashboard/DashboardKPICards';
@@ -165,7 +166,14 @@ const NotificationsSection = () => (
 const SuperAdminDashboard = () => {
   const { user, tenant, logout, isSuperAdmin, loading } = useCustomAuth();
   const navigate = useNavigate();
-  // toast is imported from sonner above
+  const { toast: shadcnToast } = useToast();
+  const toast = Object.assign(
+    (opts: any) => shadcnToast(opts),
+    {
+      success: (msg: string) => sonnerToast.success(msg),
+      error: (msg: string) => sonnerToast.error(msg),
+    }
+  );
 
   // Main dashboard state
   const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors' | 'patients' | 'staff'>('overview');
