@@ -165,7 +165,7 @@ const NotificationsSection = () => (
 const SuperAdminDashboard = () => {
   const { user, tenant, logout, isSuperAdmin, loading } = useCustomAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  // toast is imported from sonner above
 
   // Main dashboard state
   const [activeMainTab, setActiveMainTab] = useState<'overview' | 'doctors' | 'patients' | 'staff'>('overview');
