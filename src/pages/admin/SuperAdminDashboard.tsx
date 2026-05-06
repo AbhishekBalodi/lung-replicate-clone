@@ -19,8 +19,8 @@ import SuperAdminKPICards from '@/components/dashboard/SuperAdminKPICards';
 import SuperAdminGraphs from '@/components/dashboard/SuperAdminGraphs';
 import RescheduleModal from '@/components/RescheduleModal';
 import {
-  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
   Plus,
@@ -109,7 +109,7 @@ interface Invoice {
   created_at?: string;
 }
 
-// AnalyticsSection is now rendered inline with real data - see renderAnalyticsSection below
+// AnalyticsSection is now rendered inline with real data
 
 const ReportsSection = () => (
   <div className="space-y-4">
@@ -243,7 +243,7 @@ const SuperAdminDashboard = () => {
   // Rooms state
   const [allRooms, setAllRooms] = useState<Room[]>([]);
 
-// Backend-driven charts (Super Admin)
+  // Backend-driven charts (Super Admin)
 const [superAdminCharts, setSuperAdminCharts] = useState<any>(null);
 const [chartsLoading, setChartsLoading] = useState(false);
 const [chartsError, setChartsError] = useState<string | null>(null);
@@ -266,14 +266,6 @@ const [kpiData, setKpiData] = useState<any>(null);
     consultation_fee: ''
   });
 
-  const getApiBaseUrl = () => import.meta.env.VITE_API_BASE_URL || '';
-
-  const getHeaders = () => {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const tenantCode = getDevTenantCode();
-    if (tenantCode) headers['X-Tenant-Code'] = tenantCode;
-    return headers;
-  };
 
   useEffect(() => {
     // Wait until loading is complete before checking auth
@@ -288,11 +280,7 @@ const [kpiData, setKpiData] = useState<any>(null);
   const fetchDoctors = useCallback(async () => {
     try {
       setDoctorsLoading(true);
-      const response = await fetch(`${getApiBaseUrl()}/api/doctors`, {
-        headers: getHeaders(),
-        credentials: 'include'
-      });
-
+      const response = await apiFetch('/api/doctors');
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
         setDoctors(data.doctors || []);
@@ -394,28 +382,267 @@ const [kpiData, setKpiData] = useState<any>(null);
   // Add staff handler
   const handleAddStaff = async () => {
     if (!staffFormData.name || !staffFormData.email || !staffFormData.password) {
-      toast({ title: 'Validation Error', description: 'Name, email, and password are required', variant: 'destructive' });
+      toast.error('Name, email, and password are required');
       return;
     }
     try {
       setStaffFormLoading(true);
-      const res = await apiFetch('/api/staff', {
-        method: 'POST',
-        body: JSON.stringify(staffFormData)
-      });
+      const res = await apiFetch('/api/staff', { method: 'POST', body: JSON.stringify(staffFormData) });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        toast({ title: 'Success', description: 'Staff member added' });
+        toast.success('Staff member added');
         setIsAddStaffOpen(false);
         setStaffFormData({ name: '', email: '', phone: '', password: 'password123', role: '', department: '', designation: '' });
         await fetchAllStaff();
       } else {
-        toast({ title: 'Error', description: data.error || 'Failed to add staff', variant: 'destructive' });
+        toast.error(data.error || 'Failed to add staff');
       }
     } catch {
-      toast({ title: 'Error', description: 'Failed to add staff', variant: 'destructive' });
+      toast.error('Failed to add staff');
     } finally {
       setStaffFormLoading(false);
+    }
+  };
+
+  const handleSaveEditStaff = async () => {
+    if (!editingStaff) return;
+    try {
+      setStaffFormLoading(true);
+      const payload: any = { ...editStaffFormData };
+      if (!payload.password) delete payload.password;
+      const res = await apiFetch(`/api/staff/${editingStaff.id}`, { method: 'PUT', body: JSON.stringify(payload) });
+      if (res.ok) {
+        toast.success('Staff updated');
+        setIsEditStaffOpen(false);
+        setEditingStaff(null);
+        await fetchAllStaff();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error || 'Failed to update');
+      }
+    } catch {
+      toast.error('Failed to update staff');
+    } finally {
+      setStaffFormLoading(false);
+    }
+  };
+
+  const handleDeleteStaff = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this staff member?')) return;
+    try {
+      const res = await apiFetch(`/api/staff/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Staff member deactivated');
+        await fetchAllStaff();
+      }
+    } catch {
+      toast.error('Failed to delete staff');
+    }
+  };
+
+  const handleDeleteDoctor = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this doctor?')) return;
+    try {
+      const res = await apiFetch(`/api/doctors/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Doctor deactivated');
+        await fetchDoctors();
+      } else {
+        toast.error('Failed to delete doctor');
+      }
+    } catch {
+      toast.error('Failed to delete doctor');
+    }
+  };
+
+  const handleDeletePatient = async (id: number) => {
+    if (!confirm('Are you sure you want to deactivate this patient?')) return;
+    try {
+      const res = await apiFetch(`/api/patients/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        toast.success('Patient deactivated');
+        await fetchAllPatients();
+      } else {
+        toast.error('Failed to delete patient');
+      }
+    } catch {
+      toast.error('Failed to delete patient');
+    }
+  };
+
+  // Fetch all rooms
+  const fetchAllRooms = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/rooms', { method: 'GET' });
+      const data = await res.json();
+      if (res.ok) {
+        setAllRooms(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching rooms:', err);
+      setAllRooms([]);
+    }
+  }, []);
+
+  // Fetch all invoices
+  const fetchAllInvoices = useCallback(async () => {
+    try {
+      const res = await apiFetch('/api/billing/invoices', { method: 'GET' });
+      const data = await res.json();
+      if (res.ok) {
+        setAllInvoices(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error('Error fetching invoices:', err);
+      setAllInvoices([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Wait for auth to finish loading before fetching data
+    // This ensures dev_tenant_code is hydrated from customTenant in localStorage
+    if (loading) return;
+    fetchDoctors();
+    fetchAppointments();
+    fetchAllPatients();
+    fetchAllStaff();
+    fetchAllRooms();
+    fetchAllInvoices();
+    fetchKpiData();
+  }, [loading, fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices, fetchKpiData]);
+
+  useEffect(() => {
+    if (loading) return;
+    fetchSuperAdminCharts();
+  }, [loading, fetchSuperAdminCharts]);
+
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: 'password123',
+      specialization: '',
+      qualifications: '',
+      bio: '',
+      consultation_fee: ''
+    });
+    setShowPassword(false);
+  };
+
+  const handleSaveEditDoctor = async () => {
+    if (!editingDoctor) return;
+    setEditLoading(true);
+    try {
+      const payload: any = {
+        name: editingFormData.name,
+        email: editingFormData.email,
+        phone: editingFormData.phone || null,
+        specialization: editingFormData.specialization || null,
+        qualifications: editingFormData.qualifications || null,
+        bio: editingFormData.bio || null,
+        consultation_fee: editingFormData.consultation_fee ? parseFloat(editingFormData.consultation_fee) : null
+      };
+      if (editingFormData.password) {
+        payload.password = editingFormData.password;
+      }
+
+      const res = await apiFetch(`/api/doctors/${editingDoctor.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const js = await res.json().catch(() => ({}));
+        throw new Error(js.error || 'Failed to update');
+      }
+
+      // If photo file selected, upload
+      if (editPhotoFile) {
+        const fd = new FormData(); fd.append('photo', editPhotoFile);
+        const uploadPath = tenant?.id ? `/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo` : `/api/doctors/${editingDoctor.id}/photo`;
+        const uploadRes = await apiFetch(uploadPath, { method: 'POST', body: fd, headers: {} });
+        if (!uploadRes.ok) {
+          const js = await uploadRes.json().catch(() => ({}));
+          throw new Error(js.error || 'Failed to upload photo');
+        }
+      }
+
+      // If hero file selected, upload as assetType=hero
+      if (editHeroFile) {
+        const fd2 = new FormData(); fd2.append('photo', editHeroFile); fd2.append('assetType', 'hero');
+        const uploadPath2 = tenant?.id ? `/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo?assetType=hero` : `/api/doctors/${editingDoctor.id}/photo?assetType=hero`;
+        const uploadRes2 = await apiFetch(uploadPath2, { method: 'POST', body: fd2, headers: {} });
+        if (!uploadRes2.ok) {
+          const js = await uploadRes2.json().catch(() => ({}));
+          throw new Error(js.error || 'Failed to upload hero image');
+        }
+      }
+
+      toast({ title: 'Success', description: 'Doctor updated' });
+      setIsEditDialogOpen(false); setEditingDoctor(null); await fetchDoctors();
+    } catch (err) {
+      const e = err as Error; toast({ title: 'Error', description: e.message, variant: 'destructive' });
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleAddDoctor = async () => {
+    if (!formData.name || !formData.email || !formData.password) {
+      toast({
+        title: 'Validation Error',
+        description: 'Name, email, and password are required',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      setFormLoading(true);
+
+      const response = await apiFetch('/api/doctors', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          password: formData.password,
+          specialization: formData.specialization || null,
+          qualifications: formData.qualifications || null,
+          bio: formData.bio || null,
+          consultation_fee: formData.consultation_fee
+            ? parseFloat(formData.consultation_fee)
+            : null
+        })
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.status === 200 || response.status === 201) {
+        toast({
+          title: 'Success',
+          description: 'Doctor added successfully'
+        });
+        setIsAddDialogOpen(false);
+        resetForm();
+        await fetchDoctors();
+      } else {
+        toast({
+          title: 'Error',
+          description: data.error || data.message || 'Failed to add doctor',
+          variant: 'destructive'
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add doctor',
+        variant: 'destructive'
+      });
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -497,264 +724,13 @@ const [kpiData, setKpiData] = useState<any>(null);
     }
   };
 
-  // Save edit staff handler
-  const handleSaveEditStaff = async () => {
-    if (!editingStaff) return;
-    try {
-      setStaffFormLoading(true);
-      const payload: any = { ...editStaffFormData };
-      if (!payload.password) delete payload.password;
-      const res = await apiFetch(`/api/staff/${editingStaff.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) {
-        toast({ title: 'Success', description: 'Staff updated' });
-        setIsEditStaffOpen(false);
-        setEditingStaff(null);
-        await fetchAllStaff();
-      } else {
-        const data = await res.json().catch(() => ({}));
-        toast({ title: 'Error', description: data.error || 'Failed to update', variant: 'destructive' });
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to update staff', variant: 'destructive' });
-    } finally {
-      setStaffFormLoading(false);
-    }
-  };
-
-  // Delete staff handler
-  const handleDeleteStaff = async (id: number) => {
-    if (!confirm('Are you sure you want to deactivate this staff member?')) return;
-    try {
-      const res = await apiFetch(`/api/staff/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        toast({ title: 'Success', description: 'Staff member deactivated' });
-        await fetchAllStaff();
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to delete staff', variant: 'destructive' });
-    }
-  };
-
-  // Delete doctor handler
-  const handleDeleteDoctor = async (id: number) => {
-    if (!confirm('Are you sure you want to deactivate this doctor?')) return;
-    try {
-      const res = await apiFetch(`/api/doctors/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        toast({ title: 'Success', description: 'Doctor deactivated' });
-        await fetchDoctors();
-      } else {
-        toast({ title: 'Error', description: 'Failed to delete doctor', variant: 'destructive' });
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to delete doctor', variant: 'destructive' });
-    }
-  };
-
-  // Delete patient handler
-  const handleDeletePatient = async (id: number) => {
-    if (!confirm('Are you sure you want to deactivate this patient?')) return;
-    try {
-      const res = await apiFetch(`/api/patients/${id}`, { method: 'DELETE' });
-      if (res.ok) {
-        toast({ title: 'Success', description: 'Patient deactivated' });
-        await fetchAllPatients();
-      } else {
-        toast({ title: 'Error', description: 'Failed to delete patient', variant: 'destructive' });
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to delete patient', variant: 'destructive' });
-    }
-  };
-
-  // Fetch all rooms
-  const fetchAllRooms = useCallback(async () => {
-    try {
-      const res = await apiFetch('/api/rooms', { method: 'GET' });
-      const data = await res.json();
-      if (res.ok) {
-        setAllRooms(Array.isArray(data) ? data : []);
-      }
-    } catch (err) {
-      console.error('Error fetching rooms:', err);
-      setAllRooms([]);
-    }
-  }, []);
-
-  // Fetch all invoices
-  const fetchAllInvoices = useCallback(async () => {
-    try {
-      const res = await apiFetch('/api/billing/invoices', { method: 'GET' });
-      const data = await res.json();
-      if (res.ok) {
-        setAllInvoices(Array.isArray(data) ? data : []);
-      }
-    } catch (err) {
-      console.error('Error fetching invoices:', err);
-      setAllInvoices([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDoctors();
-    fetchAppointments();
-    fetchAllPatients();
-    fetchAllStaff();
-    fetchAllRooms();
-    fetchAllInvoices();
-  }, [fetchDoctors, fetchAppointments, fetchAllPatients, fetchAllStaff, fetchAllRooms, fetchAllInvoices]);
-
-  useEffect(() => {
-  fetchSuperAdminCharts();
-  fetchKpiData();
-}, [fetchSuperAdminCharts, fetchKpiData]);
-
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      password: 'password123',
-      specialization: '',
-      qualifications: '',
-      bio: '',
-      consultation_fee: ''
-    });
-    setShowPassword(false);
-  };
-
-  const handleSaveEditDoctor = async () => {
-    if (!editingDoctor) return;
-    setEditLoading(true);
-    try {
-      const payload: any = {
-        name: editingFormData.name,
-        email: editingFormData.email,
-        phone: editingFormData.phone || null,
-        specialization: editingFormData.specialization || null,
-        qualifications: editingFormData.qualifications || null,
-        bio: editingFormData.bio || null,
-        consultation_fee: editingFormData.consultation_fee ? parseFloat(editingFormData.consultation_fee) : null
-      };
-      if (editingFormData.password) {
-        payload.password = editingFormData.password;
-      }
-
-      const res = await fetch(`${getApiBaseUrl()}/api/doctors/${editingDoctor.id}`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const js = await res.json().catch(() => ({}));
-        throw new Error(js.error || 'Failed to update');
-      }
-
-      // If photo file selected, upload
-      if (editPhotoFile) {
-        const fd = new FormData(); fd.append('photo', editPhotoFile);
-        const uploadUrl = tenant?.id ? `${getApiBaseUrl()}/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo` : `${getApiBaseUrl()}/api/doctors/${editingDoctor.id}/photo`;
-        const uploadRes = await fetch(uploadUrl, { method: 'POST', body: fd, credentials: 'include' });
-        if (!uploadRes.ok) {
-          const js = await uploadRes.json().catch(() => ({}));
-          throw new Error(js.error || 'Failed to upload photo');
-        }
-      }
-
-      // If hero file selected, upload as assetType=hero
-      if (editHeroFile) {
-        const fd2 = new FormData(); fd2.append('photo', editHeroFile); fd2.append('assetType', 'hero');
-        const uploadUrl2 = tenant?.id ? `${getApiBaseUrl()}/api/tenants/${tenant.id}/doctors/${editingDoctor.id}/photo?assetType=hero` : `${getApiBaseUrl()}/api/doctors/${editingDoctor.id}/photo?assetType=hero`;
-        const uploadRes2 = await fetch(uploadUrl2, { method: 'POST', body: fd2, credentials: 'include' });
-        if (!uploadRes2.ok) {
-          const js = await uploadRes2.json().catch(() => ({}));
-          throw new Error(js.error || 'Failed to upload hero image');
-        }
-      }
-
-      toast({ title: 'Success', description: 'Doctor updated' });
-      setIsEditDialogOpen(false); setEditingDoctor(null); await fetchDoctors();
-    } catch (err) {
-      const e = err as Error; toast({ title: 'Error', description: e.message, variant: 'destructive' });
-    } finally {
-      setEditLoading(false);
-    }
-  };
-
-  const handleAddDoctor = async () => {
-    if (!formData.name || !formData.email || !formData.password) {
-      toast({
-        title: 'Validation Error',
-        description: 'Name, email, and password are required',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    try {
-      setFormLoading(true);
-
-      const response = await fetch(`${getApiBaseUrl()}/api/doctors`, {
-        method: 'POST',
-        headers: getHeaders(),
-        credentials: 'include',
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          password: formData.password,
-          specialization: formData.specialization || null,
-          qualifications: formData.qualifications || null,
-          bio: formData.bio || null,
-          consultation_fee: formData.consultation_fee
-            ? parseFloat(formData.consultation_fee)
-            : null
-        })
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (response.status === 200 || response.status === 201) {
-        toast({
-          title: 'Success',
-          description: 'Doctor added successfully'
-        });
-        setIsAddDialogOpen(false);
-        resetForm();
-        await fetchDoctors();
-      } else {
-        toast({
-          title: 'Error',
-          description: data.error || data.message || 'Failed to add doctor',
-          variant: 'destructive'
-        });
-      }
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to add doctor',
-        variant: 'destructive'
-      });
-    } finally {
-      setFormLoading(false);
-    }
-  };
-
   // Toggle doctor access
   const toggleDoctorAccess = async (doctor: Doctor) => {
     try {
       setTogglingDoctorId(doctor.id);
 
-      const response = await fetch(`${getApiBaseUrl()}/api/doctors/${doctor.id}`, {
+      const response = await apiFetch(`/api/doctors/${doctor.id}`, {
         method: 'PUT',
-        headers: getHeaders(),
-        credentials: 'include',
         body: JSON.stringify({
           is_active: !doctor.is_active
         })
@@ -956,7 +932,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       {/* Welcome Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <Building2 className="h-8 w-8 text-emerald-600" />
+          <Building2 className="h-8 w-8 text-indigo-500" />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {tenant?.name || 'Hospital Dashboard'}
@@ -980,32 +956,20 @@ const [kpiData, setKpiData] = useState<any>(null);
 
       {/* Main Tabs: Overview, Doctors, Patients, Staff Management */}
       <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors' | 'patients' | 'staff')} className="w-full">
-        <TabsList className="bg-slate-100 border border-slate-200 p-1 rounded-lg mb-6">
-          <TabsTrigger
-            value="overview"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+        <TabsList className="mb-6 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <TabsTrigger value="overview" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Calendar className="h-4 w-4 mr-2" />
             Dashboard Overview
           </TabsTrigger>
-          <TabsTrigger
-            value="doctors"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="doctors" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Stethoscope className="h-4 w-4 mr-2" />
             Manage Doctors
           </TabsTrigger>
-          <TabsTrigger
-            value="patients"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="patients" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Users className="h-4 w-4 mr-2" />
             Manage Patients
           </TabsTrigger>
-          <TabsTrigger
-            value="staff"
-            className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6"
-          >
+          <TabsTrigger value="staff" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <User className="h-4 w-4 mr-2" />
             Manage Staff
           </TabsTrigger>
@@ -1137,7 +1101,7 @@ const [kpiData, setKpiData] = useState<any>(null);
    ADVANCED DASHBOARD SECTIONS
 ============================ */}
 
-          <Card className="mt-10">
+          <Card className="mt-10 rounded-2xl border border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle>Detailed Insights</CardTitle>
               <CardDescription>
@@ -1156,7 +1120,6 @@ const [kpiData, setKpiData] = useState<any>(null);
                 <TabsContent value="analytics">
                   <div className="grid gap-6">
                     <div className="grid md:grid-cols-3 gap-4">
-                      {/* Patient Demographics - Gender breakdown */}
                       <Card>
                         <CardHeader><CardTitle className="text-base">Patient Demographics</CardTitle></CardHeader>
                         <CardContent>
@@ -1182,8 +1145,6 @@ const [kpiData, setKpiData] = useState<any>(null);
                           </div>
                         </CardContent>
                       </Card>
-
-                      {/* Appointment Types - Status breakdown */}
                       <Card>
                         <CardHeader><CardTitle className="text-base">Appointment Types</CardTitle></CardHeader>
                         <CardContent>
@@ -1209,8 +1170,6 @@ const [kpiData, setKpiData] = useState<any>(null);
                           </div>
                         </CardContent>
                       </Card>
-
-                      {/* Revenue Sources - Monthly revenue bar chart */}
                       <Card>
                         <CardHeader><CardTitle className="text-base">Revenue Sources</CardTitle></CardHeader>
                         <CardContent>
@@ -1244,10 +1203,10 @@ const [kpiData, setKpiData] = useState<any>(null);
 
 
           {/* All Patients Section */}
-          <Card className="mt-8">
+          <Card className="mt-8 rounded-2xl border border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-emerald-600" />
+                <Users className="h-5 w-5 text-blue-600" />
                 All Hospital Patients
               </CardTitle>
               <CardDescription>
@@ -1286,7 +1245,7 @@ const [kpiData, setKpiData] = useState<any>(null);
                           <TableCell>{patient.email || '-'}</TableCell>
                           <TableCell>{patient.phone || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="text-emerald-700 border-emerald-200">
+                            <Badge variant="outline" className="border-blue-200 text-blue-700">
                               {patient.doctor_name || 'Unassigned'}
                             </Badge>
                           </TableCell>
@@ -1313,7 +1272,7 @@ const [kpiData, setKpiData] = useState<any>(null);
           </Card>
 
           {/* Appointments Section */}
-          <Card className="mt-8 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <Card className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg md:text-xl">All Appointments</CardTitle>
               <CardDescription>View and manage appointments across all doctors</CardDescription>
@@ -1728,12 +1687,7 @@ const [kpiData, setKpiData] = useState<any>(null);
                         <div>
                           <Label>Password (leave blank to keep current)</Label>
                           <div className="relative">
-                            <Input
-                              type={showEditPassword ? 'text' : 'password'}
-                              value={editingFormData.password}
-                              onChange={(e) => setEditingFormData({ ...editingFormData, password: e.target.value })}
-                              placeholder="••••••••"
-                            />
+                            <Input type={showEditPassword ? 'text' : 'password'} value={editingFormData.password} onChange={(e) => setEditingFormData({ ...editingFormData, password: e.target.value })} placeholder="••••••••" />
                             <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditPassword(!showEditPassword)}>
                               {showEditPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
@@ -2083,90 +2037,38 @@ const [kpiData, setKpiData] = useState<any>(null);
                   <User className="h-5 w-5 text-blue-600" />
                   Manage Staff
                 </CardTitle>
-                <CardDescription>
-                  Add staff members who can log in to the admin dashboard
-                </CardDescription>
+                <CardDescription>Add staff members who can log in to the admin dashboard</CardDescription>
               </div>
-
               <Dialog open={isAddStaffOpen} onOpenChange={(open) => { if (!staffFormLoading) setIsAddStaffOpen(open); }}>
                 <DialogTrigger asChild>
                   <Button className="bg-blue-600 hover:bg-blue-700" onClick={() => { setStaffFormData({ name: '', email: '', phone: '', password: '', role: '', department: '', designation: '' }); setShowStaffPassword(false); setIsAddStaffOpen(true); }}>
                     <Plus className="h-4 w-4 mr-2" /> Add Staff
                   </Button>
                 </DialogTrigger>
-
                 <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Add New Staff Member</DialogTitle>
-                  </DialogHeader>
+                  <DialogHeader><DialogTitle>Add New Staff Member</DialogTitle></DialogHeader>
                   <div className="space-y-4 mt-4">
-                    <div>
-                      <Label>Name *</Label>
-                      <Input value={staffFormData.name} onChange={(e) => setStaffFormData({ ...staffFormData, name: e.target.value })} placeholder="Staff name" />
-                    </div>
-                    <div>
-                      <Label>Email *</Label>
-                      <Input type="email" value={staffFormData.email} onChange={(e) => setStaffFormData({ ...staffFormData, email: e.target.value })} placeholder="staff@hospital.com" />
-                    </div>
-                    <div>
-                      <Label>Phone</Label>
-                      <Input value={staffFormData.phone} onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value })} placeholder="+91 98765 43210" />
-                    </div>
-                    <div>
-                      <Label>Password *</Label>
-                      <div className="relative">
-                        <Input type={showStaffPassword ? 'text' : 'password'} value={staffFormData.password} onChange={(e) => setStaffFormData({ ...staffFormData, password: e.target.value })} placeholder="••••••••" />
-                        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowStaffPassword(!showStaffPassword)}>
-                          {showStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label>Role</Label>
-                      <Input value={staffFormData.role} onChange={(e) => setStaffFormData({ ...staffFormData, role: e.target.value })} placeholder="e.g. Nurse, Receptionist" />
-                    </div>
-                    <div>
-                      <Label>Department</Label>
-                      <Input value={staffFormData.department} onChange={(e) => setStaffFormData({ ...staffFormData, department: e.target.value })} placeholder="e.g. Cardiology, Admin" />
-                    </div>
-                    <div>
-                      <Label>Designation</Label>
-                      <Input value={staffFormData.designation} onChange={(e) => setStaffFormData({ ...staffFormData, designation: e.target.value })} placeholder="e.g. Senior Nurse" />
-                    </div>
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleAddStaff} disabled={staffFormLoading}>
-                      {staffFormLoading ? 'Adding...' : 'Add Staff'}
-                    </Button>
+                    <div><Label>Name *</Label><Input value={staffFormData.name} onChange={(e) => setStaffFormData({ ...staffFormData, name: e.target.value })} placeholder="Staff name" /></div>
+                    <div><Label>Email *</Label><Input type="email" value={staffFormData.email} onChange={(e) => setStaffFormData({ ...staffFormData, email: e.target.value })} placeholder="staff@hospital.com" /></div>
+                    <div><Label>Phone</Label><Input value={staffFormData.phone} onChange={(e) => setStaffFormData({ ...staffFormData, phone: e.target.value })} /></div>
+                    <div><Label>Password *</Label><div className="relative"><Input type={showStaffPassword ? 'text' : 'password'} value={staffFormData.password} onChange={(e) => setStaffFormData({ ...staffFormData, password: e.target.value })} placeholder="••••••••" /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowStaffPassword(!showStaffPassword)}>{showStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+                    <div><Label>Role</Label><Input value={staffFormData.role} onChange={(e) => setStaffFormData({ ...staffFormData, role: e.target.value })} placeholder="e.g. Nurse, Receptionist" /></div>
+                    <div><Label>Department</Label><Input value={staffFormData.department} onChange={(e) => setStaffFormData({ ...staffFormData, department: e.target.value })} /></div>
+                    <div><Label>Designation</Label><Input value={staffFormData.designation} onChange={(e) => setStaffFormData({ ...staffFormData, designation: e.target.value })} /></div>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleAddStaff} disabled={staffFormLoading}>{staffFormLoading ? 'Adding...' : 'Add Staff'}</Button>
                   </div>
                 </DialogContent>
               </Dialog>
             </CardHeader>
-
             <CardContent>
               {staffLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" />
-                </div>
+                <div className="flex items-center justify-center py-8"><div className="animate-spin h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full" /></div>
               ) : allStaff.length === 0 ? (
-                <div className="text-center py-12">
-                  <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No staff members added yet</p>
-                  <p className="text-sm text-muted-foreground mt-1">Click "Add Staff" to get started</p>
-                </div>
+                <div className="text-center py-12"><User className="h-12 w-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">No staff members added yet</p></div>
               ) : (
                 <>
                   <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Phone</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Department</TableHead>
-                        <TableHead>Designation</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                    <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Email</TableHead><TableHead>Phone</TableHead><TableHead>Role</TableHead><TableHead>Department</TableHead><TableHead>Status</TableHead><TableHead>Actions</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {allStaff.map((staff: any) => (
                         <TableRow key={staff.id}>
@@ -2175,82 +2077,27 @@ const [kpiData, setKpiData] = useState<any>(null);
                           <TableCell>{staff.phone || '-'}</TableCell>
                           <TableCell>{staff.role || '-'}</TableCell>
                           <TableCell>{staff.department || '-'}</TableCell>
-                          <TableCell>{staff.designation || '-'}</TableCell>
-                          <TableCell>
-                            {staff.is_active ? (
-                              <Badge className="bg-green-100 text-green-800">Active</Badge>
-                            ) : (
-                              <Badge variant="secondary">Inactive</Badge>
-                            )}
-                          </TableCell>
+                          <TableCell>{staff.is_active ? <Badge className="bg-green-100 text-green-800">Active</Badge> : <Badge variant="secondary">Inactive</Badge>}</TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              <Button size="sm" variant="ghost" onClick={() => {
-                                setEditingStaff(staff);
-                                setEditStaffFormData({
-                                  name: staff.name || '',
-                                  email: staff.email || '',
-                                  phone: staff.phone || '',
-                                  password: '',
-                                  role: staff.role || '',
-                                  department: staff.department || '',
-                                  designation: staff.designation || ''
-                                });
-                                setShowEditStaffPassword(false);
-                                setIsEditStaffOpen(true);
-                              }}>
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeleteStaff(staff.id)}>
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => { setEditingStaff(staff); setEditStaffFormData({ name: staff.name || '', email: staff.email || '', phone: staff.phone || '', password: '', role: staff.role || '', department: staff.department || '', designation: staff.designation || '' }); setShowEditStaffPassword(false); setIsEditStaffOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-red-600" onClick={() => handleDeleteStaff(staff.id)}><Trash2 className="h-4 w-4" /></Button>
                             </div>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
-
-                  {/* Edit Staff Dialog */}
                   <Dialog open={isEditStaffOpen} onOpenChange={(open) => { if (!staffFormLoading) setIsEditStaffOpen(open); }}>
                     <DialogContent className="max-w-md">
-                      <DialogHeader>
-                        <DialogTitle>Edit Staff Member</DialogTitle>
-                      </DialogHeader>
+                      <DialogHeader><DialogTitle>Edit Staff Member</DialogTitle></DialogHeader>
                       <div className="space-y-4 mt-4">
-                        <div>
-                          <Label>Name *</Label>
-                          <Input value={editStaffFormData.name} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, name: e.target.value })} />
-                        </div>
-                        <div>
-                          <Label>Email *</Label>
-                          <Input type="email" value={editStaffFormData.email} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, email: e.target.value })} />
-                        </div>
-                        <div>
-                          <Label>Phone</Label>
-                          <Input value={editStaffFormData.phone} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, phone: e.target.value })} />
-                        </div>
-                        <div>
-                          <Label>Password (leave blank to keep current)</Label>
-                          <div className="relative">
-                            <Input type={showEditStaffPassword ? 'text' : 'password'} value={editStaffFormData.password} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, password: e.target.value })} placeholder="••••••••" />
-                            <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditStaffPassword(!showEditStaffPassword)}>
-                              {showEditStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                        </div>
-                        <div>
-                          <Label>Role</Label>
-                          <Input value={editStaffFormData.role} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, role: e.target.value })} />
-                        </div>
-                        <div>
-                          <Label>Department</Label>
-                          <Input value={editStaffFormData.department} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, department: e.target.value })} />
-                        </div>
-                        <div>
-                          <Label>Designation</Label>
-                          <Input value={editStaffFormData.designation} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, designation: e.target.value })} />
-                        </div>
+                        <div><Label>Name *</Label><Input value={editStaffFormData.name} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, name: e.target.value })} /></div>
+                        <div><Label>Email *</Label><Input type="email" value={editStaffFormData.email} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, email: e.target.value })} /></div>
+                        <div><Label>Phone</Label><Input value={editStaffFormData.phone} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, phone: e.target.value })} /></div>
+                        <div><Label>Password (leave blank to keep current)</Label><div className="relative"><Input type={showEditStaffPassword ? 'text' : 'password'} value={editStaffFormData.password} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, password: e.target.value })} placeholder="••••••••" /><button type="button" className="absolute right-3 top-1/2 -translate-y-1/2" onClick={() => setShowEditStaffPassword(!showEditStaffPassword)}>{showEditStaffPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button></div></div>
+                        <div><Label>Role</Label><Input value={editStaffFormData.role} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, role: e.target.value })} /></div>
+                        <div><Label>Department</Label><Input value={editStaffFormData.department} onChange={(e) => setEditStaffFormData({ ...editStaffFormData, department: e.target.value })} /></div>
                         <div className="flex gap-2">
                           <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSaveEditStaff} disabled={staffFormLoading}>{staffFormLoading ? 'Saving...' : 'Save'}</Button>
                           <Button variant="ghost" onClick={() => { if (!staffFormLoading) { setIsEditStaffOpen(false); setEditingStaff(null); } }}>Cancel</Button>

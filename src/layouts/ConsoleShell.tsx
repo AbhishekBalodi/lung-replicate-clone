@@ -1,4 +1,4 @@
-import { ReactNode, useState, useMemo } from "react";
+﻿import { ReactNode, useState, useMemo } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -51,8 +51,8 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
   const isActive = (path: string) =>
     pathname === path
-      ? "bg-emerald-100 text-emerald-900 font-medium"
-      : "hover:bg-emerald-100 text-emerald-800";
+      ? "bg-blue-600 text-white font-medium shadow-sm"
+      : "hover:bg-slate-100 text-slate-700";
 
   const handleSearch = () => {
     const base = pathname.startsWith("/appointments") ? pathname : "/appointments";
@@ -83,13 +83,13 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
   const sidebarWidth = activeSidebarPage ? "w-[700px]" : "w-[280px]";
 
   return (
-    <div className="min-h-screen bg-emerald-50/30 flex">
+    <div className="min-h-screen bg-slate-100/70 flex">
       <ThemeApplicator />
 
       {/* SIDEBAR - now part of flex layout, pushes content */}
       <aside
         className={`${sidebarWidth} max-w-[90vw] min-h-screen shrink-0
-                    flex flex-col bg-emerald-50 border-r border-emerald-100 p-4
+                    flex flex-col bg-white border-r border-slate-200 p-4
                     transition-all duration-300 
                     ${sidebarOpen ? "ml-0" : "-ml-[280px]"}
                     ${sidebarOpen && activeSidebarPage ? "-ml-0" : ""}
@@ -101,9 +101,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
         {/* SIDEBAR HEADER */}
         <div className="flex items-center justify-between mb-6 px-2 shrink-0">
-          <div className="text-emerald-900 font-semibold text-lg">CareConsole</div>
-          <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-emerald-100 rounded-md">
-            <X className="h-5 w-5 text-emerald-900" />
+          <div className="text-slate-900 font-semibold text-lg">CareConsole</div>
+          <button onClick={() => setSidebarOpen(false)} className="p-1.5 hover:bg-slate-100 rounded-md">
+            <X className="h-5 w-5 text-slate-700" />
           </button>
         </div>
 
@@ -127,27 +127,27 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 Calendar
               </button>
 
-              {/* PATIENTS → open sidebar page */}
+              {/* PATIENTS â†’ open sidebar page */}
               <button
                 onClick={() => setActiveSidebarPage("patients")}
-                className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800"
+                className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700"
               >
                 Patients
               </button>
 
-              <button onClick={() => setActiveSidebarPage("medicines")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800">
+              <button onClick={() => setActiveSidebarPage("medicines")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700">
                 Medicines
               </button>
 
-              <button onClick={() => setActiveSidebarPage("lab-tests")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800">
+              <button onClick={() => setActiveSidebarPage("lab-tests")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700">
                 Lab Tests
               </button>
 
-              <button onClick={() => setActiveSidebarPage("procedures")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800">
+              <button onClick={() => setActiveSidebarPage("procedures")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700">
                 Procedures
               </button>
 
-              <button onClick={() => setActiveSidebarPage("consultation")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800">
+              <button onClick={() => setActiveSidebarPage("consultation")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700">
                 Consultation
               </button>
 
@@ -159,7 +159,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('emr')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <ClipboardList className="h-4 w-4" />
@@ -169,10 +169,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['emr'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/emr/diagnosis'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Diagnosis Notes</button>
-                    <button onClick={() => { navigate('/admin/emr/treatment-plans'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Treatment Plans</button>
-                    <button onClick={() => { navigate('/admin/emr/progress-notes'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Progress Notes (SOAP)</button>
-                    <button onClick={() => { navigate('/admin/emr/documents'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Documents</button>
+                    <button onClick={() => { navigate('/admin/emr/diagnosis'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Diagnosis Notes</button>
+                    <button onClick={() => { navigate('/admin/emr/treatment-plans'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Treatment Plans</button>
+                    <button onClick={() => { navigate('/admin/emr/progress-notes'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Progress Notes (SOAP)</button>
+                    <button onClick={() => { navigate('/admin/emr/documents'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Documents</button>
                   </div>
                 )}
               </div>
@@ -181,7 +181,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('follow-ups')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <Heart className="h-4 w-4" />
@@ -191,50 +191,50 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['follow-ups'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/follow-ups'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Follow-Up Schedule</button>
-                    <button onClick={() => { navigate('/admin/care-plans'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Care Plans</button>
+                    <button onClick={() => { navigate('/admin/follow-ups'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Follow-Up Schedule</button>
+                    <button onClick={() => { navigate('/admin/care-plans'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Care Plans</button>
                   </div>
                 )}
               </div>
 
               {/* Telemedicine */}
-              <button onClick={() => { navigate('/admin/telemedicine'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/telemedicine'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <Video className="h-4 w-4" />
                 Telemedicine
               </button>
 
               {/* Schedule & Availability */}
-              <button onClick={() => { navigate('/admin/schedule'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/schedule'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Schedule & Availability
               </button>
 
               {/* Tasks & Notifications */}
-              <button onClick={() => { navigate('/admin/tasks'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/tasks'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <ListTodo className="h-4 w-4" />
                 Tasks & Notifications
               </button>
 
               {/* Analytics */}
-              <button onClick={() => { navigate('/admin/analytics'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/analytics'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Performance Analytics
               </button>
 
               {/* Communication */}
-              <button onClick={() => { navigate('/admin/communication'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/communication'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Communication
               </button>
 
               {/* Emergency & Alerts */}
-              <button onClick={() => { navigate('/admin/emergency'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/emergency'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <Siren className="h-4 w-4" />
                 Emergency & Alerts
               </button>
 
               {/* Doctor Profile */}
-              <button onClick={() => { navigate('/admin/profile'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/profile'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <User className="h-4 w-4" />
                 My Profile & Settings
               </button>
@@ -249,7 +249,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('ambulance')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <Ambulance className="h-4 w-4" />
@@ -259,9 +259,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['ambulance'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/ambulances/calls'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Ambulance Call List</button>
-                    <button onClick={() => { navigate('/admin/ambulances/list'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Ambulance List</button>
-                    <button onClick={() => { navigate('/admin/ambulances/details/AMB-002'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Ambulance Details</button>
+                    <button onClick={() => { navigate('/admin/ambulances/calls'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Ambulance Call List</button>
+                    <button onClick={() => { navigate('/admin/ambulances/list'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Ambulance List</button>
+                    <button onClick={() => { navigate('/admin/ambulances/details/AMB-002'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Ambulance Details</button>
                   </div>
                 )}
               </div>
@@ -270,7 +270,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('staff')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <Users2 className="h-4 w-4" />
@@ -280,9 +280,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['staff'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/staffs/calls'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Staff Call List</button>
-                    <button onClick={() => { navigate('/admin/staffs/list'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Staff List</button>
-                    <button onClick={() => { navigate('/admin/staffs/details/STAFF-002'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Staff Details</button>
+                    <button onClick={() => { navigate('/admin/staffs/calls'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Staff Call List</button>
+                    <button onClick={() => { navigate('/admin/staffs/list'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Staff List</button>
+                    <button onClick={() => { navigate('/admin/staffs/details/STAFF-002'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Staff Details</button>
                   </div>
                 )}
               </div>
@@ -291,7 +291,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('pharmacy')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <Pill className="h-4 w-4" />
@@ -301,8 +301,8 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['pharmacy'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/pharmacy/medicines'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Medicine List</button>
-                    <button onClick={() => { navigate('/admin/pharmacy/inventory'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Inventory</button>
+                    <button onClick={() => { navigate('/admin/pharmacy/medicines'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Medicine List</button>
+                    <button onClick={() => { navigate('/admin/pharmacy/inventory'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Inventory</button>
                   </div>
                 )}
               </div>
@@ -311,7 +311,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('blood-bank')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <Droplets className="h-4 w-4" />
@@ -321,11 +321,11 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
 {expandedMenus['blood-bank'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/blood-bank/stock'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Stock</button>
-                    <button onClick={() => { navigate('/admin/blood-bank/donors'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Donor</button>
-                    <button onClick={() => { navigate('/admin/blood-bank/issued'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Blood Issued</button>
-                    <button onClick={() => { navigate('/admin/blood-bank/add-unit'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Add Blood Unit</button>
-                    <button onClick={() => { navigate('/admin/blood-bank/issue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Issue Blood</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/stock'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Blood Stock</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/donors'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Blood Donor</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/issued'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Blood Issued</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/add-unit'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Add Blood Unit</button>
+                    <button onClick={() => { navigate('/admin/blood-bank/issue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Issue Blood</button>
                   </div>
                 )}
               </div>
@@ -334,7 +334,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('billing')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <Receipt className="h-4 w-4" />
@@ -344,9 +344,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['billing'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/billing'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Invoices List</button>
-                    <button onClick={() => { navigate('/admin/billing/new'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Create Invoice</button>
-                    <button onClick={() => { navigate('/admin/billing/payments'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Payments History</button>
+                    <button onClick={() => { navigate('/admin/billing'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Invoices List</button>
+                    <button onClick={() => { navigate('/admin/billing/new'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Create Invoice</button>
+                    <button onClick={() => { navigate('/admin/billing/payments'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Payments History</button>
                   </div>
                 )}
               </div>
@@ -355,7 +355,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('room-allotment')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <DoorOpen className="h-4 w-4" />
@@ -365,15 +365,15 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['room-allotment'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/rooms/alloted'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Alloted Rooms</button>
-                    <button onClick={() => { navigate('/admin/rooms/new'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">New Allotment</button>
-                    <button onClick={() => { navigate('/admin/rooms'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Rooms by Department</button>
+                    <button onClick={() => { navigate('/admin/rooms/alloted'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Alloted Rooms</button>
+                    <button onClick={() => { navigate('/admin/rooms/new'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">New Allotment</button>
+                    <button onClick={() => { navigate('/admin/rooms'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Rooms by Department</button>
                   </div>
                 )}
               </div>
 
               {/* Reviews */}
-              <button onClick={() => { navigate('/admin/reviews'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => { navigate('/admin/reviews'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <Star className="h-4 w-4" />
                 Reviews
               </button>
@@ -382,7 +382,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('feedback')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <MessageSquare className="h-4 w-4" />
@@ -392,10 +392,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['feedback'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => { navigate('/admin/feedback/patient'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Patient Feedback</button>
-                    <button onClick={() => { navigate('/admin/feedback/doctor-ratings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Doctor Ratings</button>
-                    <button onClick={() => { navigate('/admin/feedback/complaints'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Complaints Management</button>
-                    <button onClick={() => { navigate('/admin/feedback/quality-score'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Service Quality Score</button>
+                    <button onClick={() => { navigate('/admin/feedback/patient'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Patient Feedback</button>
+                    <button onClick={() => { navigate('/admin/feedback/doctor-ratings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Doctor Ratings</button>
+                    <button onClick={() => { navigate('/admin/feedback/complaints'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Complaints Management</button>
+                    <button onClick={() => { navigate('/admin/feedback/quality-score'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Service Quality Score</button>
                   </div>
                 )}
               </div>
@@ -405,7 +405,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 <div>
                   <button 
                     onClick={() => toggleMenu('system-config')}
-                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
                       <Settings className="h-4 w-4" />
@@ -415,16 +415,16 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   </button>
                   {expandedMenus['system-config'] && (
                     <div className="ml-6 space-y-1 mt-1">
-                      <button onClick={() => { navigate('/admin/config/website'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700 font-medium">Website Settings</button>
-                      <button onClick={() => { navigate('/admin/config/theme-templates'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700 flex items-center gap-1.5">
+                      <button onClick={() => { navigate('/admin/config/website'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600 font-medium">Website Settings</button>
+                      <button onClick={() => { navigate('/admin/config/theme-templates'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600 flex items-center gap-1.5">
                         <Palette className="h-3.5 w-3.5" />
                         Theme & Templates
                       </button>
-                      <button onClick={() => { navigate('/admin/config/appointment-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Appointment Rules</button>
-                      <button onClick={() => { navigate('/admin/config/pricing-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Pricing Rules</button>
-                      <button onClick={() => { navigate('/admin/config/tax-settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Tax Settings</button>
-                      <button onClick={() => { navigate('/admin/config/payment-gateways'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Payment Gateways</button>
-                      <button onClick={() => { navigate('/admin/config/messaging'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">SMS/Email/WhatsApp</button>
+                      <button onClick={() => { navigate('/admin/config/appointment-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Appointment Rules</button>
+                      <button onClick={() => { navigate('/admin/config/pricing-rules'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Pricing Rules</button>
+                      <button onClick={() => { navigate('/admin/config/tax-settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Tax Settings</button>
+                      <button onClick={() => { navigate('/admin/config/payment-gateways'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Payment Gateways</button>
+                      <button onClick={() => { navigate('/admin/config/messaging'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">SMS/Email/WhatsApp</button>
                     </div>
                   )}
                 </div>
@@ -435,7 +435,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 <div>
                   <button 
                     onClick={() => toggleMenu('hospital-mgmt')}
-                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
                       <Building2 className="h-4 w-4" />
@@ -445,9 +445,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   </button>
                   {expandedMenus['hospital-mgmt'] && (
                     <div className="ml-6 space-y-1 mt-1">
-                      <button onClick={() => { navigate('/admin/hospital/profile'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Hospital Profile</button>
-                      <button onClick={() => { navigate('/admin/hospital/departments'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Departments</button>
-                      <button onClick={() => { navigate('/admin/hospital/infrastructure'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Infrastructure</button>
+                      <button onClick={() => { navigate('/admin/hospital/profile'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Hospital Profile</button>
+                      <button onClick={() => { navigate('/admin/hospital/departments'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Departments</button>
+                      <button onClick={() => { navigate('/admin/hospital/infrastructure'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Infrastructure</button>
                     </div>
                   )}
                 </div>
@@ -458,7 +458,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 <div>
                   <button 
                     onClick={() => toggleMenu('finance')}
-                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
                       <TrendingUp className="h-4 w-4" />
@@ -468,9 +468,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   </button>
                   {expandedMenus['finance'] && (
                     <div className="ml-6 space-y-1 mt-1">
-                      <button onClick={() => { navigate('/admin/finance/revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Revenue</button>
-                      <button onClick={() => { navigate('/admin/billing'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Billing</button>
-                      <button onClick={() => { navigate('/admin/finance/insurance'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Insurance & Claims</button>
+                      <button onClick={() => { navigate('/admin/finance/revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Revenue</button>
+                      <button onClick={() => { navigate('/admin/billing'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Billing</button>
+                      <button onClick={() => { navigate('/admin/finance/insurance'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Insurance & Claims</button>
                     </div>
                   )}
                 </div>
@@ -480,7 +480,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
               <div>
                 <button 
                   onClick={() => toggleMenu('lab')}
-                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                  className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                 >
                   <span className="flex items-center gap-2">
                     <FlaskConical className="h-4 w-4" />
@@ -490,9 +490,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 </button>
                 {expandedMenus['lab'] && (
                   <div className="ml-6 space-y-1 mt-1">
-                    <button onClick={() => setActiveSidebarPage("lab-tests")} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Tests Offered</button>
-                    <button onClick={() => { navigate('/admin/lab/pending'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Pending Tests</button>
-                    <button onClick={() => { navigate('/admin/lab/revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Lab Revenue</button>
+                    <button onClick={() => setActiveSidebarPage("lab-tests")} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Tests Offered</button>
+                    <button onClick={() => { navigate('/admin/lab/pending'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Pending Tests</button>
+                    <button onClick={() => { navigate('/admin/lab/revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Lab Revenue</button>
                   </div>
                 )}
               </div>
@@ -502,7 +502,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 <div>
                   <button 
                     onClick={() => toggleMenu('reports')}
-                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
                       <BarChart3 className="h-4 w-4" />
@@ -512,10 +512,10 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   </button>
                   {expandedMenus['reports'] && (
                     <div className="ml-6 space-y-1 mt-1">
-                      <button onClick={() => { navigate('/admin/reports/daily'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Daily Reports</button>
-                      <button onClick={() => { navigate('/admin/reports/monthly'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Monthly Reports</button>
-                      <button onClick={() => { navigate('/admin/reports/doctor-revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Doctor-wise Revenue</button>
-                      <button onClick={() => { navigate('/admin/reports/department-revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Department-wise Revenue</button>
+                      <button onClick={() => { navigate('/admin/reports/daily'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Daily Reports</button>
+                      <button onClick={() => { navigate('/admin/reports/monthly'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Monthly Reports</button>
+                      <button onClick={() => { navigate('/admin/reports/doctor-revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Doctor-wise Revenue</button>
+                      <button onClick={() => { navigate('/admin/reports/department-revenue'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Department-wise Revenue</button>
                     </div>
                   )}
                 </div>
@@ -526,7 +526,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 <div>
                   <button 
                     onClick={() => toggleMenu('compliance')}
-                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
                       <Shield className="h-4 w-4" />
@@ -536,9 +536,9 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   </button>
                   {expandedMenus['compliance'] && (
                     <div className="ml-6 space-y-1 mt-1">
-                      <button onClick={() => { navigate('/admin/compliance/audit-logs'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Audit Logs</button>
-                      <button onClick={() => { navigate('/admin/compliance/access-control'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Access Control</button>
-                      <button onClick={() => { navigate('/admin/compliance/data-access'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Data Access Logs</button>
+                      <button onClick={() => { navigate('/admin/compliance/audit-logs'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Audit Logs</button>
+                      <button onClick={() => { navigate('/admin/compliance/access-control'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Access Control</button>
+                      <button onClick={() => { navigate('/admin/compliance/data-access'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Data Access Logs</button>
                     </div>
                   )}
                 </div>
@@ -549,7 +549,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                 <div>
                   <button 
                     onClick={() => toggleMenu('notifications')}
-                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center justify-between"
+                    className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center justify-between"
                   >
                     <span className="flex items-center gap-2">
                       <Bell className="h-4 w-4" />
@@ -559,14 +559,14 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
                   </button>
                   {expandedMenus['notifications'] && (
                     <div className="ml-6 space-y-1 mt-1">
-                      <button onClick={() => { navigate('/admin/notifications/system'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">System Alerts</button>
-                      <button onClick={() => { navigate('/admin/notifications/settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-emerald-100 text-emerald-700">Notification Settings</button>
+                      <button onClick={() => { navigate('/admin/notifications/system'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">System Alerts</button>
+                      <button onClick={() => { navigate('/admin/notifications/settings'); setSidebarOpen(false); }} className="w-full text-left rounded-lg px-3 py-1.5 text-sm hover:bg-slate-100 text-slate-600">Notification Settings</button>
                     </div>
                   )}
                 </div>
               )}
 
-              <button onClick={() => setActiveSidebarPage("settings")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-emerald-100 text-emerald-800 flex items-center gap-2">
+              <button onClick={() => setActiveSidebarPage("settings")} className="w-full text-left rounded-lg px-3 py-2 hover:bg-slate-100 text-slate-700 flex items-center gap-2">
                 <Settings className="h-4 w-4" />
                 Settings
               </button>
@@ -574,35 +574,35 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
             {/* TODAY BOX + CONTACT */}
             <div className="mt-8 space-y-2">
-              <div className="text-xs font-semibold text-emerald-900 px-2">Today</div>
-              <div className="rounded-lg bg-white border border-emerald-100 p-3">
+              <div className="text-xs font-semibold text-slate-900 px-2">Today</div>
+              <div className="rounded-lg bg-white border border-slate-200 p-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-emerald-900/80">Appointments</span>
+                  <span className="text-slate-700">Appointments</span>
                   <span className="font-medium">{todayCount}</span>
                 </div>
               </div>
             </div>
 
             <div className="mt-8 space-y-4">
-              <div className="text-xs font-semibold text-emerald-900 px-2">Contact</div>
+              <div className="text-xs font-semibold text-slate-900 px-2">Contact</div>
 
-              <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="flex items-start gap-2 rounded-lg bg-white border p-3 hover:bg-emerald-50">
-                <MapPin className="h-4 w-4 text-emerald-700 mt-0.5" />
+              <a href="https://www.google.com/maps" target="_blank" rel="noreferrer" className="flex items-start gap-2 rounded-lg bg-white border p-3 hover:bg-slate-50">
+                <MapPin className="h-4 w-4 text-slate-600 mt-0.5" />
                 <span className="text-sm leading-snug">12, Park Street, Kolkata</span>
               </a>
 
-              <a href="tel:+919810589799" className="flex items-center gap-2 rounded-lg bg-white border p-3 hover:bg-emerald-50">
-                <Phone className="h-4 w-4 text-emerald-700" />
+              <a href="tel:+919810589799" className="flex items-center gap-2 rounded-lg bg-white border p-3 hover:bg-slate-50">
+                <Phone className="h-4 w-4 text-slate-600" />
                 <span className="text-sm">+91 98105 89799</span>
               </a>
 
               <div className="rounded-lg bg-white border p-3">
                 <div className="flex items-center gap-2 text-sm font-medium mb-2">
-                  <Clock className="h-4 w-4 text-emerald-700" />
+                  <Clock className="h-4 w-4 text-slate-600" />
                   Opening Hours
                 </div>
-                <ul className="text-sm text-emerald-900/80 space-y-1">
-                  <li>Mon–Sat: 9 AM – 7 PM</li>
+                <ul className="text-sm text-slate-700 space-y-1">
+                  <li>Monâ€“Sat: 9 AM â€“ 7 PM</li>
                   <li>Sun: Closed</li>
                 </ul>
               </div>
@@ -667,7 +667,7 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
 
             <Button variant="outline" onClick={handleSearch} className="hidden sm:flex">Search</Button>
 
-            <Button onClick={handleNewAppointment} className="bg-emerald-700 hover:bg-emerald-800 text-white hidden md:flex">
+            <Button onClick={handleNewAppointment} className="bg-blue-600 hover:bg-blue-700 text-white hidden md:flex">
               <Plus className="h-4 w-4 mr-1" />
               New Appointment
             </Button>
@@ -688,3 +688,5 @@ export default function ConsoleShell({ children, todayCount = 0 }: Props) {
     </div>
   );
 }
+
+

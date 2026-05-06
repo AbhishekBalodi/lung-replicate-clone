@@ -932,7 +932,7 @@ const [kpiData, setKpiData] = useState<any>(null);
       {/* Welcome Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-2">
-          <Building2 className="h-8 w-8 text-emerald-600" />
+          <Building2 className="h-8 w-8 text-indigo-500" />
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {tenant?.name || 'Hospital Dashboard'}
@@ -956,20 +956,20 @@ const [kpiData, setKpiData] = useState<any>(null);
 
       {/* Main Tabs: Overview, Doctors, Patients, Staff Management */}
       <Tabs value={activeMainTab} onValueChange={(v) => setActiveMainTab(v as 'overview' | 'doctors' | 'patients' | 'staff')} className="w-full">
-        <TabsList className="bg-slate-100 border border-slate-200 p-1 rounded-lg mb-6">
-          <TabsTrigger value="overview" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
+        <TabsList className="mb-6 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
+          <TabsTrigger value="overview" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Calendar className="h-4 w-4 mr-2" />
             Dashboard Overview
           </TabsTrigger>
-          <TabsTrigger value="doctors" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
+          <TabsTrigger value="doctors" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Stethoscope className="h-4 w-4 mr-2" />
             Manage Doctors
           </TabsTrigger>
-          <TabsTrigger value="patients" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
+          <TabsTrigger value="patients" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Users className="h-4 w-4 mr-2" />
             Manage Patients
           </TabsTrigger>
-          <TabsTrigger value="staff" className="data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm px-6">
+          <TabsTrigger value="staff" className="px-6 data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm">
             <User className="h-4 w-4 mr-2" />
             Manage Staff
           </TabsTrigger>
@@ -1101,7 +1101,7 @@ const [kpiData, setKpiData] = useState<any>(null);
    ADVANCED DASHBOARD SECTIONS
 ============================ */}
 
-          <Card className="mt-10">
+          <Card className="mt-10 rounded-2xl border border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle>Detailed Insights</CardTitle>
               <CardDescription>
@@ -1203,10 +1203,10 @@ const [kpiData, setKpiData] = useState<any>(null);
 
 
           {/* All Patients Section */}
-          <Card className="mt-8">
+          <Card className="mt-8 rounded-2xl border border-slate-200 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-emerald-600" />
+                <Users className="h-5 w-5 text-blue-600" />
                 All Hospital Patients
               </CardTitle>
               <CardDescription>
@@ -1245,7 +1245,7 @@ const [kpiData, setKpiData] = useState<any>(null);
                           <TableCell>{patient.email || '-'}</TableCell>
                           <TableCell>{patient.phone || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="text-emerald-700 border-emerald-200">
+                            <Badge variant="outline" className="border-blue-200 text-blue-700">
                               {patient.doctor_name || 'Unassigned'}
                             </Badge>
                           </TableCell>
@@ -1272,7 +1272,7 @@ const [kpiData, setKpiData] = useState<any>(null);
           </Card>
 
           {/* Appointments Section */}
-          <Card className="mt-8 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <Card className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg md:text-xl">All Appointments</CardTitle>
               <CardDescription>View and manage appointments across all doctors</CardDescription>
