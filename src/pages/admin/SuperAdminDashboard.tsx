@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { getDevTenantCode } from '@/components/DevTenantSwitcher';
 import ConsoleShell from '@/layouts/ConsoleShell';
 import DashboardKPICards from '@/components/dashboard/DashboardKPICards';
