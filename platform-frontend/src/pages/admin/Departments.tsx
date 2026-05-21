@@ -14,11 +14,13 @@ import { toast } from "sonner";
 interface Department {
   id: number;
   name: string;
-  head_doctor: string;
-  total_doctors: number;
-  total_beds: number;
-  status: "active" | "inactive";
-  description: string;
+  code: string | null;
+  doctor_count: number;
+  is_active: number | boolean;
+  description: string | null;
+  location: string | null;
+  phone: string | null;
+  email: string | null;
 }
 
 export default function Departments() {
@@ -29,34 +31,30 @@ export default function Departments() {
   const [editingDept, setEditingDept] = useState<Department | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    head_doctor: "",
-    total_beds: 0,
+    code: "",
     description: "",
-    status: "active" as "active" | "inactive"
+    location: "",
+    phone: "",
+    email: "",
+    is_active: true,
   });
 
   const fetchDepartments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiGet("/api/departments");
+      const query = searchQuery.trim() ? `?search=${encodeURIComponent(searchQuery.trim())}` : "";
+      const res = await apiGet(`/api/dashboard/hospital/departments${query}`);
       if (res.ok) {
         const data = await res.json();
-        setDepartments(data || []);
+        setDepartments(Array.isArray(data?.departments) ? data.departments : []);
       }
     } catch (error) {
       console.error("Error fetching departments:", error);
-      // Use mock data for now
-      setDepartments([
-        { id: 1, name: "Cardiology", head_doctor: "Dr. Sharma", total_doctors: 5, total_beds: 20, status: "active", description: "Heart and cardiovascular care" },
-        { id: 2, name: "Pulmonology", head_doctor: "Dr. Mann", total_doctors: 3, total_beds: 15, status: "active", description: "Lung and respiratory care" },
-        { id: 3, name: "Neurology", head_doctor: "Dr. Gupta", total_doctors: 4, total_beds: 18, status: "active", description: "Brain and nervous system care" },
-        { id: 4, name: "Orthopedics", head_doctor: "Dr. Singh", total_doctors: 6, total_beds: 25, status: "active", description: "Bone and joint care" },
-        { id: 5, name: "Pediatrics", head_doctor: "Dr. Mehta", total_doctors: 4, total_beds: 12, status: "active", description: "Child healthcare" },
-      ]);
+      toast.error("Failed to load departments");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchQuery]);
 
   useEffect(() => {
     fetchDepartments();
@@ -65,12 +63,12 @@ export default function Departments() {
   const handleSave = async () => {
     try {
       if (editingDept) {
-        const res = await apiPut(`/api/departments/${editingDept.id}`, formData);
+        const res = await apiPut(`/api/dashboard/hospital/departments/${editingDept.id}`, formData);
         if (res.ok) {
           toast.success("Department updated successfully");
         }
       } else {
-        const res = await apiPost("/api/departments", formData);
+        const res = await apiPost("/api/dashboard/hospital/departments", formData);
         if (res.ok) {
           toast.success("Department added successfully");
         }
@@ -86,7 +84,7 @@ export default function Departments() {
   const handleDelete = async (id: number) => {
     if (confirm("Are you sure you want to delete this department?")) {
       try {
-        await apiDelete(`/api/departments/${id}`);
+        await apiDelete(`/api/dashboard/hospital/departments/${id}`);
         toast.success("Department deleted");
         fetchDepartments();
       } catch (error) {
@@ -99,27 +97,25 @@ export default function Departments() {
     setEditingDept(dept);
     setFormData({
       name: dept.name,
-      head_doctor: dept.head_doctor,
-      total_beds: dept.total_beds,
-      description: dept.description,
-      status: dept.status
+      code: dept.code || "",
+      description: dept.description || "",
+      location: dept.location || "",
+      phone: dept.phone || "",
+      email: dept.email || "",
+      is_active: Boolean(dept.is_active),
     });
     setIsDialogOpen(true);
   };
 
   const openAddDialog = () => {
     setEditingDept(null);
-    setFormData({ name: "", head_doctor: "", total_beds: 0, description: "", status: "active" });
+    setFormData({ name: "", code: "", description: "", location: "", phone: "", email: "", is_active: true });
     setIsDialogOpen(true);
   };
 
-  const filteredDepartments = departments.filter(d => 
-    d.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    d.head_doctor.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const totalDoctors = departments.reduce((sum, d) => sum + d.total_doctors, 0);
-  const totalBeds = departments.reduce((sum, d) => sum + d.total_beds, 0);
+  const filteredDepartments = departments;
+  const totalDoctors = departments.reduce((sum, d) => sum + Number(d.doctor_count || 0), 0);
+  const activeDepartments = departments.filter((d) => Boolean(d.is_active)).length;
 
   return (
     <ConsoleShell>
@@ -149,18 +145,31 @@ export default function Departments() {
                   />
                 </div>
                 <div>
-                  <Label>Head Doctor</Label>
+                  <Label>Department Code</Label>
                   <Input 
-                    value={formData.head_doctor}
-                    onChange={(e) => setFormData({...formData, head_doctor: e.target.value})}
+                    value={formData.code}
+                    onChange={(e) => setFormData({...formData, code: e.target.value})}
                   />
                 </div>
                 <div>
-                  <Label>Total Beds</Label>
+                  <Label>Location</Label>
                   <Input 
-                    type="number"
-                    value={formData.total_beds}
-                    onChange={(e) => setFormData({...formData, total_beds: parseInt(e.target.value) || 0})}
+                    value={formData.location}
+                    onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <Input 
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
                 <div>
@@ -208,8 +217,8 @@ export default function Departments() {
                 <Bed className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalBeds}</p>
-                <p className="text-sm text-gray-600">Total Beds</p>
+                <p className="text-2xl font-bold">{activeDepartments}</p>
+                <p className="text-sm text-gray-600">Active Departments</p>
               </div>
             </CardContent>
           </Card>
@@ -233,9 +242,9 @@ export default function Departments() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Department</TableHead>
-                  <TableHead>Head Doctor</TableHead>
+                  <TableHead>Code</TableHead>
                   <TableHead>Doctors</TableHead>
-                  <TableHead>Beds</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -255,15 +264,15 @@ export default function Departments() {
                       <TableCell>
                         <div>
                           <p className="font-medium">{dept.name}</p>
-                          <p className="text-sm text-gray-500">{dept.description}</p>
+                          <p className="text-sm text-gray-500">{dept.description || '-'}</p>
                         </div>
                       </TableCell>
-                      <TableCell>{dept.head_doctor}</TableCell>
-                      <TableCell>{dept.total_doctors}</TableCell>
-                      <TableCell>{dept.total_beds}</TableCell>
+                      <TableCell>{dept.code || '-'}</TableCell>
+                      <TableCell>{dept.doctor_count || 0}</TableCell>
+                      <TableCell>{dept.location || '-'}</TableCell>
                       <TableCell>
-                        <Badge variant={dept.status === "active" ? "default" : "secondary"}>
-                          {dept.status}
+                        <Badge variant={dept.is_active ? "default" : "secondary"}>
+                          {dept.is_active ? 'active' : 'inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell>

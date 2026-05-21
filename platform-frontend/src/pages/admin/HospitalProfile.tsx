@@ -52,11 +52,28 @@ export default function HospitalProfile() {
   const fetchHospitalProfile = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiGet("/api/hospital/profile");
+      const res = await apiGet("/api/dashboard/hospital/profile");
       if (res.ok) {
         const data = await res.json();
-        if (data) {
-          setHospital(data);
+        if (data?.profile) {
+          const p = data.profile;
+          setHospital({
+            id: p.id,
+            name: p.name || "",
+            address: p.address || "",
+            city: p.city || "",
+            state: p.state || "",
+            pincode: p.postal_code || "",
+            phone: p.phone || "",
+            email: p.email || "",
+            website: p.website || "",
+            established_year: p.established_year ? String(p.established_year) : "",
+            bed_capacity: p.bed_count || 0,
+            emergency_services: true,
+            accreditation: Array.isArray(p.accreditations) ? p.accreditations.join(", ") : (p.accreditations || ""),
+            working_hours: p.working_hours ? JSON.stringify(p.working_hours) : "24/7",
+            description: p.description || "",
+          });
         }
       }
     } catch (error) {
@@ -73,7 +90,22 @@ export default function HospitalProfile() {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const res = await apiPut("/api/hospital/profile", hospital);
+      const res = await apiPut("/api/dashboard/hospital/profile", {
+        name: hospital.name,
+        address: hospital.address,
+        city: hospital.city,
+        state: hospital.state,
+        postal_code: hospital.pincode,
+        phone: hospital.phone,
+        email: hospital.email,
+        website: hospital.website,
+        established_year: hospital.established_year ? Number(hospital.established_year) : null,
+        bed_count: hospital.bed_capacity,
+        description: hospital.description,
+        accreditations: hospital.accreditation ? [hospital.accreditation] : [],
+        specializations: [],
+        working_hours: { default: hospital.working_hours || "24/7" },
+      });
       if (res.ok) {
         toast.success("Hospital profile updated successfully");
         setIsEditing(false);

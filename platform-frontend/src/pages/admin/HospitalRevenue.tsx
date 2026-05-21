@@ -42,15 +42,35 @@ const COLORS = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444'];
 
 export default function HospitalRevenue() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [categoryData, setCategoryData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'daily' | 'monthly'>('monthly');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await apiFetch('/api/billing/invoices');
-        const data = await res.json();
-        if (res.ok) setInvoices(Array.isArray(data) ? data : []);
+        const [invoiceRes, overviewRes] = await Promise.all([
+          apiFetch('/api/billing/invoices'),
+          apiFetch('/api/dashboard/financial/revenue-overview?period=year'),
+        ]);
+
+        if (invoiceRes.ok) {
+          const invoicePayload = await invoiceRes.json();
+          const list = Array.isArray(invoicePayload) ? invoicePayload : (invoicePayload?.invoices || []);
+          setInvoices(list);
+        }
+
+        if (overviewRes.ok) {
+          const overview = await overviewRes.json();
+          const byCategory = Array.isArray(overview?.byCategory) ? overview.byCategory : [];
+          setCategoryData(
+            byCategory.slice(0, COLORS.length).map((row: any, idx: number) => ({
+              name: row.category || 'Other',
+              value: Number(row.total || 0),
+              color: COLORS[idx % COLORS.length],
+            })).filter((d: any) => d.value > 0)
+          );
+        }
       } catch (e) {
         console.error('Error fetching invoices:', e);
       } finally {
@@ -143,16 +163,15 @@ export default function HospitalRevenue() {
     return months;
   }, [invoices]);
 
-  // Revenue by source (simulated)
-  const sourceData = useMemo(() => {
-    return [
-      { name: 'Consultations', value: Math.round(metrics.totalRevenue * 0.35), color: COLORS[0] },
-      { name: 'Lab Tests', value: Math.round(metrics.totalRevenue * 0.25), color: COLORS[1] },
-      { name: 'Procedures', value: Math.round(metrics.totalRevenue * 0.20), color: COLORS[2] },
-      { name: 'Pharmacy', value: Math.round(metrics.totalRevenue * 0.15), color: COLORS[3] },
-      { name: 'Other', value: Math.round(metrics.totalRevenue * 0.05), color: COLORS[4] },
-    ].filter((d) => d.value > 0);
-  }, [metrics.totalRevenue]);
+  const sourceData = categoryData.length
+    ? categoryData
+    : [
+        { name: 'Consultations', value: Math.round(metrics.totalRevenue * 0.35), color: COLORS[0] },
+        { name: 'Lab Tests', value: Math.round(metrics.totalRevenue * 0.25), color: COLORS[1] },
+        { name: 'Procedures', value: Math.round(metrics.totalRevenue * 0.20), color: COLORS[2] },
+        { name: 'Pharmacy', value: Math.round(metrics.totalRevenue * 0.15), color: COLORS[3] },
+        { name: 'Other', value: Math.round(metrics.totalRevenue * 0.05), color: COLORS[4] },
+      ].filter((d) => d.value > 0);
 
   if (loading) return <ConsoleShell><div className="p-6">Loading...</div></ConsoleShell>;
 

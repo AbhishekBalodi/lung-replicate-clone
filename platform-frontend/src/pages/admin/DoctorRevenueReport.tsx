@@ -13,8 +13,17 @@ export default function DoctorRevenueReport() {
   const fetchDoctorRevenue = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiGet("/api/reports/doctor-revenue");
-      if (res.ok) { const data = await res.json(); setDoctorData(data || []); }
+      const res = await apiGet("/api/dashboard/reports/doctor-revenue");
+      if (res.ok) {
+        const data = await res.json();
+        const rows = Array.isArray(data?.doctors) ? data.doctors : [];
+        setDoctorData(rows.map((row: any) => ({
+          name: row.doctor_name || row.name || "Unknown",
+          revenue: Number(row.total_revenue || 0),
+          appointments: Number(row.total_appointments || 0),
+          patients: Number(row.total_appointments || 0),
+        })));
+      }
       else {
         setDoctorData([
           { name: "Dr. Mann", revenue: 185000, patients: 120, appointments: 145 },

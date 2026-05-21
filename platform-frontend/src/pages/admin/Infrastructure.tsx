@@ -3,9 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Building, Bed, Car, Wrench, Wifi, Zap, Droplets, ThermometerSun } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
+import { toast } from "sonner";
 
 interface InfraStats {
   total_buildings: number;
@@ -45,10 +50,38 @@ export default function Infrastructure() {
   });
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [facilityOpen, setFacilityOpen] = useState(false);
+  const [equipmentOpen, setEquipmentOpen] = useState(false);
+  const [newFacility, setNewFacility] = useState({ name: "", category: "general", location: "", capacity: "" });
+  const [newEquipment, setNewEquipment] = useState({ name: "", category: "general", model: "", location: "" });
 
   const fetchInfraData = useCallback(async () => {
     try {
       setLoading(true);
+      const infraRes = await apiGet("/api/dashboard/hospital/infrastructure");
+      if (infraRes.ok) {
+        const infra = await infraRes.json();
+        if (infra?.roomStats) {
+          setStats(prev => ({
+            ...prev,
+            total_rooms: Number(infra.roomStats.total_rooms || prev.total_rooms),
+            occupied_rooms: Number(infra.roomStats.occupied_rooms || prev.occupied_rooms),
+            total_beds: Number(infra.roomStats.total_beds || prev.total_beds),
+          }));
+        }
+        if (Array.isArray(infra?.equipment) && infra.equipment.length) {
+          setEquipment(infra.equipment.map((e: any) => ({
+            id: e.id,
+            name: e.name,
+            category: e.category || "General",
+            status: e.status === "retired" ? "out_of_order" : (e.status || "operational"),
+            last_service: e.purchase_date || "-",
+            next_service: e.warranty_until || "-",
+            location: e.location || "-",
+          })));
+        }
+      }
+
       // Fetch rooms to calculate occupancy
       const roomsRes = await apiGet("/api/rooms");
       if (roomsRes.ok) {
@@ -90,6 +123,48 @@ export default function Infrastructure() {
     }
   }, []);
 
+  const addFacility = async () => {
+    if (!newFacility.name.trim()) {
+      toast.error("Facility name is required");
+      return;
+    }
+    const res = await apiPost("/api/dashboard/hospital/facilities", {
+      name: newFacility.name.trim(),
+      category: newFacility.category,
+      location: newFacility.location || null,
+      capacity: newFacility.capacity ? Number(newFacility.capacity) : null,
+    });
+    if (!res.ok) {
+      toast.error("Failed to add facility");
+      return;
+    }
+    toast.success("Facility added");
+    setFacilityOpen(false);
+    setNewFacility({ name: "", category: "general", location: "", capacity: "" });
+    fetchInfraData();
+  };
+
+  const addEquipment = async () => {
+    if (!newEquipment.name.trim()) {
+      toast.error("Equipment name is required");
+      return;
+    }
+    const res = await apiPost("/api/dashboard/hospital/equipment", {
+      name: newEquipment.name.trim(),
+      category: newEquipment.category,
+      model: newEquipment.model || null,
+      location: newEquipment.location || null,
+    });
+    if (!res.ok) {
+      toast.error("Failed to add equipment");
+      return;
+    }
+    toast.success("Equipment added");
+    setEquipmentOpen(false);
+    setNewEquipment({ name: "", category: "general", model: "", location: "" });
+    fetchInfraData();
+  };
+
   useEffect(() => {
     fetchInfraData();
   }, [fetchInfraData]);
@@ -110,9 +185,40 @@ export default function Infrastructure() {
   return (
     <ConsoleShell>
       <div className="p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Infrastructure</h1>
-          <p className="text-gray-600">Monitor hospital buildings, equipment and facilities</p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Infrastructure</h1>
+            <p className="text-gray-600">Monitor hospital buildings, equipment and facilities</p>
+          </div>
+          <div className="flex gap-2">
+            <Dialog open={facilityOpen} onOpenChange={setFacilityOpen}>
+              <DialogTrigger asChild><Button variant="outline">Add Facility</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Add Facility</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div><Label>Name</Label><Input value={newFacility.name} onChange={(e) => setNewFacility((p) => ({ ...p, name: e.target.value }))} /></div>
+                  <div><Label>Category</Label><Input value={newFacility.category} onChange={(e) => setNewFacility((p) => ({ ...p, category: e.target.value }))} /></div>
+                  <div><Label>Location</Label><Input value={newFacility.location} onChange={(e) => setNewFacility((p) => ({ ...p, location: e.target.value }))} /></div>
+                  <div><Label>Capacity</Label><Input type="number" value={newFacility.capacity} onChange={(e) => setNewFacility((p) => ({ ...p, capacity: e.target.value }))} /></div>
+                  <Button className="w-full" onClick={addFacility}>Save Facility</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={equipmentOpen} onOpenChange={setEquipmentOpen}>
+              <DialogTrigger asChild><Button>Add Equipment</Button></DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Add Equipment</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div><Label>Name</Label><Input value={newEquipment.name} onChange={(e) => setNewEquipment((p) => ({ ...p, name: e.target.value }))} /></div>
+                  <div><Label>Category</Label><Input value={newEquipment.category} onChange={(e) => setNewEquipment((p) => ({ ...p, category: e.target.value }))} /></div>
+                  <div><Label>Model</Label><Input value={newEquipment.model} onChange={(e) => setNewEquipment((p) => ({ ...p, model: e.target.value }))} /></div>
+                  <div><Label>Location</Label><Input value={newEquipment.location} onChange={(e) => setNewEquipment((p) => ({ ...p, location: e.target.value }))} /></div>
+                  <Button className="w-full" onClick={addEquipment}>Save Equipment</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Overview Stats */}

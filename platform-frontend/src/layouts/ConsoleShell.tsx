@@ -2,28 +2,20 @@ import { ReactNode, useState, useMemo } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
-  LogOut, Menu, Search, Plus, ArrowLeft, Bell, ChevronDown, ChevronRight,
+  LogOut, Menu, Search, Plus, Bell, ChevronDown, ChevronRight,
   Ambulance, Pill, Droplets, Receipt, Building2, Users2,
-  DoorOpen, Star, MessageSquare, ListTodo, FlaskConical, TrendingUp, Shield,
-  Settings, BarChart3, Palette, ClipboardList, Video, Calendar, Heart, Siren,
-  User, Stethoscope, LayoutDashboard, CalendarDays, UserCircle, Beaker,
+  Star, ListTodo, FlaskConical,
+  Settings, BarChart3, Palette, Video, Calendar, Heart,
+  Stethoscope, LayoutDashboard, CalendarDays, UserCircle, Beaker,
   Scissors, CheckCircle2, FileText, BookOpen, Clock, AlertTriangle, MessageCircle,
-  Wallet, Briefcase, Bed, ClipboardCheck, Cog, Lock, BellRing, UserCog, Layers
+  Wallet, Bed, ClipboardCheck, Cog, Lock, BellRing, UserCog
 } from "lucide-react";
 import { useCustomAuth } from "@/contexts/CustomAuthContext";
-import MedicinesContent from "@/pages/admin/MedicinesContent";
-import LabTestsContent from "@/pages/admin/LabTestsContent";
-import ProceduresContent from "@/pages/admin/ProceduresContent";
-import PatientsListSidebar from "@/pages/admin/PatientsListSidebar";
-import SettingsContent from "@/pages/SettingsContent";
-import ConsultationSidebar from "@/pages/admin/ConsultationSidebar";
 import ThemeApplicator from "@/components/ThemeApplicator";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
-
-type SidebarPage = "patients" | "medicines" | "lab-tests" | "procedures" | "consultation" | "settings" | null;
 
 type Props = {
   children: ReactNode;
@@ -38,8 +30,7 @@ type NavGroup = {
   kind: "group"; label: string; icon: any; key: string; superAdminOnly?: boolean;
   items: { label: string; onClick: () => void; path?: string }[];
 };
-type NavSidebarPage = { kind: "sidebar-page"; label: string; icon: any; page: SidebarPage };
-type NavItem = NavLeaf | NavGroup | NavSidebarPage;
+type NavItem = NavLeaf | NavGroup;
 
 type NavSection = { label: string; items: NavItem[] };
 
@@ -50,7 +41,6 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
 
   const [search, setSearch] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeSidebarPage, setActiveSidebarPage] = useState<SidebarPage>(null);
   const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
 
   const isAuthenticated = useMemo(() => {
@@ -101,16 +91,16 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
         { kind: "leaf", label: "Dashboard", icon: LayoutDashboard, onClick: go(dashboardPath), path: dashboardPath },
         { kind: "leaf", label: "Appointments", icon: CalendarDays, onClick: go("/appointments"), path: "/appointments" },
         { kind: "leaf", label: "Calendar", icon: Calendar, onClick: go("/calendar"), path: "/calendar" },
-        { kind: "sidebar-page", label: "Patients", icon: UserCircle, page: "patients" },
+        { kind: "leaf", label: "Patients", icon: UserCircle, onClick: go("/patients"), path: "/patients" },
       ],
     },
     {
       label: "Clinical",
       items: [
-        { kind: "sidebar-page", label: "Consultation", icon: Stethoscope, page: "consultation" },
-        { kind: "sidebar-page", label: "Medicines", icon: Pill, page: "medicines" },
-        { kind: "sidebar-page", label: "Lab Tests", icon: Beaker, page: "lab-tests" },
-        { kind: "sidebar-page", label: "Procedures", icon: Scissors, page: "procedures" },
+        { kind: "leaf", label: "Consultation", icon: Stethoscope, onClick: go("/consultation"), path: "/consultation" },
+        { kind: "leaf", label: "Medicines", icon: Pill, onClick: go("/medicines"), path: "/medicines" },
+        { kind: "leaf", label: "Lab Tests", icon: Beaker, onClick: go("/lab-tests"), path: "/lab-tests" },
+        { kind: "leaf", label: "Procedures", icon: Scissors, onClick: go("/procedures"), path: "/procedures" },
         { kind: "leaf", label: "Completed", icon: CheckCircle2, onClick: go("/completed-appointments"), path: "/completed-appointments" },
         { kind: "leaf", label: "Telemedicine", icon: Video, onClick: go("/admin/telemedicine"), path: "/admin/telemedicine" },
         {
@@ -122,13 +112,7 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
             { label: "Documents", onClick: go("/admin/emr/documents") },
           ],
         },
-        {
-          kind: "group", label: "Follow-Ups & Care", icon: Heart, key: "follow-ups",
-          items: [
-            { label: "Follow-Up Schedule", onClick: go("/admin/follow-ups") },
-            { label: "Care Plans", onClick: go("/admin/care-plans") },
-          ],
-        },
+        { kind: "leaf", label: "Follow-Ups & Care", icon: Heart, onClick: go("/admin/follow-ups"), path: "/admin/follow-ups" },
       ],
     },
     {
@@ -291,7 +275,7 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
     },
   ];
 
-  const sidebarWidth = activeSidebarPage ? "w-[640px]" : (sidebarCollapsed ? "w-[72px]" : "w-[260px]");
+  const sidebarWidth = sidebarCollapsed ? "w-[72px]" : "w-[260px]";
 
   // Render a sidebar item
   const renderItem = (item: NavItem) => {
@@ -303,23 +287,6 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
         <button
           key={item.label}
           onClick={() => { item.onClick(); }}
-          className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors
-            ${active
-              ? "bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] text-white font-medium shadow-sm"
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}
-        >
-          <Icon className="h-4 w-4 shrink-0" />
-          {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
-        </button>
-      );
-    }
-    if (item.kind === "sidebar-page") {
-      const Icon = item.icon;
-      const active = activeSidebarPage === item.page;
-      return (
-        <button
-          key={item.label}
-          onClick={() => setActiveSidebarPage(item.page)}
           className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors
             ${active
               ? "bg-gradient-to-r from-primary to-[hsl(var(--primary-glow))] text-white font-medium shadow-sm"
@@ -378,7 +345,7 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-[hsl(var(--primary-glow))] flex items-center justify-center shadow-sm shrink-0">
             <Heart className="h-5 w-5 text-white" fill="white" />
           </div>
-          {!sidebarCollapsed && !activeSidebarPage && (
+          {!sidebarCollapsed && (
             <div className="min-w-0">
               <div className="text-[15px] font-bold text-slate-900 leading-tight truncate">{brandName}</div>
               <div className="text-[11px] text-slate-500 leading-tight truncate">{brandSubtitle}</div>
@@ -386,50 +353,30 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
           )}
         </div>
 
-        {/* Sub-page mode (Patients/Medicines/etc.) */}
-        {activeSidebarPage ? (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-4 pt-4 shrink-0">
-              <Button variant="outline" size="sm" onClick={() => setActiveSidebarPage(null)} className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" /> Back to Menu
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4">
-              {activeSidebarPage === "patients" && (
-                <PatientsListSidebar onSelect={(p) => { navigate(`/patients/${p.id}`); setActiveSidebarPage(null); }} />
-              )}
-              {activeSidebarPage === "medicines" && <MedicinesContent />}
-              {activeSidebarPage === "lab-tests" && <LabTestsContent />}
-              {activeSidebarPage === "procedures" && <ProceduresContent />}
-              {activeSidebarPage === "consultation" && <ConsultationSidebar />}
-              {activeSidebarPage === "settings" && <SettingsContent />}
-            </div>
-          </div>
-        ) : (
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-            {sections.map(sec => {
-              const visibleItems = sec.items.filter(it => {
-                if (it.kind === "leaf" || it.kind === "group") {
-                  return !it.superAdminOnly || isSuper;
-                }
-                return true;
-              });
-              if (visibleItems.length === 0) return null;
-              return (
-                <div key={sec.label}>
-                  {!sidebarCollapsed && (
-                    <div className="px-3 pb-2 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
-                      {sec.label}
-                    </div>
-                  )}
-                  <div className="space-y-0.5">
-                    {visibleItems.map(renderItem)}
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+          {sections.map(sec => {
+            const visibleItems = sec.items.filter(it => {
+              if (it.kind === "leaf" || it.kind === "group") {
+                return !it.superAdminOnly || isSuper;
+              }
+              return true;
+            });
+            if (visibleItems.length === 0) return null;
+            return (
+              <div key={sec.label}>
+                {!sidebarCollapsed && (
+                  <div className="px-3 pb-2 text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
+                    {sec.label}
                   </div>
+                )}
+                <div className="space-y-0.5">
+                  {visibleItems.map(renderItem)}
                 </div>
-              );
-            })}
-          </nav>
-        )}
+              </div>
+            );
+          })}
+        </nav>
       </aside>
 
       {/* MAIN COLUMN */}
@@ -496,7 +443,7 @@ export default function ConsoleShell({ children, todayCount = 0, pageTitle, page
               <DropdownMenuItem onClick={() => navigate("/admin/profile")}>
                 <UserCog className="h-4 w-4 mr-2" /> My Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setActiveSidebarPage("settings")}>
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
                 <Settings className="h-4 w-4 mr-2" /> Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />

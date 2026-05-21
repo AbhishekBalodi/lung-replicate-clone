@@ -1,11 +1,10 @@
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, IndianRupee, Users, Stethoscope, TrendingUp } from "lucide-react";
+import { Calendar, Download, IndianRupee, Users, TrendingUp } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { apiGet } from "@/lib/api";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function DailyReports() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
@@ -14,11 +13,19 @@ export default function DailyReports() {
 
   const fetchDailyData = useCallback(async () => {
     try {
-      const res = await apiGet(`/api/reports/daily?date=${selectedDate}`);
+      const res = await apiGet(`/api/dashboard/reports/daily?date=${selectedDate}`);
       if (res.ok) {
         const data = await res.json();
-        setStats(data.stats || stats);
-        setHourlyData(data.hourly || []);
+        setStats({
+          appointments: Number(data?.appointments?.total || 0),
+          patients: Number(data?.newPatients || 0),
+          revenue: Number(data?.revenue || 0),
+          completed: Number(data?.appointments?.completed || 0),
+        });
+        // Backend endpoint currently returns daily aggregates; keep chart stable until hourly API is added.
+        setHourlyData([
+          { hour: "All Day", appointments: Number(data?.appointments?.total || 0), revenue: Number(data?.revenue || 0) },
+        ]);
       }
     } catch {
       // Mock data

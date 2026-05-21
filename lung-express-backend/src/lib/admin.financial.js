@@ -5,6 +5,49 @@
 
 import { getTenantPool } from './tenant-db.js';
 
+async function ensureInsuranceClaimsTable(pool) {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS insurance_claims (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      patient_id INT NULL,
+      patient_name VARCHAR(255),
+      insurance_provider VARCHAR(255),
+      policy_number VARCHAR(100),
+      claim_number VARCHAR(100) UNIQUE,
+      claim_amount DECIMAL(12,2) DEFAULT 0,
+      approved_amount DECIMAL(12,2) DEFAULT 0,
+      claim_date DATE,
+      submitted_date DATE,
+      diagnosis TEXT,
+      treatment TEXT,
+      treatment_type VARCHAR(100),
+      documents JSON,
+      notes TEXT,
+      remarks TEXT,
+      status ENUM('pending','submitted','approved','rejected','partial','partially_approved') DEFAULT 'pending',
+      rejection_reason TEXT,
+      approved_date DATE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  const addColumnIfMissing = async (columnName, ddl) => {
+    const [exists] = await pool.execute(
+      `SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'insurance_claims' AND COLUMN_NAME = ? LIMIT 1`,
+      [columnName]
+    );
+    if (!exists.length) {
+      await pool.execute(`ALTER TABLE insurance_claims ADD COLUMN ${ddl}`);
+    }
+  };
+
+  await addColumnIfMissing('treatment_type', 'treatment_type VARCHAR(100) NULL');
+  await addColumnIfMissing('submitted_date', 'submitted_date DATE NULL');
+  await addColumnIfMissing('remarks', 'remarks TEXT NULL');
+};
+
 // ============================================
 // REVENUE ANALYTICS
 // ============================================
@@ -177,6 +220,7 @@ export async function getBillingDashboard(req, res) {
 export async function getInsuranceClaims(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureInsuranceClaimsTable(pool);
     const { status, search, from, to } = req.query;
     
     let query = `
@@ -215,7 +259,14 @@ export async function getInsuranceClaims(req, res) {
     query += ' ORDER BY ic.created_at DESC';
     
     const [rows] = await pool.execute(query, params);
-    res.json({ claims: rows });
+    const normalizedRows = rows.map((r) => ({
+      ...r,
+      submitted_date: r.submitted_date || r.claim_date || r.created_at,
+      treatment_type: r.treatment_type || r.treatment || null,
+      remarks: r.remarks || r.notes || null,
+      status: r.status === 'partial' ? 'partially_approved' : r.status,
+    }));
+    res.json({ claims: normalizedRows });
   } catch (err) {
     console.error('getInsuranceClaims error:', err);
     res.status(500).json({ error: 'Failed to fetch insurance claims' });
@@ -225,6 +276,7 @@ export async function getInsuranceClaims(req, res) {
 export async function getInsuranceClaimsSummary(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureInsuranceClaimsTable(pool);
     
     const [total] = await pool.execute('SELECT COUNT(*) as count, COALESCE(SUM(claim_amount), 0) as amount FROM insurance_claims');
     const [pending] = await pool.execute("SELECT COUNT(*) as count, COALESCE(SUM(claim_amount), 0) as amount FROM insurance_claims WHERE status = 'pending'");
@@ -246,10 +298,11 @@ export async function getInsuranceClaimsSummary(req, res) {
 export async function addInsuranceClaim(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureInsuranceClaimsTable(pool);
     const { 
-      patient_id, patient_name, insurance_provider, policy_number, 
-      claim_number, claim_amount, claim_date, diagnosis, treatment,
-      documents, notes 
+      patient_id, patient_name, insurance_provider, policy_number,
+      claim_number, claim_amount, claim_date, submitted_date, diagnosis, treatment,
+      treatment_type, documents, notes, remarks
     } = req.body;
     
     // Generate claim number if not provided
@@ -260,11 +313,13 @@ export async function addInsuranceClaim(req, res) {
     const [result] = await pool.execute(
       `INSERT INTO insurance_claims 
        (patient_id, patient_name, insurance_provider, policy_number, claim_number, 
-        claim_amount, claim_date, diagnosis, treatment, documents, notes, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
+        claim_amount, claim_date, submitted_date, diagnosis, treatment, treatment_type, documents, notes, remarks, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')`,
       [patient_id || null, patient_name, insurance_provider, policy_number, generatedClaimNumber,
-       claim_amount, claim_date || new Date().toISOString().split('T')[0], diagnosis || null, 
-       treatment || null, JSON.stringify(documents || []), notes || null]
+       claim_amount, claim_date || new Date().toISOString().split('T')[0],
+       submitted_date || new Date().toISOString().split('T')[0],
+       diagnosis || null, treatment || null, treatment_type || treatment || null,
+       JSON.stringify(documents || []), notes || null, remarks || notes || null]
     );
     
     res.json({ success: true, id: result.insertId, claim_number: generatedClaimNumber });
@@ -277,11 +332,14 @@ export async function addInsuranceClaim(req, res) {
 export async function updateInsuranceClaimStatus(req, res) {
   try {
     const pool = getTenantPool(req);
+    await ensureInsuranceClaimsTable(pool);
     const { id } = req.params;
     const { status, approved_amount, rejection_reason } = req.body;
+
+    const normalizedStatus = status === 'partially_approved' ? 'partial' : status;
     
     let query = 'UPDATE insurance_claims SET status = ?';
-    const params = [status];
+    const params = [normalizedStatus];
     
     if (status === 'approved' && approved_amount !== undefined) {
       query += ', approved_amount = ?, approved_date = NOW()';

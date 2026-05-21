@@ -36,58 +36,30 @@ export default function FinanceRevenue() {
   const fetchRevenueData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiGet("/api/billing/invoices");
-      if (res.ok) {
-        const invoices = await res.json();
+      const [overviewRes, trendRes] = await Promise.all([
+        apiGet(`/api/dashboard/financial/revenue-overview?period=${period === "this_month" ? "month" : "year"}`),
+        apiGet(`/api/dashboard/financial/revenue-trend?groupBy=month`),
+      ]);
+
+      if (overviewRes.ok) {
+        const overview = await overviewRes.json();
+        const byCategory = Array.isArray(overview.byCategory) ? overview.byCategory : [];
+
+        const getCat = (needle: string) =>
+          Number(byCategory.find((c: any) => String(c.category || "").toLowerCase().includes(needle))?.total || 0);
+
+        const totalRevenue = Number(overview.totalRevenue || 0);
         
         const now = new Date();
         const thisMonth = now.getMonth();
         const thisYear = now.getFullYear();
         
-        let totalRevenue = 0;
-        let thisMonthRevenue = 0;
-        let lastMonthRevenue = 0;
-        let opdRevenue = 0;
-        let ipdRevenue = 0;
-        let labRevenue = 0;
-        let pharmacyRevenue = 0;
-
-        // Monthly aggregation
-        const monthlyMap: Record<string, { revenue: number; expenses: number }> = {};
-
-        invoices.forEach((inv: { status: string; total_amount: number; invoice_date: string; items?: { category?: string; amount?: number }[] }) => {
-          if (inv.status === "paid") {
-            totalRevenue += inv.total_amount;
-            
-            const invDate = new Date(inv.invoice_date);
-            const invMonth = invDate.getMonth();
-            const invYear = invDate.getFullYear();
-            
-            if (invMonth === thisMonth && invYear === thisYear) {
-              thisMonthRevenue += inv.total_amount;
-            }
-            if (invMonth === thisMonth - 1 && invYear === thisYear) {
-              lastMonthRevenue += inv.total_amount;
-            }
-
-            // Categorize by type (mock logic)
-            if (inv.items) {
-              inv.items.forEach(item => {
-                if (item.category === "consultation") opdRevenue += item.amount || 0;
-                else if (item.category === "room") ipdRevenue += item.amount || 0;
-                else if (item.category === "lab") labRevenue += item.amount || 0;
-                else if (item.category === "pharmacy") pharmacyRevenue += item.amount || 0;
-              });
-            }
-
-            // Monthly aggregation
-            const monthKey = `${invYear}-${String(invMonth + 1).padStart(2, "0")}`;
-            if (!monthlyMap[monthKey]) {
-              monthlyMap[monthKey] = { revenue: 0, expenses: 0 };
-            }
-            monthlyMap[monthKey].revenue += inv.total_amount;
-          }
-        });
+        const thisMonthRevenue = Number((overview.trend || []).at?.(-1)?.revenue || totalRevenue);
+        const lastMonthRevenue = Number((overview.trend || []).at?.(-2)?.revenue || 0);
+        const opdRevenue = getCat("consult") || getCat("opd");
+        const ipdRevenue = getCat("room") || getCat("ipd");
+        const labRevenue = getCat("lab");
+        const pharmacyRevenue = getCat("pharmacy");
 
         const growth = lastMonthRevenue > 0 
           ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
@@ -104,17 +76,15 @@ export default function FinanceRevenue() {
           pharmacy_revenue: pharmacyRevenue || totalRevenue * 0.1
         });
 
-        // Generate monthly chart data
-        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        const chartData = months.map((month, idx) => {
-          const key = `${thisYear}-${String(idx + 1).padStart(2, "0")}`;
-          return {
-            month,
-            revenue: monthlyMap[key]?.revenue || Math.floor(Math.random() * 50000) + 10000,
-            expenses: Math.floor(Math.random() * 30000) + 5000
-          };
-        });
-        setMonthlyData(chartData);
+        if (trendRes.ok) {
+          const trendData = await trendRes.json();
+          const chartData = (trendData.trend || []).map((r: any) => ({
+            month: String(r.period || "").slice(5),
+            revenue: Number(r.revenue || 0),
+            expenses: Math.max(0, Number(r.revenue || 0) - Number(r.collected || 0)),
+          }));
+          if (chartData.length) setMonthlyData(chartData);
+        }
       }
     } catch (error) {
       console.error("Error fetching revenue:", error);

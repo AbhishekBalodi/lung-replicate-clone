@@ -1,18 +1,48 @@
 -- Migration to add telemedicine chat support and update telemedicine_sessions
+-- MySQL 5.7 compatible (no ADD COLUMN IF NOT EXISTS)
 
--- Add meeting_link column if it doesn't exist
-ALTER TABLE telemedicine_sessions 
-ADD COLUMN IF NOT EXISTS meeting_link VARCHAR(500) DEFAULT NULL;
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1 FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'telemedicine_sessions'
+      AND COLUMN_NAME = 'meeting_link'
+    ),
+    'SELECT "meeting_link exists";',
+    'ALTER TABLE telemedicine_sessions ADD COLUMN meeting_link VARCHAR(500) DEFAULT NULL;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add session_type if using old 'type' column
--- (Skip if column already exists with correct name)
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1 FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'telemedicine_sessions'
+      AND COLUMN_NAME = 'scheduled_date'
+    ),
+    'SELECT "scheduled_date exists";',
+    'ALTER TABLE telemedicine_sessions ADD COLUMN scheduled_date DATE DEFAULT NULL;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Add scheduled_date and scheduled_time if using old scheduled_time datetime
-ALTER TABLE telemedicine_sessions 
-ADD COLUMN IF NOT EXISTS scheduled_date DATE DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS scheduled_time_new TIME DEFAULT NULL;
+SET @sql := (
+  SELECT IF(
+    EXISTS (
+      SELECT 1 FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'telemedicine_sessions'
+      AND COLUMN_NAME = 'scheduled_time_new'
+    ),
+    'SELECT "scheduled_time_new exists";',
+    'ALTER TABLE telemedicine_sessions ADD COLUMN scheduled_time_new TIME DEFAULT NULL;'
+  )
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
--- Create telemedicine_messages table for chat
 CREATE TABLE IF NOT EXISTS telemedicine_messages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   session_id INT NOT NULL,
@@ -25,7 +55,6 @@ CREATE TABLE IF NOT EXISTS telemedicine_messages (
   INDEX idx_tele_messages_session (session_id)
 );
 
--- Create tenant_settings table if not exists (for individual doctor tenants)
 CREATE TABLE IF NOT EXISTS tenant_settings (
   id INT AUTO_INCREMENT PRIMARY KEY,
   doctor_name VARCHAR(255),

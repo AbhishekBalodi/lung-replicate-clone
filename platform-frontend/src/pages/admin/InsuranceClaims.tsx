@@ -33,14 +33,24 @@ export default function InsuranceClaims() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [newClaim, setNewClaim] = useState({
+    patient_name: "",
+    insurance_provider: "",
+    policy_number: "",
+    claim_amount: "",
+    treatment_type: "",
+    diagnosis: "",
+    remarks: "",
+  });
 
   const fetchClaims = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiGet("/api/insurance/claims");
+      const res = await apiGet(`/api/dashboard/financial/insurance-claims?status=${statusFilter}&search=${encodeURIComponent(searchQuery)}`);
       if (res.ok) {
         const data = await res.json();
-        setClaims(data || []);
+        setClaims(data?.claims || []);
       } else {
         // Mock data
         setClaims([
@@ -56,11 +66,48 @@ export default function InsuranceClaims() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [searchQuery, statusFilter]);
 
   useEffect(() => {
     fetchClaims();
   }, [fetchClaims]);
+
+  const submitClaim = async () => {
+    if (!newClaim.patient_name.trim() || !newClaim.insurance_provider.trim() || !newClaim.claim_amount) {
+      toast.error("Patient, provider and amount are required");
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const res = await apiPost("/api/dashboard/financial/insurance-claims", {
+        patient_name: newClaim.patient_name.trim(),
+        insurance_provider: newClaim.insurance_provider.trim(),
+        policy_number: newClaim.policy_number.trim() || null,
+        claim_amount: Number(newClaim.claim_amount),
+        treatment_type: newClaim.treatment_type || null,
+        diagnosis: newClaim.diagnosis || null,
+        remarks: newClaim.remarks || null,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to submit claim");
+      toast.success(`Claim submitted: ${data?.claim_number || "new claim"}`);
+      setIsDialogOpen(false);
+      setNewClaim({
+        patient_name: "",
+        insurance_provider: "",
+        policy_number: "",
+        claim_amount: "",
+        treatment_type: "",
+        diagnosis: "",
+        remarks: "",
+      });
+      fetchClaims();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit claim");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const getStatusBadge = (status: Claim["status"]) => {
     const config = {
@@ -68,9 +115,10 @@ export default function InsuranceClaims() {
       submitted: { icon: FileText, className: "bg-blue-100 text-blue-800", label: "Submitted" },
       approved: { icon: CheckCircle, className: "bg-green-100 text-green-800", label: "Approved" },
       rejected: { icon: XCircle, className: "bg-red-100 text-red-800", label: "Rejected" },
+      partial: { icon: AlertCircle, className: "bg-orange-100 text-orange-800", label: "Partial" },
       partially_approved: { icon: AlertCircle, className: "bg-orange-100 text-orange-800", label: "Partial" },
     };
-    const { icon: Icon, className, label } = config[status];
+    const { icon: Icon, className, label } = config[status] || config.pending;
     return (
       <Badge className={className}>
         <Icon className="h-3 w-3 mr-1" />
@@ -118,23 +166,23 @@ export default function InsuranceClaims() {
               <div className="space-y-4 mt-4">
                 <div>
                   <Label>Patient Name</Label>
-                  <Input placeholder="Enter patient name" />
+                  <Input placeholder="Enter patient name" value={newClaim.patient_name} onChange={(e) => setNewClaim((p) => ({ ...p, patient_name: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Insurance Provider</Label>
-                  <Input placeholder="Enter insurance company" />
+                  <Input placeholder="Enter insurance company" value={newClaim.insurance_provider} onChange={(e) => setNewClaim((p) => ({ ...p, insurance_provider: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Policy Number</Label>
-                  <Input placeholder="Enter policy number" />
+                  <Input placeholder="Enter policy number" value={newClaim.policy_number} onChange={(e) => setNewClaim((p) => ({ ...p, policy_number: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Claim Amount</Label>
-                  <Input type="number" placeholder="Enter amount" />
+                  <Input type="number" placeholder="Enter amount" value={newClaim.claim_amount} onChange={(e) => setNewClaim((p) => ({ ...p, claim_amount: e.target.value }))} />
                 </div>
                 <div>
                   <Label>Treatment Type</Label>
-                  <Select>
+                  <Select value={newClaim.treatment_type} onValueChange={(value) => setNewClaim((p) => ({ ...p, treatment_type: value }))}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select treatment type" />
                     </SelectTrigger>
@@ -147,11 +195,16 @@ export default function InsuranceClaims() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button className="w-full" onClick={() => {
-                  toast.success("Claim submitted successfully");
-                  setIsDialogOpen(false);
-                }}>
-                  Submit Claim
+                <div>
+                  <Label>Diagnosis (Optional)</Label>
+                  <Input placeholder="Primary diagnosis" value={newClaim.diagnosis} onChange={(e) => setNewClaim((p) => ({ ...p, diagnosis: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>Remarks</Label>
+                  <Input placeholder="Additional notes" value={newClaim.remarks} onChange={(e) => setNewClaim((p) => ({ ...p, remarks: e.target.value }))} />
+                </div>
+                <Button className="w-full" disabled={submitting} onClick={submitClaim}>
+                  {submitting ? "Submitting..." : "Submit Claim"}
                 </Button>
               </div>
             </DialogContent>
@@ -258,7 +311,7 @@ export default function InsuranceClaims() {
                       <TableCell>₹{claim.claim_amount.toLocaleString()}</TableCell>
                       <TableCell>₹{claim.approved_amount.toLocaleString()}</TableCell>
                       <TableCell>{getStatusBadge(claim.status)}</TableCell>
-                      <TableCell>{claim.submitted_date}</TableCell>
+                      <TableCell>{claim.submitted_date ? String(claim.submitted_date).slice(0, 10) : "-"}</TableCell>
                     </TableRow>
                   ))
                 )}

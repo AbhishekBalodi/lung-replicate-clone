@@ -7,12 +7,80 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageSquare, Mail, Phone, Send, Settings, Check, X, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { apiGet, apiPost } from "@/lib/api";
+import { toast } from "sonner";
 
 export default function MessagingIntegrations() {
   const [smsEnabled, setSmsEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+  const [smtp, setSmtp] = useState({
+    smtp_host: "",
+    smtp_port: 587,
+    smtp_user: "",
+    smtp_pass: "",
+    smtp_secure: true,
+    smtp_from: "",
+  });
+  const [testEmail, setTestEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const loadSmtp = async () => {
+      try {
+        const res = await apiGet("/api/smtp-settings");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.settings) {
+          setSmtp({
+            smtp_host: data.settings.smtp_host || "",
+            smtp_port: Number(data.settings.smtp_port || 587),
+            smtp_user: data.settings.smtp_user || "",
+            smtp_pass: data.settings.smtp_pass || "",
+            smtp_secure: Boolean(data.settings.smtp_secure),
+            smtp_from: data.settings.smtp_from || "",
+          });
+        }
+      } catch {
+        // keep defaults
+      }
+    };
+    loadSmtp();
+  }, []);
+
+  const saveSmtp = async () => {
+    if (!smtp.smtp_host || !smtp.smtp_user || !smtp.smtp_pass || !smtp.smtp_from) {
+      toast.error("Please complete SMTP host, user, password and from email");
+      return;
+    }
+    try {
+      setSaving(true);
+      const res = await apiPost("/api/smtp-settings", smtp);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Failed to save SMTP settings");
+      toast.success("SMTP settings saved");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save SMTP settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const sendTestEmail = async () => {
+    if (!testEmail) {
+      toast.error("Enter a test email address");
+      return;
+    }
+    try {
+      const res = await apiPost("/api/smtp-settings/test", { test_email: testEmail });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Failed to send test email");
+      toast.success("Test email sent");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to send test email");
+    }
+  };
 
   const notificationTypes = [
     { name: "Appointment Confirmation", sms: true, email: true, whatsapp: true },
@@ -32,8 +100,8 @@ export default function MessagingIntegrations() {
             <h1 className="text-2xl font-bold text-slate-900">SMS / Email / WhatsApp Integrations</h1>
             <p className="text-slate-600">Configure messaging services for patient communication</p>
           </div>
-          <Button>
-            <Save className="h-4 w-4 mr-2" /> Save Changes
+          <Button onClick={saveSmtp} disabled={saving}>
+            <Save className="h-4 w-4 mr-2" /> {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
 
@@ -197,23 +265,35 @@ export default function MessagingIntegrations() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>SMTP Host</Label>
-                <Input placeholder="smtp.gmail.com" />
+                <Input placeholder="smtp.gmail.com" value={smtp.smtp_host} onChange={(e) => setSmtp((p) => ({ ...p, smtp_host: e.target.value }))} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Port</Label>
-                  <Input placeholder="587" />
+                  <Input placeholder="587" type="number" value={smtp.smtp_port} onChange={(e) => setSmtp((p) => ({ ...p, smtp_port: Number(e.target.value || 587) }))} />
                 </div>
                 <div className="space-y-2">
                   <Label>Security</Label>
-                  <Input placeholder="TLS" />
+                  <Input placeholder="TLS/SSL" value={smtp.smtp_secure ? "TLS" : "None"} onChange={(e) => setSmtp((p) => ({ ...p, smtp_secure: e.target.value.toLowerCase() !== "none" }))} />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>From Email</Label>
-                <Input placeholder="noreply@hospital.com" />
+                <Label>SMTP Username</Label>
+                <Input placeholder="smtp user" value={smtp.smtp_user} onChange={(e) => setSmtp((p) => ({ ...p, smtp_user: e.target.value }))} />
               </div>
-              <Button variant="outline" className="w-full">
+              <div className="space-y-2">
+                <Label>SMTP Password</Label>
+                <Input type="password" placeholder="password" value={smtp.smtp_pass} onChange={(e) => setSmtp((p) => ({ ...p, smtp_pass: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>From Email</Label>
+                <Input placeholder="noreply@hospital.com" value={smtp.smtp_from} onChange={(e) => setSmtp((p) => ({ ...p, smtp_from: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Test Recipient Email</Label>
+                <Input placeholder="you@example.com" value={testEmail} onChange={(e) => setTestEmail(e.target.value)} />
+              </div>
+              <Button variant="outline" className="w-full" onClick={sendTestEmail}>
                 <Send className="h-4 w-4 mr-2" /> Send Test Email
               </Button>
             </CardContent>

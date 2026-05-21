@@ -212,13 +212,24 @@ SET @sql := (
   SELECT IF(
     EXISTS (
       SELECT 1
-      FROM INFORMATION_SCHEMA.COLUMNS
+      FROM INFORMATION_SCHEMA.TABLES
       WHERE table_schema = DATABASE()
         AND table_name = 'doctors'
-        AND column_name = 'department_id'
     ),
-    'SELECT "department_id already exists";',
-    'ALTER TABLE doctors ADD COLUMN department_id INT;'
+    (
+      SELECT IF(
+        EXISTS (
+          SELECT 1
+          FROM INFORMATION_SCHEMA.COLUMNS
+          WHERE table_schema = DATABASE()
+            AND table_name = 'doctors'
+            AND column_name = 'department_id'
+        ),
+        'SELECT "department_id already exists";',
+        'ALTER TABLE doctors ADD COLUMN department_id INT;'
+      )
+    ),
+    'SELECT "doctors table missing - skipped department_id add";'
   )
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;

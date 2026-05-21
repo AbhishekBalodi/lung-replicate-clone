@@ -1,29 +1,113 @@
-import ConsoleShell from "@/layouts/ConsoleShell";
+﻿import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Bell, Mail, MessageSquare, Smartphone, Save } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
+
+type NotificationSetting = {
+  id?: number;
+  category: string;
+  setting_key: string;
+  setting_name: string;
+  enabled: boolean;
+  email_enabled: boolean;
+  sms_enabled: boolean;
+  push_enabled: boolean;
+};
+
+const defaultSettings: NotificationSetting[] = [
+  { category: "appointments", setting_key: "new_appointment", setting_name: "New Appointment", enabled: true, email_enabled: true, sms_enabled: true, push_enabled: true },
+  { category: "appointments", setting_key: "appointment_reminder", setting_name: "Appointment Reminder", enabled: true, email_enabled: true, sms_enabled: true, push_enabled: true },
+  { category: "billing", setting_key: "invoice_created", setting_name: "Invoice Created", enabled: true, email_enabled: true, sms_enabled: false, push_enabled: true },
+  { category: "billing", setting_key: "payment_received", setting_name: "Payment Received", enabled: true, email_enabled: true, sms_enabled: false, push_enabled: true },
+  { category: "lab", setting_key: "results_ready", setting_name: "Lab Results Ready", enabled: true, email_enabled: true, sms_enabled: true, push_enabled: true },
+  { category: "system", setting_key: "system_alerts", setting_name: "System Alerts", enabled: true, email_enabled: true, sms_enabled: false, push_enabled: true },
+];
 
 export default function NotificationSettings() {
-  const [settings, setSettings] = useState({
-    email_appointments: true,
-    email_billing: true,
-    email_reports: false,
-    sms_appointments: true,
-    sms_emergency: true,
-    push_all: true,
-    push_critical: true,
-    daily_digest: false,
-    weekly_report: true,
-  });
+  const [settings, setSettings] = useState<NotificationSetting[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleSave = () => {
-    toast.success("Notification settings saved");
+  const fetchSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await apiGet("/api/dashboard/notification-settings");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const serverSettings = data?.settings || [];
+      setSettings(serverSettings.length ? serverSettings : defaultSettings);
+    } catch {
+      setSettings(defaultSettings);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+
+  const updateRow = (index: number, key: keyof NotificationSetting, value: boolean) => {
+    setSettings((prev) => prev.map((row, i) => (i === index ? { ...row, [key]: value } : row)));
   };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const withIds = settings.filter((s) => s.id);
+      const withoutIds = settings.filter((s) => !s.id);
+
+      for (const setting of withIds) {
+        await apiPut(`/api/dashboard/notification-settings/${setting.id}`, {
+          enabled: setting.enabled,
+          email_enabled: setting.email_enabled,
+          sms_enabled: setting.sms_enabled,
+          push_enabled: setting.push_enabled,
+        });
+      }
+
+      if (withoutIds.length) {
+        const res = await apiPost("/api/dashboard/notification-settings", { settings: withoutIds });
+        if (!res.ok) throw new Error();
+      }
+
+      toast.success("Notification settings saved");
+      fetchSettings();
+    } catch {
+      toast.error("Failed to save notification settings");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const byCategory = (cat: string) => settings.filter((s) => s.category === cat);
+
+  const renderGroup = (title: string, icon: JSX.Element, rows: NotificationSetting[]) => (
+    <Card>
+      <CardHeader><CardTitle className="flex items-center gap-2">{icon} {title}</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        {rows.map((row) => {
+          const idx = settings.findIndex((s) => s.setting_key === row.setting_key && s.category === row.category);
+          return (
+            <div key={`${row.category}-${row.setting_key}`} className="rounded-lg border p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>{row.setting_name}</Label>
+                <Switch checked={row.enabled} onCheckedChange={(v) => updateRow(idx, "enabled", v)} />
+              </div>
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <label className="flex items-center justify-between gap-2">Email <Switch checked={row.email_enabled} onCheckedChange={(v) => updateRow(idx, "email_enabled", v)} /></label>
+                <label className="flex items-center justify-between gap-2">SMS <Switch checked={row.sms_enabled} onCheckedChange={(v) => updateRow(idx, "sms_enabled", v)} /></label>
+                <label className="flex items-center justify-between gap-2">Push <Switch checked={row.push_enabled} onCheckedChange={(v) => updateRow(idx, "push_enabled", v)} /></label>
+              </div>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <ConsoleShell>
@@ -31,45 +115,21 @@ export default function NotificationSettings() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Notification Settings</h1>
-            <p className="text-gray-600">Configure how you receive alerts and updates</p>
+            <p className="text-gray-600">Configure alerts by channel and event type</p>
           </div>
-          <Button onClick={handleSave}><Save className="h-4 w-4 mr-2" />Save Changes</Button>
+          <Button onClick={handleSave} disabled={saving || loading}><Save className="h-4 w-4 mr-2" />{saving ? "Saving..." : "Save Changes"}</Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" />Email Notifications</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between"><Label>Appointment Reminders</Label><Switch checked={settings.email_appointments} onCheckedChange={(c) => setSettings({...settings, email_appointments: c})} /></div>
-              <div className="flex items-center justify-between"><Label>Billing Alerts</Label><Switch checked={settings.email_billing} onCheckedChange={(c) => setSettings({...settings, email_billing: c})} /></div>
-              <div className="flex items-center justify-between"><Label>Daily Reports</Label><Switch checked={settings.email_reports} onCheckedChange={(c) => setSettings({...settings, email_reports: c})} /></div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Smartphone className="h-5 w-5" />SMS Notifications</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between"><Label>Appointment Confirmations</Label><Switch checked={settings.sms_appointments} onCheckedChange={(c) => setSettings({...settings, sms_appointments: c})} /></div>
-              <div className="flex items-center justify-between"><Label>Emergency Alerts</Label><Switch checked={settings.sms_emergency} onCheckedChange={(c) => setSettings({...settings, sms_emergency: c})} /></div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" />Push Notifications</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between"><Label>All Notifications</Label><Switch checked={settings.push_all} onCheckedChange={(c) => setSettings({...settings, push_all: c})} /></div>
-              <div className="flex items-center justify-between"><Label>Critical Only</Label><Switch checked={settings.push_critical} onCheckedChange={(c) => setSettings({...settings, push_critical: c})} /></div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquare className="h-5 w-5" />Reports & Digest</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between"><Label>Daily Digest</Label><Switch checked={settings.daily_digest} onCheckedChange={(c) => setSettings({...settings, daily_digest: c})} /></div>
-              <div className="flex items-center justify-between"><Label>Weekly Report</Label><Switch checked={settings.weekly_report} onCheckedChange={(c) => setSettings({...settings, weekly_report: c})} /></div>
-            </CardContent>
-          </Card>
-        </div>
+        {loading ? (
+          <Card><CardContent className="p-8 text-center text-slate-500">Loading settings...</CardContent></Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {renderGroup("Appointments", <Bell className="h-5 w-5" />, byCategory("appointments"))}
+            {renderGroup("Billing", <Mail className="h-5 w-5" />, byCategory("billing"))}
+            {renderGroup("Lab", <Smartphone className="h-5 w-5" />, byCategory("lab"))}
+            {renderGroup("System", <MessageSquare className="h-5 w-5" />, byCategory("system"))}
+          </div>
+        )}
       </div>
     </ConsoleShell>
   );

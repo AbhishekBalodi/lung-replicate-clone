@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Download, IndianRupee, Users, Calendar, TrendingUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
+import { apiGet } from "@/lib/api";
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -18,6 +19,60 @@ export default function MonthlyReports() {
     { week: "Week 4", appointments: 120, revenue: 240000 },
   ]);
 
+  useEffect(() => {
+    const fetchMonthly = async () => {
+      const year = new Date().getFullYear();
+      const month = Number(selectedMonth) + 1;
+      const res = await apiGet(`/api/dashboard/reports/monthly?year=${year}&month=${month}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const apptTotal = Number(data?.appointments?.total || 0);
+      const revenue = Number(data?.revenue || 0);
+      const completed = Number(data?.appointments?.completed || 0);
+      setStats((prev) => ({
+        appointments: apptTotal,
+        patients: Number(data?.newPatients || 0),
+        revenue,
+        growth: apptTotal > 0 ? (completed / apptTotal) * 100 : prev.growth,
+      }));
+
+      const weeks = [
+        { key: "Week 1", start: 1, end: 7 },
+        { key: "Week 2", start: 8, end: 14 },
+        { key: "Week 3", start: 15, end: 21 },
+        { key: "Week 4", start: 22, end: 31 },
+      ];
+
+      const daily = Array.isArray(data?.dailyStats) ? data.dailyStats : [];
+      const computed = weeks.map((w) => {
+        const inWeek = daily.filter((d: any) => Number(d.day) >= w.start && Number(d.day) <= w.end);
+        const appointments = inWeek.reduce((sum: number, d: any) => sum + Number(d.appointments || 0), 0);
+        const ratio = apptTotal > 0 ? appointments / apptTotal : 0;
+        return {
+          week: w.key,
+          appointments,
+          revenue: Math.round(revenue * ratio),
+        };
+      });
+      setWeeklyData(computed);
+    };
+    fetchMonthly();
+  }, [selectedMonth]);
+
+  const exportCsv = () => {
+    const csv = [
+      ["Week", "Appointments", "Revenue"].join(","),
+      ...weeklyData.map((w) => [w.week, w.appointments, w.revenue].join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `monthly-report-${selectedMonth}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <ConsoleShell>
       <div className="p-6 space-y-6">
@@ -25,7 +80,7 @@ export default function MonthlyReports() {
           <div><h1 className="text-2xl font-bold text-gray-900">Monthly Reports</h1><p className="text-gray-600">View monthly performance summary</p></div>
           <div className="flex gap-2">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}><SelectTrigger className="w-40"><SelectValue /></SelectTrigger><SelectContent>{months.map((m, i) => <SelectItem key={i} value={i.toString()}>{m}</SelectItem>)}</SelectContent></Select>
-            <Button variant="outline"><Download className="h-4 w-4 mr-2" />Export</Button>
+            <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />Export</Button>
           </div>
         </div>
 

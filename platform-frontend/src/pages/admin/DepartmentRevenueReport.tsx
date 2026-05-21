@@ -2,19 +2,52 @@ import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download, IndianRupee, Building2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { apiGet } from "@/lib/api";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
-const deptData = [
-  { name: "Cardiology", revenue: 285000, patients: 180 },
-  { name: "Pulmonology", revenue: 245000, patients: 150 },
-  { name: "Neurology", revenue: 195000, patients: 120 },
-  { name: "Orthopedics", revenue: 175000, patients: 140 },
-  { name: "Pediatrics", revenue: 125000, patients: 200 },
-  { name: "General Medicine", revenue: 95000, patients: 250 },
-];
-
 export default function DepartmentRevenueReport() {
+  const [deptData, setDeptData] = useState<{ name: string; revenue: number; patients: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDepartmentRevenue = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await apiGet("/api/dashboard/reports/department-revenue");
+      if (res.ok) {
+        const data = await res.json();
+        const rows = Array.isArray(data?.departments) ? data.departments : [];
+        setDeptData(rows.map((row: any) => ({
+          name: row.department_name || row.name || "Unknown",
+          revenue: Number(row.total_revenue || 0),
+          patients: Number(row.total_appointments || 0),
+        })));
+      } else {
+        setDeptData([]);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDepartmentRevenue();
+  }, [fetchDepartmentRevenue]);
+
+  const exportCsv = () => {
+    const csv = [
+      ["Department", "Revenue", "Patients/Appointments"].join(","),
+      ...deptData.map((d) => [d.name, d.revenue, d.patients].join(",")),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "department-revenue.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const totalRevenue = deptData.reduce((sum, d) => sum + d.revenue, 0);
   const colors = ["#10b981", "#3b82f6", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4"];
 
@@ -23,8 +56,10 @@ export default function DepartmentRevenueReport() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div><h1 className="text-2xl font-bold text-gray-900">Department-wise Revenue</h1><p className="text-gray-600">Revenue breakdown by department</p></div>
-          <Button variant="outline"><Download className="h-4 w-4 mr-2" />Export</Button>
+          <Button variant="outline" onClick={exportCsv}><Download className="h-4 w-4 mr-2" />Export</Button>
         </div>
+
+        {loading && <Card><CardContent className="p-4 text-sm text-gray-500">Loading department revenue...</CardContent></Card>}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card><CardContent className="p-4 flex items-center gap-4"><IndianRupee className="h-8 w-8 text-emerald-500" /><div><p className="text-2xl font-bold">₹{(totalRevenue/100000).toFixed(1)}L</p><p className="text-sm text-gray-600">Total Revenue</p></div></CardContent></Card>
