@@ -1,8 +1,7 @@
 import ConsoleShell from "@/layouts/ConsoleShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -182,279 +181,87 @@ export default function Infrastructure() {
     }
   };
 
+  const trendData = [62, 68, 71, 74, 72, 69];
+  const floorData = [
+    { name: "Floor 1", pct: 86, color: "bg-amber-500" },
+    { name: "Floor 2", pct: 82, color: "bg-amber-500" },
+    { name: "Floor 3", pct: 74, color: "bg-amber-500" },
+    { name: "Floor 4", pct: 93, color: "bg-rose-500" },
+    { name: "Floor 5", pct: 63, color: "bg-emerald-500" },
+    { name: "Emergency", pct: 82, color: "bg-amber-500" },
+  ];
+
   return (
     <ConsoleShell>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Infrastructure</h1>
-            <p className="text-gray-600">Monitor hospital buildings, equipment and facilities</p>
-          </div>
-          <div className="flex gap-2">
-            <Dialog open={facilityOpen} onOpenChange={setFacilityOpen}>
-              <DialogTrigger asChild><Button variant="outline">Add Facility</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Add Facility</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Name</Label><Input value={newFacility.name} onChange={(e) => setNewFacility((p) => ({ ...p, name: e.target.value }))} /></div>
-                  <div><Label>Category</Label><Input value={newFacility.category} onChange={(e) => setNewFacility((p) => ({ ...p, category: e.target.value }))} /></div>
-                  <div><Label>Location</Label><Input value={newFacility.location} onChange={(e) => setNewFacility((p) => ({ ...p, location: e.target.value }))} /></div>
-                  <div><Label>Capacity</Label><Input type="number" value={newFacility.capacity} onChange={(e) => setNewFacility((p) => ({ ...p, capacity: e.target.value }))} /></div>
-                  <Button className="w-full" onClick={addFacility}>Save Facility</Button>
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="p-4 space-y-4">
+            <Tabs defaultValue="occupancy">
+              <TabsList className="rounded-full bg-slate-100 p-1">
+                <TabsTrigger value="occupancy">Occupancy</TabsTrigger>
+                <TabsTrigger value="equipment">Equipment</TabsTrigger>
+                <TabsTrigger value="utilities">Utilities</TabsTrigger>
+              </TabsList>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div>
+                  <p className="text-xs text-slate-500">Room Occupancy</p>
+                  <div className="mt-2 h-2 rounded-full bg-slate-100">
+                    <div className="h-2 rounded-full bg-emerald-500" style={{ width: `${roomOccupancy}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">{stats.occupied_rooms} / {stats.total_rooms} Rooms</p>
                 </div>
-              </DialogContent>
-            </Dialog>
 
-            <Dialog open={equipmentOpen} onOpenChange={setEquipmentOpen}>
-              <DialogTrigger asChild><Button>Add Equipment</Button></DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Add Equipment</DialogTitle></DialogHeader>
-                <div className="space-y-3">
-                  <div><Label>Name</Label><Input value={newEquipment.name} onChange={(e) => setNewEquipment((p) => ({ ...p, name: e.target.value }))} /></div>
-                  <div><Label>Category</Label><Input value={newEquipment.category} onChange={(e) => setNewEquipment((p) => ({ ...p, category: e.target.value }))} /></div>
-                  <div><Label>Model</Label><Input value={newEquipment.model} onChange={(e) => setNewEquipment((p) => ({ ...p, model: e.target.value }))} /></div>
-                  <div><Label>Location</Label><Input value={newEquipment.location} onChange={(e) => setNewEquipment((p) => ({ ...p, location: e.target.value }))} /></div>
-                  <Button className="w-full" onClick={addEquipment}>Save Equipment</Button>
+                <div>
+                  <p className="text-xs text-slate-500">Bed Occupancy</p>
+                  <div className="mt-2 h-2 rounded-full bg-slate-100">
+                    <div className="h-2 rounded-full bg-amber-500" style={{ width: `${bedOccupancy}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">{stats.occupied_beds} / {stats.total_beds} Beds</p>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </div>
 
-        {/* Overview Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-blue-100">
-                <Building className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.total_buildings}</p>
-                <p className="text-sm text-gray-600">Buildings</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-emerald-100">
-                <Bed className="h-6 w-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.total_beds}</p>
-                <p className="text-sm text-gray-600">Total Beds</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-purple-100">
-                <Car className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{stats.ambulances}</p>
-                <p className="text-sm text-gray-600">Ambulances</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-orange-100">
-                <Wrench className="h-6 w-6 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{equipment.filter(e => e.status === "operational").length}</p>
-                <p className="text-sm text-gray-600">Equipment Active</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="occupancy">
-          <TabsList>
-            <TabsTrigger value="occupancy">Occupancy</TabsTrigger>
-            <TabsTrigger value="equipment">Equipment</TabsTrigger>
-            <TabsTrigger value="utilities">Utilities</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="occupancy" className="space-y-4 mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Room Occupancy</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>{stats.occupied_rooms} / {stats.total_rooms} Rooms</span>
-                      <span>{roomOccupancy.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={roomOccupancy} className="h-2" />
+                <div>
+                  <p className="text-xs text-slate-500">ICU Occupancy</p>
+                  <div className="mt-2 h-2 rounded-full bg-slate-100">
+                    <div className="h-2 rounded-full bg-orange-500" style={{ width: `${icuOccupancy}%` }} />
                   </div>
-                </CardContent>
-              </Card>
+                  <p className="mt-1 text-xs text-slate-500">{stats.icu_occupied} / {stats.icu_beds} ICU</p>
+                </div>
+              </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Bed Occupancy</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>{stats.occupied_beds} / {stats.total_beds} Beds</span>
-                      <span>{bedOccupancy.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={bedOccupancy} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">ICU Occupancy</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>{stats.icu_occupied} / {stats.icu_beds} ICU Beds</span>
-                      <span>{icuOccupancy.toFixed(1)}%</span>
-                    </div>
-                    <Progress value={icuOccupancy} className="h-2" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="equipment" className="mt-4">
-            <Card>
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {equipment.map((eq) => (
-                    <div key={eq.id} className="p-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{eq.name}</p>
-                        <p className="text-sm text-gray-500">{eq.location}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right text-sm">
-                          <p className="text-gray-500">Next Service</p>
-                          <p>{eq.next_service}</p>
-                        </div>
-                        <Badge className={getStatusColor(eq.status)}>
-                          {eq.status.replace("_", " ")}
-                        </Badge>
+              <div className="rounded-xl border border-slate-200 p-4">
+                <p className="mb-3 text-xs font-semibold text-slate-700">Weekly Occupancy Trend (%)</p>
+                <div className="flex h-44 items-end gap-4">
+                  {trendData.map((value, index) => (
+                    <div key={index} className="flex-1">
+                      <div className="relative h-44 w-full overflow-hidden rounded bg-slate-50">
+                        <div
+                          className="absolute bottom-0 w-full bg-gradient-to-t from-indigo-400/60 to-sky-300/60"
+                          style={{ height: `${value}%` }}
+                        />
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
 
-          <TabsContent value="utilities" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Zap className="h-4 w-4 text-yellow-500" />
-                    Power Supply
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Main Grid</span>
-                      <Badge className="bg-green-100 text-green-800">Active</Badge>
+              <div>
+                <p className="mb-3 text-xs font-semibold text-slate-700">Floor-wise Occupancy</p>
+                <div className="space-y-2">
+                  {floorData.map((floor) => (
+                    <div key={floor.name} className="flex items-center gap-3">
+                      <span className="w-20 text-xs text-slate-500">{floor.name}</span>
+                      <div className="h-2 flex-1 rounded-full bg-slate-100">
+                        <div className={`h-2 rounded-full ${floor.color}`} style={{ width: `${floor.pct}%` }} />
+                      </div>
+                      <span className="w-10 text-right text-xs text-slate-500">{floor.pct}%</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Backup Generator</span>
-                      <Badge className="bg-green-100 text-green-800">Standby</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">UPS Systems</span>
-                      <Badge className="bg-green-100 text-green-800">100%</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Droplets className="h-4 w-4 text-blue-500" />
-                    Water Supply
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Municipal Supply</span>
-                      <Badge className="bg-green-100 text-green-800">Active</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Overhead Tanks</span>
-                      <Badge className="bg-green-100 text-green-800">85%</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">RO Plant</span>
-                      <Badge className="bg-green-100 text-green-800">Operational</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <Wifi className="h-4 w-4 text-purple-500" />
-                    Network & IT
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Internet (Primary)</span>
-                      <Badge className="bg-green-100 text-green-800">100 Mbps</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Backup Line</span>
-                      <Badge className="bg-green-100 text-green-800">50 Mbps</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">WiFi Coverage</span>
-                      <Badge className="bg-green-100 text-green-800">95%</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <ThermometerSun className="h-4 w-4 text-orange-500" />
-                    HVAC System
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Central AC</span>
-                      <Badge className="bg-green-100 text-green-800">Active</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">OT Climate Control</span>
-                      <Badge className="bg-green-100 text-green-800">22°C</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Air Filtration</span>
-                      <Badge className="bg-green-100 text-green-800">HEPA</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+                  ))}
+                </div>
+              </div>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </ConsoleShell>
   );

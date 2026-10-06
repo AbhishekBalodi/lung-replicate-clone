@@ -49,28 +49,53 @@ export default function AddBloodUnit() {
 
   return (
     <ConsoleShell>
-      <div className="space-y-6 max-w-3xl">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate('/admin/blood-bank/stock')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Add Blood Unit</h1>
-            <p className="text-muted-foreground">Register a new blood unit to the inventory</p>
+      <div className="space-y-5 max-w-2xl mx-auto">
+
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <Droplet className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-700">How Blood Bank Works</p>
+              <p className="text-[11px] text-slate-500">Manage blood inventory, donors, collections, and issuance</p>
+            </div>
           </div>
         </div>
 
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => navigate('/admin/blood-bank/stock')} className="rounded-full border-slate-200 bg-white shadow-sm">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Add Blood Unit</h1>
+            <p className="text-sm text-slate-500">Register a new blood unit to the inventory</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+          {['Blood Stock', 'Blood Donor', 'Blood Issued', 'Add Blood Unit', 'Issue Blood'].map((item, index) => (
+            <button
+              key={item}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${index === 3 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
         <form onSubmit={handleSubmit}>
-          <Card>
+          <Card className="border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Droplet className="h-5 w-5 text-red-500" />
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Droplet className="h-5 w-5 text-rose-500" />
                 Blood Unit Details
               </CardTitle>
-              <CardDescription>Enter the details of the blood unit being added</CardDescription>
+              <CardDescription className="text-slate-500">Enter the details of the blood unit being added</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               {/* Blood Type and Units */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -190,11 +215,11 @@ export default function AddBloodUnit() {
 
               {/* Actions */}
               <div className="flex gap-3 pt-4">
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting} className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-sm hover:opacity-95">
                   <Plus className="h-4 w-4 mr-2" />
                   {isSubmitting ? 'Adding...' : 'Add Blood Unit'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate('/admin/blood-bank/stock')}>
+                <Button type="button" variant="outline" onClick={() => navigate('/admin/blood-bank/stock')} className="rounded-full border-slate-200 bg-white">
                   Cancel
                 </Button>
               </div>

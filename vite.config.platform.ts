@@ -1,19 +1,26 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
 // Platform app Vite configuration
 // Run with: npx vite --config vite.config.platform.ts (run from platform-frontend or root)
-const PLATFORM_ROOT = path.resolve(__dirname, 'platform-frontend');
+const PLATFORM_ROOT = path.resolve(__dirname, "platform-frontend");
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, PLATFORM_ROOT, "");
+  // Keep the development proxy independent from the production browser API URL.
+  // api.ts sends development requests to same-origin `/api`, so this must point
+  // at the local Express server unless a different backend is explicitly needed.
+  const apiProxyTarget = env.VITE_API_PROXY_TARGET || "http://localhost:5050";
+
+  return {
   root: PLATFORM_ROOT,
   plugins: [
     {
       name: "platform-html",
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
-          // Serve index.platform.html for all routes (SPA routing)
+          // Serve index.html for all routes (SPA routing)
           // Skip for assets, API calls, and file requests with extensions
           if (
             req.url &&
@@ -23,7 +30,7 @@ export default defineConfig({
             !req.url.startsWith("/@") &&
             !req.url.includes(".")
           ) {
-            req.url = "/index.platform.html";
+            req.url = "/index.html";
           }
           next();
         });
@@ -42,15 +49,17 @@ export default defineConfig({
     port: 5174, // Different port from tenant app (5173)
     proxy: {
       "/api": {
-        target: "http://localhost:5050",
+        target: apiProxyTarget,
         changeOrigin: true,
+        secure: true,
       },
     },
   },
   build: {
     outDir: path.resolve(PLATFORM_ROOT, "dist-platform"),
     rollupOptions: {
-      input: path.resolve(PLATFORM_ROOT, "index.platform.html"),
+      input: path.resolve(PLATFORM_ROOT, "index.html"),
     },
   },
+  };
 });

@@ -124,32 +124,74 @@ export default function BloodStock() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-rose-600">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">How Blood Bank Works</p>
+                <p className="text-sm text-slate-500">Manage and monitor blood inventory in the blood bank.</p>
+              </div>
+            </div>
+            <Button className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-sm hover:opacity-95">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Blood Units
+            </Button>
+          </div>
+        </div>
+
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Blood Stock</h1>
-          <p className="text-muted-foreground">Manage and monitor blood inventory in the blood bank</p>
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Blood Stock</h1>
+            <p className="text-sm text-slate-500">Manage and monitor blood inventory in the blood bank</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="rounded-full border-slate-200 bg-white text-slate-600" onClick={loadData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="outline" className="rounded-full border-slate-200 bg-white text-slate-600">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+          {['Blood Stock', 'Blood Donor', 'Blood Issued', 'Add Blood Unit', 'Issue Blood'].map((item, index) => (
+            <button
+              key={item}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${index === 0 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Blood Units</p>
-                  <p className="text-3xl font-bold mt-2">{summary.totalUnits}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Units available across all blood types</p>
+                  <p className="text-sm font-medium text-slate-500">Total Blood Units</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{summary.totalUnits}</p>
+                  <p className="mt-1 text-xs text-slate-500">Units available across all blood types</p>
                 </div>
                 <Plus className="h-5 w-5 text-red-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Blood Type Distribution</p>
+                  <p className="text-sm font-medium text-slate-500">Blood Type Distribution</p>
                   <div className="flex flex-wrap gap-1.5 mt-3">
                     {summary.stockByGroup.map((bt) => (
                       <Badge key={bt.blood_type} variant="secondary" className="text-xs">
@@ -162,26 +204,26 @@ export default function BloodStock() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Expiring Soon</p>
-                  <p className="text-3xl font-bold mt-2">{summary.expiringSoon}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Units expiring within the next 7 days</p>
+                  <p className="text-sm font-medium text-slate-500">Expiring Soon</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{summary.expiringSoon}</p>
+                  <p className="mt-1 text-xs text-slate-500">Units expiring within the next 7 days</p>
                 </div>
                 <AlertCircle className="h-5 w-5 text-amber-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Critical Levels</p>
-                  <p className="text-3xl font-bold mt-2">{summary.criticalTypes}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Blood types with critically low inventory</p>
+                  <p className="text-sm font-medium text-slate-500">Critical Levels</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{summary.criticalTypes}</p>
+                  <p className="mt-1 text-xs text-slate-500">Blood types with critically low inventory</p>
                 </div>
                 <AlertCircle className="h-5 w-5 text-red-500" />
               </div>
@@ -190,10 +232,10 @@ export default function BloodStock() {
         </div>
 
         {/* Blood Type Availability */}
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader>
-            <CardTitle>Blood Type Availability</CardTitle>
-            <p className="text-sm text-muted-foreground">Current inventory levels for each blood type</p>
+            <CardTitle className="text-slate-800">Blood Type Availability</CardTitle>
+            <p className="text-sm text-slate-500">Current inventory levels for each blood type</p>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -254,9 +296,9 @@ export default function BloodStock() {
         </div>
 
         {/* Tabs and Table */}
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="m-4">
+            <TabsList className="m-4 rounded-full bg-slate-100 p-1">
               <TabsTrigger value="all">All Units</TabsTrigger>
               <TabsTrigger value="available">Available</TabsTrigger>
               <TabsTrigger value="expiring">Expiring Soon</TabsTrigger>
@@ -302,11 +344,11 @@ export default function BloodStock() {
                   )}
                 </TableBody>
               </Table>
-              <div className="p-4 flex items-center justify-between border-t">
-                <p className="text-sm text-muted-foreground">Showing {filteredItems.length} units</p>
+              <div className="p-4 flex items-center justify-between border-t border-slate-200">
+                <p className="text-sm text-slate-500">Showing {filteredItems.length} units</p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled>Previous</Button>
-                  <Button variant="outline" size="sm">Next</Button>
+                  <Button variant="outline" size="sm" className="rounded-full border-slate-200" disabled>Previous</Button>
+                  <Button variant="outline" size="sm" className="rounded-full border-slate-200">Next</Button>
                 </div>
               </div>
             </TabsContent>

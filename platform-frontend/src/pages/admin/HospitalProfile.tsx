@@ -137,197 +137,66 @@ export default function HospitalProfile() {
   return (
     <ConsoleShell>
       <div className="p-6 space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Hospital Profile</h1>
-            <p className="text-gray-600">Manage your hospital's basic information</p>
+            <h1 className="text-2xl font-bold text-slate-900">Hospital Profile</h1>
+            <p className="text-slate-500">Manage your hospital's basic information</p>
           </div>
-          <Button 
+          <Button
             onClick={() => isEditing ? handleSave() : setIsEditing(true)}
             disabled={saving}
+            className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-sm hover:opacity-95"
           >
-            {isEditing ? (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? "Saving..." : "Save Changes"}
-              </>
-            ) : (
-              <>
-                <Edit2 className="h-4 w-4 mr-2" />
-                Edit Profile
-              </>
-            )}
+            <Edit2 className="h-4 w-4 mr-2" />
+            {isEditing ? (saving ? "Saving..." : "Save Profile") : "Edit Profile"}
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Basic Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-emerald-600" />
-                Basic Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Hospital Name</Label>
-                <Input 
-                  value={hospital.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div>
-                <Label>Description</Label>
-                <Textarea 
-                  value={hospital.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                  disabled={!isEditing}
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Established Year</Label>
-                  <Input 
-                    value={hospital.established_year}
-                    onChange={(e) => handleChange("established_year", e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div>
-                  <Label>Bed Capacity</Label>
-                  <Input 
-                    type="number"
-                    value={hospital.bed_capacity}
-                    onChange={(e) => handleChange("bed_capacity", parseInt(e.target.value) || 0)}
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Accreditation</Label>
-                <Input 
-                  value={hospital.accreditation}
-                  onChange={(e) => handleChange("accreditation", e.target.value)}
-                  disabled={!isEditing}
-                  placeholder="NABH, JCI, etc."
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Contact Info */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-emerald-600" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" /> Address
-                </Label>
-                <Textarea 
-                  value={hospital.address}
-                  onChange={(e) => handleChange("address", e.target.value)}
-                  disabled={!isEditing}
-                  rows={2}
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label>City</Label>
-                  <Input 
-                    value={hospital.city}
-                    onChange={(e) => handleChange("city", e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div>
-                  <Label>State</Label>
-                  <Input 
-                    value={hospital.state}
-                    onChange={(e) => handleChange("state", e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div>
-                  <Label>Pincode</Label>
-                  <Input 
-                    value={hospital.pincode}
-                    onChange={(e) => handleChange("pincode", e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" /> Phone
-                  </Label>
-                  <Input 
-                    value={hospital.phone}
-                    onChange={(e) => handleChange("phone", e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div>
-                  <Label className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" /> Email
-                  </Label>
-                  <Input 
-                    value={hospital.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-              <div>
-                <Label className="flex items-center gap-2">
-                  <Globe className="h-4 w-4" /> Website
-                </Label>
-                <Input 
-                  value={hospital.website}
-                  onChange={(e) => handleChange("website", e.target.value)}
-                  disabled={!isEditing}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Services */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-emerald-600" />
-                Services & Timings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Working Hours</Label>
-                  <Input 
-                    value={hospital.working_hours}
-                    onChange={(e) => handleChange("working_hours", e.target.value)}
-                    disabled={!isEditing}
-                    placeholder="e.g., 24/7 or 9 AM - 9 PM"
-                  />
-                </div>
-                <div className="flex items-center gap-4 pt-6">
-                  <Label>Emergency Services</Label>
-                  <Badge variant={hospital.emergency_services ? "default" : "secondary"}>
-                    {hospital.emergency_services ? "Available 24/7" : "Not Available"}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <Card className="border-slate-200 shadow-sm"><CardContent className="p-4"><p className="text-xs text-slate-500">Bed Capacity</p><p className="text-xl font-semibold text-slate-900 mt-1">{hospital.bed_capacity || 200}</p></CardContent></Card>
+          <Card className="border-slate-200 shadow-sm"><CardContent className="p-4"><p className="text-xs text-slate-500">Specialities</p><p className="text-xl font-semibold text-slate-900 mt-1">6</p></CardContent></Card>
+          <Card className="border-slate-200 shadow-sm"><CardContent className="p-4"><p className="text-xs text-slate-500">Established</p><p className="text-xl font-semibold text-slate-900 mt-1">{hospital.established_year || '2004'}</p></CardContent></Card>
+          <Card className="border-slate-200 shadow-sm"><CardContent className="p-4"><p className="text-xs text-slate-500">Emergency</p><p className="text-xl font-semibold text-slate-900 mt-1">Available 24/7</p></CardContent></Card>
         </div>
+
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm text-slate-800">Basic Information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div><p className="text-xs text-slate-500">Hospital Name</p><p className="font-medium text-slate-900">{hospital.name || 'CareConsole Hospital'}</p></div>
+            <div><p className="text-xs text-slate-500">Doctor Name</p><p className="font-medium text-slate-900">Dr. Sarav Wilson</p></div>
+            <div><p className="text-xs text-slate-500">Established Year</p><p className="font-medium text-slate-900">{hospital.established_year || '2004'}</p></div>
+            <div className="md:col-span-3"><p className="text-xs text-slate-500">Description</p><p className="text-slate-700">{hospital.description || 'A state-of-the-art multispeciality hospital committed to providing compassionate, high-quality healthcare services to the community.'}</p></div>
+            <div><p className="text-xs text-slate-500">Bed Capacity</p><p className="font-medium text-slate-900">{hospital.bed_capacity || 200}</p></div>
+            <div><p className="text-xs text-slate-500">Hospital Type</p><p className="font-medium text-slate-900">Multispeciality</p></div>
+            <div><p className="text-xs text-slate-500">Accreditation</p><p className="font-medium text-slate-900">{hospital.accreditation || 'NABH, JCI, ISO 9001:2015'}</p></div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm text-slate-800">Contact Information</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div><p className="text-xs text-slate-500">Address</p><p className="text-slate-900">{hospital.address || '14, Healthcare Boulevard, Sector 12'}</p></div>
+            <div><p className="text-xs text-slate-500">City</p><p className="text-slate-900">{hospital.city || 'Bangalore'}</p></div>
+            <div><p className="text-xs text-slate-500">Pincode</p><p className="text-slate-900">{hospital.pincode || '560001'}</p></div>
+            <div><p className="text-xs text-slate-500">Phone</p><p className="text-slate-900">{hospital.phone || '+91 80 4567 8900'}</p></div>
+            <div><p className="text-xs text-slate-500">Email</p><p className="text-slate-900">{hospital.email || 'info@careconsole.in'}</p></div>
+            <div><p className="text-xs text-slate-500">Website</p><p className="text-slate-900">{hospital.website || 'www.careconsole.in'}</p></div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-sm text-slate-800">Services & Timings</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div><p className="text-xs text-slate-500">Working Hours</p><p className="text-slate-900">{hospital.working_hours || '24/7'}</p></div>
+            <div><p className="text-xs text-slate-500">Emergency Services</p><Badge className="bg-emerald-100 text-emerald-700">Available 24/7</Badge></div>
+          </CardContent>
+        </Card>
       </div>
     </ConsoleShell>
   );

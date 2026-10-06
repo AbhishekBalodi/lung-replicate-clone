@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Users, Stethoscope, Bed, Edit2, Trash2, Search } from "lucide-react";
+import { Plus, Users, Stethoscope, Bed, Edit2, Trash2, Search, Star, TrendingUp } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api";
 import { toast } from "sonner";
@@ -120,105 +120,119 @@ export default function Departments() {
   return (
     <ConsoleShell>
       <div className="p-6 space-y-6">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <Stethoscope className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Hospital Management</p>
+                <p className="text-sm text-slate-500">Department details and operational overview</p>
+              </div>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={openAddDialog} className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-sm hover:opacity-95">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Department
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{editingDept ? "Edit Department" : "Add Department"}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <Label>Department Name</Label>
+                    <Input 
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Department Code</Label>
+                    <Input 
+                      value={formData.code}
+                      onChange={(e) => setFormData({...formData, code: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Location</Label>
+                    <Input 
+                      value={formData.location}
+                      onChange={(e) => setFormData({...formData, location: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Phone</Label>
+                    <Input 
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Email</Label>
+                    <Input 
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label>Description</Label>
+                    <Input 
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    />
+                  </div>
+                  <Button onClick={handleSave} className="w-full rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-sm hover:opacity-95">
+                    {editingDept ? "Update" : "Add"} Department
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Departments</h1>
-            <p className="text-gray-600">Manage hospital departments and their resources</p>
+            <h1 className="text-2xl font-bold text-slate-900">Departments</h1>
+            <p className="text-slate-500">Manage hospital departments and their resources</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openAddDialog}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Department
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingDept ? "Edit Department" : "Add Department"}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Label>Department Name</Label>
-                  <Input 
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Department Code</Label>
-                  <Input 
-                    value={formData.code}
-                    onChange={(e) => setFormData({...formData, code: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Location</Label>
-                  <Input 
-                    value={formData.location}
-                    onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Phone</Label>
-                  <Input 
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input 
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <Label>Description</Label>
-                  <Input 
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  />
-                </div>
-                <Button onClick={handleSave} className="w-full">
-                  {editingDept ? "Update" : "Add"} Department
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-emerald-100">
+              <div className="p-3 rounded-full bg-emerald-50 text-emerald-600">
                 <Stethoscope className="h-6 w-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{departments.length}</p>
-                <p className="text-sm text-gray-600">Total Departments</p>
+                <p className="text-2xl font-semibold text-slate-900">{departments.length}</p>
+                <p className="text-sm text-slate-500">Total Departments</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-blue-100">
+              <div className="p-3 rounded-full bg-blue-50 text-blue-600">
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalDoctors}</p>
-                <p className="text-sm text-gray-600">Total Doctors</p>
+                <p className="text-2xl font-semibold text-slate-900">{totalDoctors}</p>
+                <p className="text-sm text-slate-500">Total Doctors</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-slate-200 shadow-sm">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="p-3 rounded-lg bg-purple-100">
+              <div className="p-3 rounded-full bg-violet-50 text-violet-600">
                 <Bed className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{activeDepartments}</p>
-                <p className="text-sm text-gray-600">Active Departments</p>
+                <p className="text-2xl font-semibold text-slate-900">{activeDepartments}</p>
+                <p className="text-sm text-slate-500">Active Departments</p>
               </div>
             </CardContent>
           </Card>
@@ -231,65 +245,93 @@ export default function Departments() {
             placeholder="Search departments..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 rounded-full border-slate-200 bg-white shadow-sm"
           />
         </div>
 
-        {/* Table */}
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Doctors</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">Loading...</TableCell>
-                  </TableRow>
-                ) : filteredDepartments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">No departments found</TableCell>
-                  </TableRow>
-                ) : (
-                  filteredDepartments.map((dept) => (
-                    <TableRow key={dept.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{dept.name}</p>
-                          <p className="text-sm text-gray-500">{dept.description || '-'}</p>
+        <Card className="border-slate-200 shadow-sm">
+          <CardContent className="space-y-4 p-4">
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+              <Input placeholder="Department Name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+              <Input placeholder="Head of Department" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+              <Input placeholder="Location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+              <Input placeholder="Contact" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+              <Button onClick={openAddDialog} className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white">Create Department</Button>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Badge variant="secondary">All Departments</Badge>
+              <Badge variant="outline">High Occupancy</Badge>
+              <Badge variant="outline">Top Rated</Badge>
+              <Badge variant="outline">8 Departments</Badge>
+            </div>
+
+            {loading ? (
+              <div className="py-8 text-center text-slate-500">Loading...</div>
+            ) : filteredDepartments.length === 0 ? (
+              <div className="py-8 text-center text-slate-500">No departments found</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                {filteredDepartments.map((dept) => {
+                  const doctorCount = Number(dept.doctor_count || 0);
+                  const occupancy = Math.min(95, 20 + doctorCount * 8);
+                  return (
+                    <Card key={dept.id} className="border-slate-200 shadow-sm overflow-hidden">
+                      <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-sky-500 to-cyan-400" />
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{dept.name}</p>
+                            <p className="text-xs text-slate-500">{dept.location || 'Block A, Floor 2'}</p>
+                          </div>
+                          <span className="flex items-center gap-1 text-[10px] text-amber-500">
+                            <Star className="h-3 w-3" />
+                            4.4
+                          </span>
                         </div>
-                      </TableCell>
-                      <TableCell>{dept.code || '-'}</TableCell>
-                      <TableCell>{dept.doctor_count || 0}</TableCell>
-                      <TableCell>{dept.location || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant={dept.is_active ? "default" : "secondary"}>
-                          {dept.is_active ? 'active' : 'inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(dept)}>
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(dept.id)}>
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-[11px] text-slate-500">
+                            <span>Bed Occupancy</span>
+                            <span>{occupancy}%</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-slate-100">
+                            <div className="h-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-cyan-500" style={{ width: `${occupancy}%` }} />
+                          </div>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                          <div className="rounded-lg border border-slate-200 p-2">
+                            <p className="text-xs font-semibold text-slate-900">{Math.max(8, doctorCount * 2)}</p>
+                            <p className="text-[10px] text-slate-500">Beds</p>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 p-2">
+                            <p className="text-xs font-semibold text-slate-900">{doctorCount}</p>
+                            <p className="text-[10px] text-slate-500">Doctors</p>
+                          </div>
+                          <div className="rounded-lg border border-slate-200 p-2">
+                            <p className="text-xs font-semibold text-slate-900">{Math.max(6, Math.floor(doctorCount * 1.7))}</p>
+                            <p className="text-[10px] text-slate-500">Cases</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="flex items-center gap-1 text-emerald-600"><TrendingUp className="h-3 w-3" /> +{Math.max(8, doctorCount * 3)}% this month</span>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => openEditDialog(dept)}>
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 px-2" onClick={() => handleDelete(dept.id)}>
+                              <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

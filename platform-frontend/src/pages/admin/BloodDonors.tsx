@@ -8,9 +8,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { toast } from 'sonner';
-import { Search, RefreshCw, Download, Plus, Users, Calendar, Phone, Mail } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Search, RefreshCw, Download, Plus, Users, Calendar, Phone, Mail, Droplet } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 
 type Donor = {
   id: string;
@@ -26,7 +41,7 @@ type Donor = {
   avatar?: string;
 };
 
-const mockDonors: Donor[] = [
+const donorsSeed: Donor[] = [
   { id: 'D-1001', name: 'John Smith', blood_type: 'O+', phone: '+1 (555) 123-4567', email: 'john.smith@example.com', last_donation: '3/15/2023', status: 'Eligible', total_donations: 8, next_eligible: '7/15/2023', tier: 'Silver Donor' },
   { id: 'D-1002', name: 'Sarah Johnson', blood_type: 'A-', phone: '+1 (555) 987-6543', email: 'sarah.j@example.com', last_donation: '5/22/2023', status: 'Ineligible', total_donations: 3, next_eligible: '9/22/2023' },
   { id: 'D-1003', name: 'Michael Chen', blood_type: 'B+', phone: '+1 (555) 456-7890', email: 'mchen@example.com', last_donation: '1/10/2023', status: 'Eligible', total_donations: 12, next_eligible: '5/10/2023', tier: 'Gold Donor' },
@@ -36,14 +51,20 @@ const mockDonors: Donor[] = [
 ];
 
 const bloodTypeData = [
-  { type: 'O+', percentage: 38, count: 94, color: '#EF4444' },
-  { type: 'A+', percentage: 18, count: 45, color: '#3B82F6' },
-  { type: 'B+', percentage: 12, count: 30, color: '#22C55E' },
-  { type: 'AB+', percentage: 6, count: 15, color: '#A855F7' },
-  { type: 'O-', percentage: 9, count: 22, color: '#EF4444' },
-  { type: 'A-', percentage: 7, count: 17, color: '#3B82F6' },
-  { type: 'B-', percentage: 6, count: 15, color: '#22C55E' },
-  { type: 'AB-', percentage: 4, count: 10, color: '#8B5CF6' },
+  { type: 'O+', percentage: 38, count: 94, color: '#ef4444' },
+  { type: 'A+', percentage: 18, count: 45, color: '#3b82f6' },
+  { type: 'B+', percentage: 12, count: 30, color: '#22c55e' },
+  { type: 'AB+', percentage: 6, count: 15, color: '#a855f7' },
+  { type: 'O-', percentage: 9, count: 22, color: '#f97316' },
+  { type: 'A-', percentage: 7, count: 17, color: '#0ea5e9' },
+  { type: 'B-', percentage: 6, count: 15, color: '#22c55e' },
+  { type: 'AB-', percentage: 4, count: 10, color: '#8b5cf6' },
+];
+
+const donorStatusData = [
+  { name: 'Eligible', value: 183, color: '#22c55e' },
+  { name: 'Ineligible', value: 52, color: '#ef4444' },
+  { name: 'New', value: 12, color: '#6366f1' },
 ];
 
 const donationFrequencyData = [
@@ -55,7 +76,7 @@ const donationFrequencyData = [
 ];
 
 export default function BloodDonors() {
-  const [donors, setDonors] = useState<Donor[]>(mockDonors);
+  const [donors] = useState<Donor[]>(donorsSeed);
   const [searchQuery, setSearchQuery] = useState('');
   const [bloodTypeFilter, setBloodTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -66,15 +87,20 @@ export default function BloodDonors() {
   const eligibleDonors = 183;
   const frequentDonors = 42;
 
-  const filteredDonors = donors.filter(donor => {
-    const matchesSearch = donor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          donor.id.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    document.title = 'Blood Donors';
+  }, []);
+
+  const filteredDonors = donors.filter((donor) => {
+    const matchesSearch = donor.name.toLowerCase().includes(searchQuery.toLowerCase()) || donor.id.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = bloodTypeFilter === 'all' || donor.blood_type === bloodTypeFilter;
     const matchesStatus = statusFilter === 'all' || donor.status === statusFilter;
-    const matchesTab = activeTab === 'all' || 
-                       (activeTab === 'eligible' && donor.status === 'Eligible') ||
-                       (activeTab === 'ineligible' && donor.status === 'Ineligible') ||
-                       (activeTab === 'new' && donor.status === 'New');
+    const matchesTab =
+      activeTab === 'all' ||
+      (activeTab === 'eligible' && donor.status === 'Eligible') ||
+      (activeTab === 'ineligible' && donor.status === 'Ineligible') ||
+      (activeTab === 'new' && donor.status === 'New');
+
     return matchesSearch && matchesType && matchesStatus && matchesTab;
   });
 
@@ -122,127 +148,185 @@ export default function BloodDonors() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Blood Donors</h1>
-            <p className="text-muted-foreground">Manage and track blood donors in your blood bank</p>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                <Droplet className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">How Blood Bank Works</p>
+                <p className="text-sm text-slate-500">Manage blood inventory, donors, and issuance from one place.</p>
+              </div>
+            </div>
+            <Button className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-sm hover:opacity-95">
+              <Plus className="h-4 w-4 mr-2" />
+              Register New Donor
+            </Button>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Register New Donor
-          </Button>
         </div>
 
-        {/* Stats Cards */}
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Blood Donors</h1>
+            <p className="text-sm text-slate-500">Manage and track blood donors in your blood bank</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="rounded-full border-slate-200 bg-white text-slate-600">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="outline" className="rounded-full border-slate-200 bg-white text-slate-600">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+          {['Blood Stock', 'Blood Donor', 'Blood Issued', 'Add Blood Unit', 'Issue Blood'].map((item, index) => (
+            <button
+              key={item}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${index === 1 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Donors</p>
-                  <p className="text-3xl font-bold mt-2">{totalDonors}</p>
-                  <p className="text-xs text-green-600 mt-1">+12 from last month</p>
+                  <p className="text-sm font-medium text-slate-500">Total Donors</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{totalDonors}</p>
+                  <p className="mt-1 text-xs text-emerald-600">+12 from last month</p>
                 </div>
-                <Users className="h-5 w-5 text-muted-foreground" />
+                <Users className="h-5 w-5 text-slate-400" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Donations This Month</p>
-                  <p className="text-3xl font-bold mt-2">{donationsThisMonth}</p>
-                  <p className="text-xs text-green-600 mt-1">+5 compared to last month</p>
+                  <p className="text-sm font-medium text-slate-500">Donations This Month</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{donationsThisMonth}</p>
+                  <p className="mt-1 text-xs text-emerald-600">+5 compared to last month</p>
                 </div>
-                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <Calendar className="h-5 w-5 text-slate-400" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Eligible Donors</p>
-                  <p className="text-3xl font-bold mt-2">{eligibleDonors}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Ready for donation</p>
+                  <p className="text-sm font-medium text-slate-500">Eligible Donors</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{eligibleDonors}</p>
+                  <p className="mt-1 text-xs text-slate-500">Ready for donation</p>
                 </div>
-                <Badge className="bg-green-500 hover:bg-green-600 text-xs">Active</Badge>
+                <Badge className="bg-emerald-500 text-xs text-white hover:bg-emerald-500">Active</Badge>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Frequent Donors</p>
-                  <p className="text-3xl font-bold mt-2">{frequentDonors}</p>
-                  <p className="text-xs text-muted-foreground mt-1">5+ donations</p>
+                  <p className="text-sm font-medium text-slate-500">Frequent Donors</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{frequentDonors}</p>
+                  <p className="mt-1 text-xs text-slate-500">5+ donations</p>
                 </div>
-                <Badge variant="outline" className="bg-amber-100 text-amber-700 border-amber-300 text-xs">VIP</Badge>
+                <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 text-xs">VIP</Badge>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
+          <Card className="border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Donors by Blood Type</CardTitle>
-              <p className="text-sm text-muted-foreground">Distribution of registered donors by blood type</p>
+              <CardTitle className="text-sm font-medium text-slate-700">Blood Type Coverage</CardTitle>
+              <p className="text-sm text-slate-500">Distribution of registered donors by blood type</p>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-1 mb-4">
-                {bloodTypeData.map((bt) => (
-                  <span key={bt.type} className="text-xs text-muted-foreground">{bt.percentage}%</span>
-                ))}
-              </div>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={bloodTypeData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="type" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count">
-                    {bloodTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
+                <RadarChart data={bloodTypeData}>
+                  <PolarGrid stroke="#e2e8f0" />
+                  <PolarAngleAxis dataKey="type" tick={{ fill: '#64748B', fontSize: 11 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar dataKey="percentage" stroke="#6366f1" fill="#6366f1" fillOpacity={0.16} />
+                </RadarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle>Donation Frequency</CardTitle>
-              <p className="text-sm text-muted-foreground">Number of donors by donation frequency</p>
+              <CardTitle className="text-sm font-medium text-slate-700">Donor Status</CardTitle>
+              <p className="text-sm text-slate-500">Eligibility breakdown of all donors</p>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-4 mb-4">
-                {donationFrequencyData.map((df) => (
-                  <span key={df.frequency} className="text-xs text-muted-foreground">{df.count}</span>
+              <div className="flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={200}>
+                  <PieChart>
+                    <Pie data={donorStatusData} dataKey="value" nameKey="name" innerRadius={52} outerRadius={82} paddingAngle={4}>
+                      {donorStatusData.map((entry) => (
+                        <Cell key={entry.name} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500">
+                {donorStatusData.map((entry) => (
+                  <span key={entry.name} className="flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                    {entry.name}
+                  </span>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-slate-200 shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-slate-700">Donation Frequency</CardTitle>
+              <p className="text-sm text-slate-500">Number of donors by donation frequency</p>
+            </CardHeader>
+            <CardContent>
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={donationFrequencyData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="frequency" fontSize={10} />
-                  <YAxis />
+                <LineChart data={donationFrequencyData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                  <XAxis dataKey="frequency" tick={{ fill: '#64748B', fontSize: 11 }} interval={0} />
+                  <YAxis tick={{ fill: '#64748B', fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="count" fill="#6366f1" />
-                </BarChart>
+                  <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={3} dot={{ r: 3 }} />
+                </LineChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
 
-        {/* Filters */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-8">
+          {bloodTypeData.map((bt) => (
+            <Card key={bt.type} className="border-slate-200 shadow-sm">
+              <CardContent className="p-3 text-center">
+                <div className="text-[11px] font-semibold text-slate-500">{bt.type}</div>
+                <div className="mt-1 text-sm font-semibold text-slate-900">{bt.count}</div>
+                <div className="text-[11px] text-slate-400">{bt.percentage}%</div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
           <div className="flex flex-wrap gap-3 items-center">
             <div className="relative">
@@ -260,7 +344,7 @@ export default function BloodDonors() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Blood Types</SelectItem>
-                {bloodTypeData.map(bt => (
+                {bloodTypeData.map((bt) => (
                   <SelectItem key={bt.type} value={bt.type}>{bt.type}</SelectItem>
                 ))}
               </SelectContent>
@@ -292,10 +376,9 @@ export default function BloodDonors() {
           </div>
         </div>
 
-        {/* Tabs and Table */}
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="m-4">
+            <TabsList className="m-4 rounded-full bg-slate-100 p-1">
               <TabsTrigger value="all">All Donors</TabsTrigger>
               <TabsTrigger value="eligible">Eligible</TabsTrigger>
               <TabsTrigger value="ineligible">Ineligible</TabsTrigger>
@@ -322,7 +405,7 @@ export default function BloodDonors() {
                           <Avatar className="h-9 w-9">
                             <AvatarImage src={donor.avatar} />
                             <AvatarFallback className="bg-slate-200 text-slate-600 text-sm">
-                              {donor.name.split(' ').map(n => n[0]).join('')}
+                              {donor.name.split(' ').map((n) => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
                           <div>

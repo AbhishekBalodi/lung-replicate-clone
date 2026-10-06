@@ -69,22 +69,47 @@ export default function IssueBlood() {
 
   return (
     <ConsoleShell>
-      <div className="space-y-6 max-w-3xl">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate('/admin/blood-bank/issued')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Issue Blood</h1>
-            <p className="text-muted-foreground">Issue blood units to a patient</p>
+      <div className="space-y-5 max-w-2xl mx-auto">
+
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <Droplet className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-700">How Blood Bank Works</p>
+              <p className="text-[11px] text-slate-500">Manage blood inventory, donors, collections, and issuance</p>
+            </div>
           </div>
         </div>
 
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => navigate('/admin/blood-bank/issued')} className="rounded-full border-slate-200 bg-white shadow-sm">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Issue Blood</h1>
+            <p className="text-sm text-slate-500">Issue blood units to a patient</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+          {['Blood Stock', 'Blood Donor', 'Blood Issued', 'Add Blood Unit', 'Issue Blood'].map((item, index) => (
+            <button
+              key={item}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${index === 4 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
         {/* Stock Overview */}
-        <Card>
+        <Card className="border-slate-200 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Available Blood Stock</CardTitle>
+            <CardTitle className="text-base text-slate-800">Available Blood Stock</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -102,15 +127,15 @@ export default function IssueBlood() {
         </Card>
 
         <form onSubmit={handleSubmit}>
-          <Card>
+          <Card className="border-slate-200 shadow-sm">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Droplet className="h-5 w-5 text-red-500" />
+              <CardTitle className="flex items-center gap-2 text-slate-800">
+                <Droplet className="h-5 w-5 text-rose-500" />
                 Issue Details
               </CardTitle>
-              <CardDescription>Fill in the details for blood issuance</CardDescription>
+              <CardDescription className="text-slate-500">Fill in the details for blood issuance</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               {/* Blood Type and Units */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -248,11 +273,11 @@ export default function IssueBlood() {
 
               {/* Actions */}
               <div className="flex gap-3 pt-4">
-                <Button type="submit" disabled={isSubmitting || !hasEnoughStock}>
+                <Button type="submit" disabled={isSubmitting || !hasEnoughStock} className="rounded-full bg-gradient-to-r from-indigo-500 to-sky-500 text-white shadow-sm hover:opacity-95">
                   <Droplet className="h-4 w-4 mr-2" />
                   {isSubmitting ? 'Processing...' : 'Issue Blood'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => navigate('/admin/blood-bank/issued')}>
+                <Button type="button" variant="outline" onClick={() => navigate('/admin/blood-bank/issued')} className="rounded-full border-slate-200 bg-white">
                   Cancel
                 </Button>
               </div>

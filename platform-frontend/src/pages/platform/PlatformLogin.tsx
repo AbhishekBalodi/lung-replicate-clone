@@ -115,6 +115,11 @@ const PlatformLogin = () => {
                   <Input
                     id="tenantCode"
                     type="text"
+                    inputMode="text"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoComplete="off"
                     placeholder="e.g., hosp_city_hospital"
                     value={tenantCode}
                     onChange={(e) => setTenantCode(e.target.value)}
@@ -158,6 +163,11 @@ const PlatformLogin = () => {
                   <Input
                     id="tenantEmail"
                     type="email"
+                    inputMode="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoComplete="email"
                     placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -170,6 +180,10 @@ const PlatformLogin = () => {
                     <Input
                       id="tenantPassword"
                       type={showPassword ? 'text' : 'password'}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="current-password"
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -203,6 +217,11 @@ const PlatformLogin = () => {
                   <Input
                     id="adminEmail"
                     type="email"
+                    inputMode="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    autoComplete="email"
                     placeholder="admin@platform.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -215,6 +234,10 @@ const PlatformLogin = () => {
                     <Input
                       id="adminPassword"
                       type={showPassword ? 'text' : 'password'}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      autoComplete="current-password"
                       placeholder="Enter your password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}

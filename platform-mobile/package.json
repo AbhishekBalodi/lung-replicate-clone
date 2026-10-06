@@ -1,0 +1,36 @@
+{
+  "name": "platform-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start --clear",
+    "phone": "expo start --lan --clear --port 8082",
+    "android": "expo start --lan --clear --port 8082",
+    "open:android": "adb shell am start -a android.intent.action.VIEW -d exp://10.0.2.2:8082",
+    "adb:reset": "adb kill-server && adb start-server && adb devices",
+    "keyboard:fix": "powershell.exe -ExecutionPolicy Bypass -File ./scripts/fix-emulator-keyboard.ps1",
+    "emulator": "emulator -avd Rephyl_Pixel -no-snapshot-load",
+    "web": "expo start --web --clear",
+    "export:web": "expo export --platform web",
+    "typecheck": "tsc --noEmit",
+    "doctor": "expo-doctor",
+    "ios": "expo run:ios"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "expo": "~54.0.0",
+    "expo-constants": "~18.0.0",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-web": "~0.21.0",
+    "react-native-webview": "13.15.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2"
+  }
+}

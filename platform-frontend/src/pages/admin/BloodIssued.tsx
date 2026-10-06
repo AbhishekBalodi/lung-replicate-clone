@@ -87,62 +87,97 @@ export default function BloodIssued() {
   return (
     <ConsoleShell>
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Blood Issued</h1>
-          <p className="text-muted-foreground">Track and manage blood issuance records</p>
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Blood Issued</h1>
+            <p className="text-sm text-slate-500">Track and manage blood issuance records</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="rounded-full border-slate-200 bg-white text-slate-600">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+            <Button variant="outline" className="rounded-full border-slate-200 bg-white text-slate-600">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+              <Droplet className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-700">How Blood Bank Works</p>
+              <p className="text-[11px] text-slate-500">Manage blood inventory, donors, collections, and issuance</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-sm">
+          {['Blood Stock', 'Blood Donor', 'Blood Issued', 'Add Blood Unit', 'Issue Blood'].map((item, index) => (
+            <button
+              key={item}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${index === 2 ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}
+              type="button"
+            >
+              {item}
+            </button>
+          ))}
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Units Issued</p>
-                  <p className="text-3xl font-bold mt-2">{totalIssued}</p>
-                  <p className="text-xs text-muted-foreground mt-1">This month</p>
+                  <p className="text-sm font-medium text-slate-500">Total Units Issued</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{totalIssued}</p>
+                  <p className="mt-1 text-xs text-slate-500">This month</p>
                 </div>
-                <Droplet className="h-5 w-5 text-red-500" />
+                <Droplet className="h-5 w-5 text-rose-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Completed Issues</p>
-                  <p className="text-3xl font-bold mt-2">{completedCount}</p>
-                  <p className="text-xs text-green-600 mt-1">Successfully transfused</p>
+                  <p className="text-sm font-medium text-slate-500">Completed Issues</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{completedCount}</p>
+                  <p className="mt-1 text-xs text-emerald-600">Successfully transfused</p>
                 </div>
-                <ArrowUpRight className="h-5 w-5 text-green-500" />
+                <ArrowUpRight className="h-5 w-5 text-emerald-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending Issues</p>
-                  <p className="text-3xl font-bold mt-2">{pendingCount}</p>
-                  <p className="text-xs text-amber-600 mt-1">Awaiting transfusion</p>
+                  <p className="text-sm font-medium text-slate-500">Pending Issues</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{pendingCount}</p>
+                  <p className="mt-1 text-xs text-amber-600">Awaiting transfusion</p>
                 </div>
                 <Activity className="h-5 w-5 text-amber-500" />
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="border-slate-200 shadow-sm">
+            <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Emergency Issues</p>
-                  <p className="text-3xl font-bold mt-2">{emergencyCount}</p>
-                  <p className="text-xs text-red-600 mt-1">Emergency department</p>
+                  <p className="text-sm font-medium text-slate-500">Emergency Issues</p>
+                  <p className="mt-2 text-3xl font-semibold text-slate-900">{emergencyCount}</p>
+                  <p className="mt-1 text-xs text-rose-600">Emergency department</p>
                 </div>
-                <Users className="h-5 w-5 text-red-500" />
+                <Users className="h-5 w-5 text-rose-500" />
               </div>
             </CardContent>
           </Card>
@@ -157,11 +192,11 @@ export default function BloodIssued() {
                 placeholder="Search records..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 w-64"
+                className="pl-9 w-64 h-9"
               />
             </div>
             <Select value={bloodTypeFilter} onValueChange={setBloodTypeFilter}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-32 h-9">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
@@ -177,7 +212,7 @@ export default function BloodIssued() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-32 h-9">
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
@@ -187,16 +222,16 @@ export default function BloodIssued() {
                 <SelectItem value="Cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="h-9 w-9">
               <Calendar className="h-4 w-4" />
             </Button>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline">
+            <Button variant="outline" className="h-9">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" className="h-9">
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -204,14 +239,16 @@ export default function BloodIssued() {
         </div>
 
         {/* Tabs and Table */}
-        <Card>
+        <Card className="overflow-hidden border-slate-200 shadow-sm">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="m-4">
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 pt-4">
+              <TabsList className="h-10 rounded-full bg-slate-100 p-1 m-0">
               <TabsTrigger value="all">All Records</TabsTrigger>
               <TabsTrigger value="completed">Completed</TabsTrigger>
               <TabsTrigger value="pending">Pending</TabsTrigger>
               <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
-            </TabsList>
+              </TabsList>
+            </div>
             <TabsContent value={activeTab} className="mt-0">
               <Table>
                 <TableHeader>
@@ -254,11 +291,11 @@ export default function BloodIssued() {
                   ))}
                 </TableBody>
               </Table>
-              <div className="p-4 flex items-center justify-between border-t">
-                <p className="text-sm text-muted-foreground">Showing 1-{filteredRecords.length} of {records.length} records</p>
+              <div className="p-4 flex items-center justify-between border-t border-slate-200">
+                <p className="text-sm text-slate-500">Showing 1-{filteredRecords.length} of {records.length} records</p>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled>Previous</Button>
-                  <Button variant="outline" size="sm">Next</Button>
+                  <Button variant="outline" size="sm" className="rounded-full border-slate-200" disabled>Previous</Button>
+                  <Button variant="outline" size="sm" className="rounded-full border-slate-200">Next</Button>
                 </div>
               </div>
             </TabsContent>

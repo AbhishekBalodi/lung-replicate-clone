@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Platform Mobile",
+    "slug": "platform-mobile",
+    "version": "1.0.1",
+    "orientation": "portrait",
+    "scheme": "platformmobile",
+    "userInterfaceStyle": "light",
+    "sdkVersion": "54.0.0",
+    "platforms": ["android", "ios", "web"],
+    "android": {
+      "package": "in.brandingidiots.platformmobile",
+      "versionCode": 2,
+      "newArchEnabled": false,
+      "usesCleartextTraffic": true,
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lungreplicate.platformmobile",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "extra": {
+      "platformFrontendPort": 5174,
+      "backendPort": 5050
+    }
+  }
+}
